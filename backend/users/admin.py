@@ -4,6 +4,25 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, UserProfile, UserInterest
 
 
+class UserProfileInline(admin.StackedInline):
+    """Inline admin for user profile"""
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = 'Profile'
+    fields = [
+        'current_role', 'experience_level', 'preferred_work_type', 
+        'availability_status', 'bio', 'linkedin_url', 'github_url', 
+        'portfolio_url'
+    ]
+
+
+class UserInterestInline(admin.TabularInline):
+    """Inline admin for user interests"""
+    model = UserInterest
+    extra = 1
+    fields = ['interest_area', 'priority_level']
+
+
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """Admin configuration for custom User model"""
@@ -20,6 +39,9 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ['email', 'first_name', 'last_name', 'phone']
     ordering = ['-registration_date']
     readonly_fields = ['registration_date', 'last_login', 'profile_completion_percentage']
+    
+    # Add inlines to User admin instead
+    inlines = [UserProfileInline, UserInterestInline]
     
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -45,13 +67,6 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
-class UserInterestInline(admin.TabularInline):
-    """Inline admin for user interests"""
-    model = UserInterest
-    extra = 1
-    fields = ['interest_area', 'priority_level']
-
-
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     """Admin configuration for UserProfile"""
@@ -63,7 +78,8 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_filter = ['experience_level', 'preferred_work_type', 'availability_status']
     search_fields = ['user__email', 'user__first_name', 'user__last_name', 'current_role']
     readonly_fields = ['updated_at']
-    inlines = [UserInterestInline]
+    
+    # Removed inlines from here since UserInterest is related to User, not UserProfile
     
     fieldsets = (
         ('User', {
