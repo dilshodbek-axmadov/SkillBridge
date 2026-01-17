@@ -1,5 +1,3 @@
-# jobs/models.py - UPDATED VERSION
-
 from django.db import models
 from django.utils import timezone
 from skills.models import Skill
