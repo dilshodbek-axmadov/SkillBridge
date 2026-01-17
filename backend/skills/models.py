@@ -40,19 +40,42 @@ class Skill(models.Model):
     def update_popularity_score(self):
         """
         Calculate popularity based on how many job postings require this skill
-        Will be implemented after JobPosting model is created
+        Uses dynamic scaling based on actual job market data
         """
         from jobs.models import JobSkill
+        from django.db.models import Count
         
+        # Count jobs that require this skill
         total_jobs = JobSkill.objects.filter(skill=self).count()
         required_jobs = JobSkill.objects.filter(skill=self, is_required=True).count()
         
-        # Calculate score: required jobs count more
-        score = (required_jobs * 2) + total_jobs
+        if total_jobs == 0:
+            self.popularity_score = 0.0
+            self.save(update_fields=['popularity_score'])
+            return self.popularity_score
         
-        # Normalize to 0-100 scale (you can adjust this formula)
-        max_score = 1000  # Assume 1000 is the max possible
-        self.popularity_score = min((score / max_score) * 100, 100)
+        # Get the maximum job count for any skill (for normalization)
+        max_jobs_for_any_skill = JobSkill.objects.values('skill').annotate(
+            count=Count('id')
+        ).order_by('-count').first()
+        
+        if max_jobs_for_any_skill:
+            max_count = max_jobs_for_any_skill['count']
+        else:
+            max_count = total_jobs
+        
+        # Ensure max_count is at least 1 to avoid division by zero
+        max_count = max(max_count, 1)
+        
+        # Calculate base score (0-70) based on total jobs
+        base_score = (total_jobs / max_count) * 70
+        
+        # Add bonus (0-30) for required jobs
+        required_ratio = required_jobs / total_jobs if total_jobs > 0 else 0
+        bonus_score = required_ratio * 30
+        
+        # Final score (0-100)
+        self.popularity_score = min(base_score + bonus_score, 100)
         self.save(update_fields=['popularity_score'])
         
         return self.popularity_score

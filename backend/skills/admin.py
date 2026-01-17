@@ -34,12 +34,15 @@ class SkillAdmin(admin.ModelAdmin):
             color = 'orange'
         else:
             color = 'red'
+
+        score_formatted = f"{obj.popularity_score:.1f}"
         
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{:.1f}</span>',
+            '<span style="color: {}; font-weight: bold;"></span>',
             color,
-            obj.popularity_score
+            score_formatted
         )
+
     popularity_score_display.short_description = 'Popularity'
     
     def user_count(self, obj):
