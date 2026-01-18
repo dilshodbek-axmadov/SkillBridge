@@ -55,9 +55,10 @@ class MarketTrendAdmin(admin.ModelAdmin):
     
     def average_salary_display(self, obj):
         if obj.average_salary:
+            salary_formatted = f"{obj.average_salary:,.0f}"
             return format_html(
-                '<span style="color: green; font-weight: bold;">{:,.0f}</span>',
-                obj.average_salary
+                '<span style="color: green; font-weight: bold;"></span>',
+                salary_formatted
             )
         return '-'
     average_salary_display.short_description = 'Avg Salary'
@@ -132,10 +133,11 @@ class SkillCombinationAdmin(admin.ModelAdmin):
         else:
             color = 'gray'
         
+        percentage_formatted = f"{obj.correlation_score:,.1f}%"
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{:.1f}%</span>',
+            '<span style="color: {}; font-weight: bold;"></span>',
             color,
-            percentage
+            percentage_formatted
         )
     correlation_display.short_description = 'Correlation'
     correlation_display.admin_order_field = 'correlation_score'
