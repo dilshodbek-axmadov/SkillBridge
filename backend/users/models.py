@@ -13,6 +13,13 @@ class User(AbstractUser):
         ('questionnaire', 'Questionnaire'),
         ('cv_upload', 'CV Upload'),
     ]
+
+
+    IT_KNOWLEDGE_LEVELS = [
+        ('complete_beginner', 'Complete Beginner - No IT Knowledge'),
+        ('some_knowledge', 'Some IT Knowledge'),
+        ('experienced', 'Experienced in IT'),
+    ]
     
     username = None  # Remove username field
     email = models.EmailField('email address', unique=True)
@@ -31,6 +38,13 @@ class User(AbstractUser):
         choices=ONBOARDING_CHOICES,
         blank=True,
         null=True
+    )
+    it_knowledge_level = models.CharField(
+        max_length=30,
+        choices=IT_KNOWLEDGE_LEVELS,
+        blank=True,
+        null=True,
+        help_text="User's IT knowledge level"
     )
     profile_completion_percentage = models.IntegerField(default=0)
     registration_date = models.DateTimeField(auto_now_add=True)
@@ -148,6 +162,11 @@ class UserProfile(models.Model):
     github_url = models.URLField(max_length=255, blank=True, null=True)
     portfolio_url = models.URLField(max_length=255, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
+    career_preferences = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Stores career discovery quiz responses and preferences"
+    )
     
     class Meta:
         db_table = 'user_profiles'
