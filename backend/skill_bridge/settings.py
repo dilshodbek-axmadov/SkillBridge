@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'career',
     'learning',
     'cvs',
+    'analytics',
 
     # external apps
     'rest_framework',
