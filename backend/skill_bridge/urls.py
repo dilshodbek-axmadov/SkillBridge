@@ -9,17 +9,18 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
+
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    
+
     # API endpoints
     path('api/users/', include('users.urls')),
     path('api/cvs/', include('cvs.urls')),
     path('api/skills/', include('skills.urls')),
     path('api/jobs/', include('jobs.urls')),
     path('api/career/', include('career.urls')),
+    path('api/learning/', include('learning.urls')),
 ]
 
 # Serve media files in development
