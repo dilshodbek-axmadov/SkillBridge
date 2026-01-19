@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular', 
+    'django_filters',
 ]
 
 REST_FRAMEWORK = {
