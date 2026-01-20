@@ -22,8 +22,9 @@ urlpatterns = [
     path('api/career/', include('career.urls')),
     path('api/learning/', include('learning.urls')),
     path('api/analytics/', include('analytics.urls')),
+    path('api/cvs/', include('cvs.urls')),
 ]
 
-# Serve media files in development
+# media files
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
