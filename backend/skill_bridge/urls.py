@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/learning/', include('learning.urls')),
     path('api/analytics/', include('analytics.urls')),
     path('api/chatbot/', include('chatbot.urls')),
+    path('api/notifications/', include('notifications.urls')),
 ]
 
 # media files
