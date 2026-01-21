@@ -211,3 +211,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+GROQ_API_KEY = config('GROQ_API_KEY')
+GROQ_MODEL = 'llama-3.3-70b-versatile' 

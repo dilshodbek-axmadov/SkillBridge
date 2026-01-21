@@ -22,7 +22,7 @@ urlpatterns = [
     path('api/career/', include('career.urls')),
     path('api/learning/', include('learning.urls')),
     path('api/analytics/', include('analytics.urls')),
-    path('api/cvs/', include('cvs.urls')),
+    path('api/chatbot/', include('chatbot.urls')),
 ]
 
 # media files
