@@ -41,7 +41,7 @@ See [Setup Guide](./docs/SETUP.md) for detailed installation instructions.
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/skillbridge.git
+git clone https://github.com/dilshodbek-axmadov/SkillBridge.git
 cd skillbridge
 
 # Backend setup
@@ -130,15 +130,6 @@ skillbridge/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contact
-
-- **Project:** SkillBridge
-- **Location:** Uzbekistan
-- **Purpose:** BISP (Bachelor of Information Systems Project)
 
 ---
 

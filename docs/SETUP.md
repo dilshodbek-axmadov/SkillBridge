@@ -20,7 +20,7 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/skillbridge.git
+git clone https://github.com/dilshodbek-axmadov/SkillBridge.git
 cd skillbridge
 ```
 
@@ -329,10 +329,5 @@ For production deployment, ensure:
 
 - **API Documentation:** [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 - **GitHub Issues:** Report bugs and request features
-- **Email:** support@skillbridge.uz
+- **Email:** axmadovdilshod777@gmail.com
 
----
-
-## License
-
-This project is licensed under the MIT License.
