@@ -1,0 +1,204 @@
+"""
+Users App Models
+================
+Models for user authentication and profile management.
+
+Tables:
+- User (extends Django's AbstractUser)
+- UserProfile
+"""
+
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
+
+
+class User(AbstractUser):
+    """
+    Custom User model extending Django's AbstractUser.
+    Handles authentication and basic user information.
+    """
+    
+    email = models.EmailField(
+        _('email address'),
+        unique=True,
+        help_text=_('Required. Enter a valid email address.')
+    )
+    phone = models.CharField(
+        _('phone number'),
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_('Optional. User phone number.')
+    )
+    preferred_language = models.CharField(
+        _('preferred language'),
+        max_length=2,
+        choices=[
+            ('en', _('English')),
+            ('ru', _('Russian')),
+            ('uz', _('Uzbek')),
+        ],
+        default='en',
+        help_text=_('User preferred interface language.')
+    )
+    profile_completed = models.BooleanField(
+        _('profile completed'),
+        default=False,
+        help_text=_('Whether user has completed initial profile setup.')
+    )
+    created_at = models.DateTimeField(
+        _('created at'),
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        _('updated at'),
+        auto_now=True
+    )
+    last_login = models.DateTimeField(
+        _('last login'),
+        blank=True,
+        null=True
+    )
+    
+    # Use email as username for login
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+    
+    class Meta:
+        verbose_name = _('user')
+        verbose_name_plural = _('users')
+        ordering = ['-created_at']
+        db_table = 'users'
+    
+    def __str__(self):
+        return self.email
+    
+    @property
+    def full_name(self):
+        """Return user's full name."""
+        return f"{self.first_name} {self.last_name}".strip() or self.username
+
+
+class UserProfile(models.Model):
+    """
+    Extended user profile information.
+    Stores career-related information and preferences.
+    """
+    
+    EXPERIENCE_LEVELS = [
+        ('beginner', _('Beginner')),
+        ('junior', _('Junior')),
+        ('mid', _('Mid-level')),
+        ('senior', _('Senior')),
+        ('lead', _('Lead/Principal')),
+    ]
+    
+    PROFILE_SOURCES = [
+        ('manual', _('Manual Entry')),
+        ('cv_upload', _('CV Upload')),
+        ('assessment', _('Career Assessment')),
+    ]
+    
+    profile_id = models.AutoField(
+        primary_key=True
+    )
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile',
+        verbose_name=_('user')
+    )
+    current_job_position = models.CharField(
+        _('current job position'),
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text=_('User current job title or position.')
+    )
+    desired_role = models.CharField(
+        _('desired role'),
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text=_('Target career role user wants to achieve.')
+    )
+    experience_level = models.CharField(
+        _('experience level'),
+        max_length=20,
+        choices=EXPERIENCE_LEVELS,
+        default='beginner',
+        help_text=_('User current experience level in IT.')
+    )
+    cv_file_path = models.FileField(
+        _('CV file'),
+        upload_to='cvs/%Y/%m/',
+        blank=True,
+        null=True,
+        help_text=_('Uploaded CV file (PDF or DOCX).')
+    )
+    profile_source = models.CharField(
+        _('profile source'),
+        max_length=20,
+        choices=PROFILE_SOURCES,
+        default='manual',
+        help_text=_('How the profile was created.')
+    )
+    bio = models.TextField(
+        _('bio'),
+        blank=True,
+        null=True,
+        help_text=_('User biography or summary.')
+    )
+    profile_picture = models.ImageField(
+        _('profile picture'),
+        upload_to='profile_pics/%Y/%m/',
+        blank=True,
+        null=True
+    )
+    location = models.CharField(
+        _('location'),
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_('User city or region.')
+    )
+    github_url = models.URLField(
+        _('GitHub URL'),
+        blank=True,
+        null=True
+    )
+    linkedin_url = models.URLField(
+        _('LinkedIn URL'),
+        blank=True,
+        null=True
+    )
+    portfolio_url = models.URLField(
+        _('Portfolio URL'),
+        blank=True,
+        null=True
+    )
+    created_at = models.DateTimeField(
+        _('created at'),
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        _('updated at'),
+        auto_now=True
+    )
+    
+    class Meta:
+        verbose_name = _('user profile')
+        verbose_name_plural = _('user profiles')
+        db_table = 'user_profiles'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.email} - Profile"
+    
+    @property
+    def is_complete(self):
+        """Check if profile has minimum required information."""
+        return bool(
+            self.current_job_position or self.desired_role
+        ) and self.user.profile_completed
