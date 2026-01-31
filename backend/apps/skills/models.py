@@ -1,360 +1,467 @@
 """
-Skills App Models
-=================
-Models for skill management, user skills, skill gaps, and skill normalization.
-
-Tables:
-- Skill
-- UserSkill
-- SkillGap
-- SkillMapping
+Skills App Models 
+===============================================
+Phase-based skill resolution system:
+- Phase A: Raw skills → skill_aliases (unresolved)
+- Phase B: Resolver maps aliases → canonical skills
+- Phase C: Link jobs → skills via resolved aliases
 """
 
 from django.db import models
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from apps.users.models import User
 
 
+# ==================== SKILL (Canonical Concept) ====================
+
 class Skill(models.Model):
     """
-    Master skill database.
-    Stores all skills in normalized English with translations.
-    """
+    Canonical skill with multilingual names.
+    English (name_en) is the source of truth.
     
-    SKILL_CATEGORIES = [
+    Example:
+        name_en: "Object-Oriented Programming"
+        name_ru: "Объектно-ориентированное программирование"
+        name_uz: None
+        category: "methodology"
+    """
+
+    CATEGORY_CHOICES = [
         ('programming', _('Programming Language')),
-        ('framework', _('Framework')),
-        ('library', _('Library')),
-        ('tool', _('Tool/Software')),
+        ('framework', _('Framework / Library')),
         ('database', _('Database')),
+        ('tool', _('Tool / Software')),
         ('cloud', _('Cloud Platform')),
+        ('methodology', _('Methodology / Practice')),
         ('soft_skill', _('Soft Skill')),
-        ('methodology', _('Methodology')),
         ('other', _('Other')),
     ]
-    
-    skill_id = models.AutoField(
-        primary_key=True
-    )
-    skill_name = models.CharField(
-        _('skill name'),
+
+    skill_id = models.AutoField(primary_key=True)
+
+    # Multilingual names (English is required)
+    name_en = models.CharField(
+        _('name (English)'),
         max_length=100,
-        unique=True,
-        help_text=_('Normalized skill name in English.')
+        unique=True,  # English name must be unique
+        db_index=True,
+        help_text=_("Canonical English name, e.g. 'Python', 'SQL', 'OOP'")
     )
-    category = models.CharField(
-        _('category'),
-        max_length=50,
-        choices=SKILL_CATEGORIES,
-        default='other',
-        help_text=_('Skill category type.')
-    )
-    description = models.TextField(
-        _('description'),
+
+    name_ru = models.CharField(
+        _('name (Russian)'),
+        max_length=100,
         blank=True,
         null=True,
-        help_text=_('Brief description of the skill.')
+        help_text=_("Russian translation, e.g. 'Питон', 'ООП'")
     )
-    translations = models.JSONField(
-        _('translations'),
-        default=dict,
+
+    name_uz = models.CharField(
+        _('name (Uzbek)'),
+        max_length=100,
         blank=True,
-        help_text=_('Translations: {"ru": "Python", "uz": "Python"}')
+        null=True,
+        help_text=_("Uzbek translation")
     )
+
+    # Normalized key for matching (generated from name_en)
+    normalized_key = models.CharField(
+        _('normalized key'),
+        max_length=100,
+        unique=True,
+        db_index=True,
+        editable=False,
+        help_text=_("Auto-generated: 'python', 'oop', 'sql'")
+    )
+
+    # Classification
+    category = models.CharField(
+        _('category'),
+        max_length=30,
+        choices=CATEGORY_CHOICES,
+        default='other'
+    )
+
+    # Quality control
     is_verified = models.BooleanField(
         _('verified'),
         default=False,
-        help_text=_('Whether this skill has been manually verified.')
+        help_text=_("Admin-reviewed and confirmed correct")
     )
+
+    verification_notes = models.TextField(
+        _('verification notes'),
+        blank=True,
+        help_text=_("Admin notes about verification/merging")
+    )
+
+    # Timestamps
     created_at = models.DateTimeField(
         _('created at'),
         auto_now_add=True
     )
-    
+
+    updated_at = models.DateTimeField(
+        _('updated at'),
+        auto_now=True
+    )
+
     class Meta:
+        db_table = 'skills'
+        ordering = ['name_en']
         verbose_name = _('skill')
         verbose_name_plural = _('skills')
-        ordering = ['skill_name']
-        db_table = 'skills'
         indexes = [
-            models.Index(fields=['skill_name']),
+            models.Index(fields=['name_en']),
+            models.Index(fields=['normalized_key']),
             models.Index(fields=['category']),
+            models.Index(fields=['is_verified']),
         ]
-    
+
     def __str__(self):
-        return self.skill_name
-    
-    def get_translated_name(self, language='en'):
+        return self.name_en
+
+    def save(self, *args, **kwargs):
+        """Auto-generate normalized_key from name_en."""
+        if self.name_en:
+            self.normalized_key = self.normalize_key(self.name_en)
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def normalize_key(text: str) -> str:
         """
-        Get skill name in specified language.
-        Falls back to English if translation not available.
+        Normalize skill name to canonical key.
+        
+        Examples:
+            'Python' → 'python'
+            'C++' → 'c_plus_plus'
+            'Node.js' → 'nodejs'
+            'React.js' → 'reactjs'
         """
-        if language == 'en':
-            return self.skill_name
-        return self.translations.get(language, self.skill_name)
+        if not text:
+            return ''
+        
+        text = text.lower().strip()
+        
+        # Handle special characters
+        text = text.replace('++', '_plus_plus')
+        text = text.replace('#', '_sharp')
+        text = text.replace('.', '')
+        text = text.replace('/', '_')
+        
+        # Use slugify and replace hyphens with underscores
+        normalized = slugify(text).replace('-', '_')
+        
+        return normalized
+
+    def get_primary_alias(self, language_code='en'):
+        """Get the most-used alias for this skill in given language."""
+        return self.aliases.filter(
+            language_code=language_code,
+            status='resolved'
+        ).order_by('-usage_count').first()
 
 
-class SkillMapping(models.Model):
+# ==================== SKILL ALIAS (Raw Observed Strings) ====================
+
+class SkillAlias(models.Model):
     """
-    Maps various skill name variations to normalized skills.
-    Helps with deduplication and translation tracking.
-    """
+    Raw skill strings extracted from jobs, CVs, etc.
+    Links to canonical skill after resolution.
     
-    LANGUAGES = [
+    Workflow:
+    1. Ingestion: skill_id=NULL, status='unresolved'
+    2. Resolution: skill_id assigned, status='resolved'
+    3. Job linking: Use skill_id to create job_skills
+    
+    Example:
+        alias_text: "Питон"
+        language_code: "ru"
+        skill_id: → Skill(name_en="Python")
+        status: "resolved"
+        confidence: 0.95
+    """
+
+    LANGUAGE_CHOICES = [
         ('en', _('English')),
         ('ru', _('Russian')),
         ('uz', _('Uzbek')),
     ]
-    
-    SOURCES = [
-        ('hh.uz', _('hh.uz Job Posting')),
+
+    SOURCE_CHOICES = [
+        ('hh.uz', _('HH.uz API')),
         ('cv', _('User CV')),
         ('manual', _('Manual Entry')),
         ('ai_extracted', _('AI Extracted')),
     ]
-    
-    mapping_id = models.AutoField(
-        primary_key=True
-    )
-    original_text = models.CharField(
-        _('original text'),
-        max_length=200,
-        help_text=_('Original skill text as extracted.')
-    )
-    normalized_skill = models.ForeignKey(
+
+    STATUS_CHOICES = [
+        ('unresolved', _('Unresolved')),
+        ('resolved', _('Resolved')),
+        ('rejected', _('Rejected')),
+        ('needs_review', _('Needs Review')),
+    ]
+
+    alias_id = models.AutoField(primary_key=True)
+
+    # Link to canonical skill (nullable during ingestion)
+    skill = models.ForeignKey(
         Skill,
-        on_delete=models.CASCADE,
-        related_name='mappings',
-        verbose_name=_('normalized skill')
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='aliases',
+        verbose_name=_('skill'),
+        help_text=_("Resolved canonical skill (NULL until resolved)")
     )
-    language = models.CharField(
+
+    # Raw extracted data
+    alias_text = models.CharField(
+        _('alias text'),
+        max_length=200,
+        db_index=True,
+        help_text=_("Raw text as extracted: 'Python', 'Питон', 'PYTHON'")
+    )
+
+    language_code = models.CharField(
         _('language'),
         max_length=2,
-        choices=LANGUAGES,
-        help_text=_('Language of original text.')
+        choices=LANGUAGE_CHOICES,
+        default='en'
     )
+
     source = models.CharField(
         _('source'),
         max_length=20,
-        choices=SOURCES,
-        help_text=_('Where this mapping came from.')
+        choices=SOURCE_CHOICES,
+        default='hh.uz'
     )
-    confidence_score = models.FloatField(
-        _('confidence score'),
-        default=1.0,
-        help_text=_('Confidence in this mapping (0.0-1.0).')
+
+    # Resolution metadata
+    status = models.CharField(
+        _('status'),
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='unresolved',
+        db_index=True
     )
+
+    confidence = models.DecimalField(
+        _('confidence'),
+        max_digits=3,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Confidence score 0.00-1.00 for skill mapping")
+    )
+
+    # Statistics
+    usage_count = models.IntegerField(
+        _('usage count'),
+        default=0,
+        help_text=_("How many times this alias appears in data")
+    )
+
+    # Timestamps
     created_at = models.DateTimeField(
         _('created at'),
         auto_now_add=True
     )
-    
-    class Meta:
-        verbose_name = _('skill mapping')
-        verbose_name_plural = _('skill mappings')
-        ordering = ['-created_at']
-        db_table = 'skill_mappings'
-        unique_together = [['original_text', 'language', 'source']]
-        indexes = [
-            models.Index(fields=['original_text']),
-            models.Index(fields=['normalized_skill']),
-        ]
-    
-    def __str__(self):
-        return f"{self.original_text} → {self.normalized_skill.skill_name}"
 
+    updated_at = models.DateTimeField(
+        _('updated at'),
+        auto_now=True
+    )
+
+    class Meta:
+        db_table = 'skill_aliases'
+        ordering = ['-usage_count', 'alias_text']
+        verbose_name = _('skill alias')
+        verbose_name_plural = _('skill aliases')
+        
+        # Unique constraint: same text + language + source = same alias
+        unique_together = [('alias_text', 'language_code', 'source')]
+        
+        indexes = [
+            models.Index(fields=['skill']),
+            models.Index(fields=['status']),
+            models.Index(fields=['language_code']),
+            models.Index(fields=['alias_text']),
+            models.Index(fields=['usage_count']),
+        ]
+
+    def __str__(self):
+        if self.skill:
+            return f"{self.alias_text} → {self.skill.name_en} [{self.status}]"
+        return f"{self.alias_text} [{self.status}]"
+
+    def is_resolved(self):
+        """Check if alias is resolved to a canonical skill."""
+        return self.status == 'resolved' and self.skill_id is not None
+
+
+# ==================== USER SKILL (Unchanged) ====================
 
 class UserSkill(models.Model):
     """
     Skills that users possess.
-    Tracks proficiency, experience, and source.
+    Links directly to canonical Skill, not to aliases.
     """
-    
+
     PROFICIENCY_LEVELS = [
         ('beginner', _('Beginner')),
         ('intermediate', _('Intermediate')),
         ('advanced', _('Advanced')),
         ('expert', _('Expert')),
     ]
-    
-    SKILL_SOURCES = [
+
+    SOURCE_CHOICES = [
         ('cv', _('From CV')),
-        ('manual', _('Manually Added')),
-        ('completed_learning', _('Completed from Roadmap')),
-        ('assessment', _('From Career Assessment')),
+        ('manual', _('Manual')),
+        ('completed_learning', _('Completed Learning')),
+        ('assessment', _('Career Assessment')),
     ]
-    
-    user_skill_id = models.AutoField(
-        primary_key=True
-    )
+
+    user_skill_id = models.AutoField(primary_key=True)
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='skills',
         verbose_name=_('user')
     )
+
     skill = models.ForeignKey(
         Skill,
         on_delete=models.CASCADE,
         related_name='user_skills',
         verbose_name=_('skill')
     )
+
     proficiency_level = models.CharField(
         _('proficiency level'),
         max_length=20,
         choices=PROFICIENCY_LEVELS,
-        default='beginner',
-        help_text=_('User proficiency in this skill.')
+        default='beginner'
     )
+
     years_of_experience = models.FloatField(
         _('years of experience'),
-        default=0.0,
-        help_text=_('Years of experience with this skill.')
+        default=0.0
     )
+
     source = models.CharField(
         _('source'),
         max_length=30,
-        choices=SKILL_SOURCES,
-        default='manual',
-        help_text=_('How this skill was added.')
+        choices=SOURCE_CHOICES,
+        default='manual'
     )
+
     is_primary = models.BooleanField(
         _('primary skill'),
-        default=False,
-        help_text=_('Whether this is a primary/core skill for the user.')
+        default=False
     )
+
     added_at = models.DateTimeField(
         _('added at'),
         auto_now_add=True
     )
+
     updated_at = models.DateTimeField(
         _('updated at'),
         auto_now=True
     )
-    
+
     class Meta:
+        db_table = 'user_skills'
+        unique_together = [('user', 'skill')]
+        ordering = ['-is_primary', 'skill__name_en']
         verbose_name = _('user skill')
         verbose_name_plural = _('user skills')
-        ordering = ['-is_primary', '-proficiency_level', 'skill__skill_name']
-        db_table = 'user_skills'
-        unique_together = [['user', 'skill']]
-        indexes = [
-            models.Index(fields=['user', 'skill']),
-            models.Index(fields=['proficiency_level']),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.skill.skill_name} ({self.proficiency_level})"
 
+    def __str__(self):
+        return f"{self.user.email} – {self.skill.name_en}"
+
+
+# ==================== SKILL GAP (Unchanged) ====================
 
 class SkillGap(models.Model):
     """
-    Identified skill gaps for users.
-    Shows missing skills needed for target role.
+    Missing skills for target role.
+    Links directly to canonical Skill, not to aliases.
     """
-    
-    IMPORTANCE_LEVELS = [
-        ('core', _('Core/Essential')),
-        ('secondary', _('Secondary/Nice to Have')),
+
+    IMPORTANCE_CHOICES = [
+        ('core', _('Core')),
+        ('secondary', _('Secondary')),
     ]
-    
-    PRIORITY_LEVELS = [
-        ('high', _('High Priority')),
-        ('medium', _('Medium Priority')),
-        ('low', _('Low Priority')),
+
+    PRIORITY_CHOICES = [
+        ('high', _('High')),
+        ('medium', _('Medium')),
+        ('low', _('Low')),
     ]
-    
+
     STATUS_CHOICES = [
         ('pending', _('Pending')),
-        ('learning', _('Currently Learning')),
+        ('learning', _('Learning')),
         ('completed', _('Completed')),
         ('skipped', _('Skipped')),
     ]
-    
-    gap_id = models.AutoField(
-        primary_key=True
-    )
+
+    gap_id = models.AutoField(primary_key=True)
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='skill_gaps',
         verbose_name=_('user')
     )
+
     skill = models.ForeignKey(
         Skill,
         on_delete=models.CASCADE,
         related_name='gaps',
         verbose_name=_('skill')
     )
+
     importance = models.CharField(
         _('importance'),
         max_length=20,
-        choices=IMPORTANCE_LEVELS,
-        default='secondary',
-        help_text=_('How important this skill is for target role.')
+        choices=IMPORTANCE_CHOICES,
+        default='secondary'
     )
+
     demand_priority = models.CharField(
-        _('demand priority'),
+        _('priority'),
         max_length=20,
-        choices=PRIORITY_LEVELS,
-        default='medium',
-        help_text=_('Priority based on market demand.')
+        choices=PRIORITY_CHOICES,
+        default='medium'
     )
+
     status = models.CharField(
         _('status'),
         max_length=20,
         choices=STATUS_CHOICES,
-        default='pending',
-        help_text=_('Current learning status.')
+        default='pending'
     )
-    target_proficiency = models.CharField(
-        _('target proficiency'),
-        max_length=20,
-        choices=UserSkill.PROFICIENCY_LEVELS,
-        default='intermediate',
-        help_text=_('Target proficiency level to achieve.')
-    )
-    estimated_learning_hours = models.IntegerField(
-        _('estimated learning hours'),
-        default=0,
-        help_text=_('Estimated hours needed to learn this skill.')
-    )
+
     identified_at = models.DateTimeField(
         _('identified at'),
         auto_now_add=True
     )
+
     updated_at = models.DateTimeField(
         _('updated at'),
         auto_now=True
     )
-    
+
     class Meta:
+        db_table = 'skill_gaps'
+        unique_together = [('user', 'skill')]
         verbose_name = _('skill gap')
         verbose_name_plural = _('skill gaps')
-        ordering = ['-importance', '-demand_priority', 'skill__skill_name']
-        db_table = 'skill_gaps'
-        unique_together = [['user', 'skill']]
-        indexes = [
-            models.Index(fields=['user', 'status']),
-            models.Index(fields=['importance', 'demand_priority']),
-        ]
-    
+
     def __str__(self):
-        return f"{self.user.email} - Gap: {self.skill.skill_name}"
-    
-    def mark_as_completed(self):
-        """
-        Mark skill gap as completed and add to user's skills.
-        """
-        self.status = 'completed'
-        self.save()
-        
-        # Add to user's skills if not already exists
-        UserSkill.objects.get_or_create(
-            user=self.user,
-            skill=self.skill,
-            defaults={
-                'proficiency_level': self.target_proficiency,
-                'source': 'completed_learning'
-            }
-        )
+        return f"{self.user.email} – gap: {self.skill.name_en}"

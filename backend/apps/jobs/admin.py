@@ -1,322 +1,461 @@
 """
-Jobs App Admin Configuration
-=============================
-Django admin interface for JobPosting, JobSkill, and MarketTrend models.
+Jobs App - Admin Interface
+===========================
+apps/jobs/admin.py
+
+Admin interfaces for:
+- JobPosting
+- JobPostingTranslation
+- JobSkill
 """
 
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
-from .models import JobPosting, JobSkill, MarketTrend
+from django.db.models import Count
+from django.utils.translation import gettext_lazy as _
+from .models import JobPosting, JobPostingTranslation, JobSkill
 
+
+# ==================== INLINES ====================
 
 class JobSkillInline(admin.TabularInline):
-    """
-    Inline admin for JobSkill to show required skills in JobPosting admin.
-    """
+    """Inline editor for job skills."""
     model = JobSkill
     extra = 1
     autocomplete_fields = ['skill']
-    fields = ['skill', 'importance', 'years_required']
+    fields = ['skill', 'importance']
+    verbose_name = _('Required Skill')
+    verbose_name_plural = _('Required Skills')
 
+
+class JobPostingTranslationInline(admin.StackedInline):
+    """Inline editor for job translations."""
+    model = JobPostingTranslation
+    extra = 0
+    fields = [
+        'language_code',
+        'job_title',
+        'job_category',
+        'job_description',
+        'translated_by',
+        'translation_quality',
+    ]
+    classes = ['collapse']
+    verbose_name = _('Translation')
+    verbose_name_plural = _('Translations')
+
+
+# ==================== JOB POSTING ADMIN ====================
 
 @admin.register(JobPosting)
 class JobPostingAdmin(admin.ModelAdmin):
-    """
-    Admin interface for JobPosting model.
-    """
+    """Admin interface for job postings."""
     
     list_display = [
         'job_title',
         'company_name',
-        'job_category',
+        'original_language',
         'experience_required',
-        'location',
         'salary_display',
+        'location',
+        'skill_count',
+        'translation_status',
         'is_active',
-        'is_remote',
         'posted_date',
-        'source',
     ]
     
     list_filter = [
         'is_active',
-        'is_remote',
-        'job_category',
+        'original_language',
         'experience_required',
         'employment_type',
-        'source',
+        'is_remote',
         'posted_date',
-        'scraped_at',
+        'source',
     ]
     
     search_fields = [
         'job_title',
         'company_name',
-        'job_category',
-        'location',
         'job_description',
         'external_job_id',
+        'location',
     ]
     
-    readonly_fields = ['scraped_at', 'updated_at', 'job_url_link']
+    readonly_fields = [
+        'job_id',
+        'external_job_id',
+        'source',
+        'job_url_link',
+        'scraped_at',
+        'updated_at',
+    ]
+    
+    date_hierarchy = 'posted_date'
+    
+    inlines = [JobSkillInline, JobPostingTranslationInline]
     
     fieldsets = (
         (_('Basic Information'), {
             'fields': (
+                'job_id',
                 'external_job_id',
-                'job_title',
-                'company_name',
-                'job_category',
+                'source',
+                'original_language',
             )
         }),
         (_('Job Details'), {
             'fields': (
+                'job_title',
+                'company_name',
+                'job_category',
                 'experience_required',
                 'employment_type',
-                'location',
-                'is_remote',
             )
         }),
-        (_('Salary Information'), {
+        (_('Description & Content'), {
+            'fields': (
+                'job_description',
+            ),
+            'classes': ('collapse',)
+        }),
+        (_('Salary'), {
             'fields': (
                 'salary_min',
                 'salary_max',
                 'salary_currency',
             )
         }),
-        (_('Description'), {
+        (_('Location'), {
             'fields': (
-                'job_description',
-                'requirements',
-                'responsibilities',
-                'benefits',
+                'location',
+                'is_remote',
             )
         }),
-        (_('Dates & Status'), {
+        (_('Dates'), {
             'fields': (
                 'posted_date',
                 'deadline_date',
-                'is_active',
             )
         }),
-        (_('Source'), {
-            'fields': (
-                'source',
-                'job_url',
-                'job_url_link',
-            )
+        (_('External Link'), {
+            'fields': ('job_url_link',)
         }),
-        (_('Timestamps'), {
+        (_('Status'), {
+            'fields': ('is_active',)
+        }),
+        (_('Metadata'), {
             'fields': ('scraped_at', 'updated_at'),
-            'classes': ('collapse',),
+            'classes': ('collapse',)
         }),
     )
     
-    ordering = ['-posted_date', '-scraped_at']
-    
-    inlines = [JobSkillInline]
-    
-    actions = ['mark_as_active', 'mark_as_inactive']
-    
-    date_hierarchy = 'posted_date'
+    actions = [
+        'mark_active',
+        'mark_inactive',
+        'extract_sections',
+        'create_english_translation',
+    ]
     
     def salary_display(self, obj):
-        """Display salary range."""
-        return obj.salary_range
+        """Display formatted salary range."""
+        if not obj.salary_min and not obj.salary_max:
+            return format_html('<span style="color: gray;">—</span>')
+        
+        if obj.salary_min and obj.salary_max:
+            return format_html(
+                '<span style="color: #28a745;">{} – {} {}</span>',
+                f'{obj.salary_min:,.0f}',
+                f'{obj.salary_max:,.0f}',
+                obj.salary_currency
+            )
+        elif obj.salary_min:
+            return format_html(
+                '<span style="color: #28a745;">From {} {}</span>',
+                f'{obj.salary_min:,.0f}',
+                obj.salary_currency
+            )
+        else:
+            return format_html(
+                '<span style="color: #28a745;">Up to {} {}</span>',
+                f'{obj.salary_max:,.0f}',
+                obj.salary_currency
+            )
     salary_display.short_description = _('Salary')
     
+    def skill_count(self, obj):
+        """Count of required skills."""
+        count = obj.job_skills.count()
+        if count == 0:
+            return format_html('<span style="color: red;">0 skills</span>')
+        
+        core_count = obj.job_skills.filter(importance='core').count()
+        secondary_count = obj.job_skills.filter(importance='secondary').count()
+        
+        return format_html(
+            '<b>{}</b> skills <span style="color: #666;">({} core, {} nice-to-have)</span>',
+            count, core_count, secondary_count
+        )
+    skill_count.short_description = _('Skills')
+    
+    def translation_status(self, obj):
+        """Show translation availability."""
+        translations = obj.translations.all()
+        if not translations:
+            return format_html('<span style="color: gray;">No translations</span>')
+        
+        langs = []
+        for t in translations:
+            color = '#28a745' if t.translation_quality == 'verified' else '#ffc107'
+            langs.append(f'<span style="color: {color};">{t.language_code.upper()}</span>')
+        
+        return format_html(' '.join(langs))
+    translation_status.short_description = _('Translations')
+    
     def job_url_link(self, obj):
-        """Display clickable job URL."""
+        """Clickable job URL."""
         if obj.job_url:
             return format_html(
-                '<a href="{}" target="_blank">{}</a>',
-                obj.job_url,
-                _('View Job Posting')
+                '<a href="{}" target="_blank" style="color: #007bff;">🔗 View Original Job</a>',
+                obj.job_url
             )
-        return '-'
+        return '—'
     job_url_link.short_description = _('Job URL')
     
-    def mark_as_active(self, request, queryset):
-        """Mark selected jobs as active."""
+    def mark_active(self, request, queryset):
+        """Mark jobs as active."""
         updated = queryset.update(is_active=True)
-        self.message_user(request, _(f'{updated} job(s) marked as active.'))
-    mark_as_active.short_description = _('Mark as active')
+        self.message_user(
+            request,
+            _(f'{updated} jobs marked as active'),
+            level='success'
+        )
+    mark_active.short_description = _("✅ Mark selected as active")
     
-    def mark_as_inactive(self, request, queryset):
-        """Mark selected jobs as inactive."""
+    def mark_inactive(self, request, queryset):
+        """Mark jobs as inactive."""
         updated = queryset.update(is_active=False)
-        self.message_user(request, _(f'{updated} job(s) marked as inactive.'))
-    mark_as_inactive.short_description = _('Mark as inactive')
+        self.message_user(
+            request,
+            _(f'{updated} jobs marked as inactive'),
+            level='warning'
+        )
+    mark_inactive.short_description = _("❌ Mark selected as inactive")
+    
+    def extract_sections(self, request, queryset):
+        """Extract requirements/responsibilities using AI."""
+        count = queryset.filter(requirements='').count()
+        self.message_user(
+            request,
+            _(f'{count} jobs need section extraction. Feature coming soon!'),
+            level='info'
+        )
+    extract_sections.short_description = _("🤖 Extract sections (AI)")
+    
+    def create_english_translation(self, request, queryset):
+        """Create English translations."""
+        russian_jobs = queryset.filter(original_language='ru').exclude(
+            translations__language_code='en'
+        ).count()
+        
+        uzbek_jobs = queryset.filter(original_language='uz').exclude(
+            translations__language_code='en'
+        ).count()
+        
+        self.message_user(
+            request,
+            _(f'{russian_jobs + uzbek_jobs} jobs need English translation. Feature coming soon!'),
+            level='info'
+        )
+    create_english_translation.short_description = _("🌐 Create English translations")
+    
+    def get_queryset(self, request):
+        """Optimize queries."""
+        qs = super().get_queryset(request)
+        return qs.select_related().prefetch_related(
+            'translations',
+            'job_skills',
+            'job_skills__skill'
+        )
 
+
+# ==================== JOB TRANSLATION ADMIN ====================
+
+@admin.register(JobPostingTranslation)
+class JobPostingTranslationAdmin(admin.ModelAdmin):
+    """Admin interface for job translations."""
+    
+    list_display = [
+        'job_posting',
+        'language_code',
+        'translated_by',
+        'translation_quality',
+        'created_at',
+    ]
+    
+    list_filter = [
+        'language_code',
+        'translated_by',
+        'translation_quality',
+        'created_at',
+    ]
+    
+    search_fields = [
+        'job_posting__job_title',
+        'job_title',
+        'job_posting__external_job_id',
+        'job_posting__company_name',
+    ]
+    
+    readonly_fields = [
+        'translation_id',
+        'created_at',
+        'updated_at',
+    ]
+    
+    autocomplete_fields = ['job_posting']
+    
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        (_('Translation Info'), {
+            'fields': (
+                'translation_id',
+                'job_posting',
+                'language_code',
+            )
+        }),
+        (_('Translated Content'), {
+            'fields': (
+                'job_title',
+                'job_category',
+                'job_description',
+            )
+        }),
+        (_('Quality & Source'), {
+            'fields': (
+                'translated_by',
+                'translation_quality',
+            )
+        }),
+        (_('Metadata'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['mark_reviewed', 'mark_verified']
+    
+    def mark_reviewed(self, request, queryset):
+        """Mark translations as reviewed."""
+        updated = queryset.update(translation_quality='reviewed')
+        self.message_user(
+            request,
+            _(f'{updated} translations marked as reviewed'),
+            level='success'
+        )
+    mark_reviewed.short_description = _("✓ Mark as reviewed")
+    
+    def mark_verified(self, request, queryset):
+        """Mark translations as verified."""
+        updated = queryset.update(translation_quality='verified')
+        self.message_user(
+            request,
+            _(f'{updated} translations marked as verified'),
+            level='success'
+        )
+    mark_verified.short_description = _("✓✓ Mark as verified")
+    
+    def get_queryset(self, request):
+        """Optimize queries."""
+        qs = super().get_queryset(request)
+        return qs.select_related('job_posting')
+
+
+# ==================== JOB SKILL ADMIN ====================
 
 @admin.register(JobSkill)
 class JobSkillAdmin(admin.ModelAdmin):
-    """
-    Admin interface for JobSkill model.
-    """
+    """Admin interface for job skills."""
     
     list_display = [
-        'job_title',
-        'company_name',
-        'skill_name',
+        'job_posting',
+        'skill_link',
         'importance',
-        'years_required',
-        'extracted_at',
+        'created_at',
     ]
     
     list_filter = [
         'importance',
-        'extracted_at',
+        'skill__category',
+        'created_at',
     ]
     
     search_fields = [
-        'job__job_title',
-        'job__company_name',
-        'skill__skill_name',
+        'job_posting__job_title',
+        'job_posting__company_name',
+        'skill__canonical_key',
+        'skill__aliases__alias_text',
     ]
     
-    readonly_fields = ['extracted_at']
+    readonly_fields = [
+        'job_skill_id',
+        'created_at',
+    ]
+    
+    autocomplete_fields = ['job_posting', 'skill']
+    
+    date_hierarchy = 'created_at'
     
     fieldsets = (
         (_('Job & Skill'), {
-            'fields': ('job', 'skill')
-        }),
-        (_('Requirement Details'), {
             'fields': (
-                'importance',
-                'years_required',
+                'job_skill_id',
+                'job_posting',
+                'skill',
             )
         }),
-        (_('Metadata'), {
-            'fields': ('extracted_at',),
-            'classes': ('collapse',),
-        }),
-    )
-    
-    ordering = ['-extracted_at']
-    
-    autocomplete_fields = ['job', 'skill']
-    
-    def job_title(self, obj):
-        """Display job title."""
-        return obj.job.job_title
-    job_title.short_description = _('Job Title')
-    job_title.admin_order_field = 'job__job_title'
-    
-    def company_name(self, obj):
-        """Display company name."""
-        return obj.job.company_name
-    company_name.short_description = _('Company')
-    company_name.admin_order_field = 'job__company_name'
-    
-    def skill_name(self, obj):
-        """Display skill name."""
-        return obj.skill.skill_name
-    skill_name.short_description = _('Skill')
-    skill_name.admin_order_field = 'skill__skill_name'
-    
-    def get_queryset(self, request):
-        """Optimize with select_related."""
-        queryset = super().get_queryset(request)
-        return queryset.select_related('job', 'skill')
-
-
-@admin.register(MarketTrend)
-class MarketTrendAdmin(admin.ModelAdmin):
-    """
-    Admin interface for MarketTrend model.
-    """
-    
-    list_display = [
-        'job_category',
-        'skill_name',
-        'demand_score',
-        'job_count',
-        'average_salary_display',
-        'growth_rate_display',
-        'period_display',
-        'created_at',
-    ]
-    
-    list_filter = [
-        'job_category',
-        'analysis_period_start',
-        'analysis_period_end',
-        'created_at',
-    ]
-    
-    search_fields = [
-        'job_category',
-        'skill__skill_name',
-    ]
-    
-    readonly_fields = ['created_at']
-    
-    fieldsets = (
-        (_('Category & Skill'), {
-            'fields': ('job_category', 'skill')
-        }),
-        (_('Trend Metrics'), {
-            'fields': (
-                'demand_score',
-                'job_count',
-                'growth_rate',
-            )
-        }),
-        (_('Salary Information'), {
-            'fields': (
-                'average_salary',
-                'salary_currency',
-            )
-        }),
-        (_('Analysis Period'), {
-            'fields': (
-                'analysis_period_start',
-                'analysis_period_end',
-            )
+        (_('Importance'), {
+            'fields': ('importance',)
         }),
         (_('Metadata'), {
             'fields': ('created_at',),
-            'classes': ('collapse',),
+            'classes': ('collapse',)
         }),
     )
     
-    ordering = ['-demand_score', '-created_at']
+    actions = ['mark_core', 'mark_secondary']
     
-    autocomplete_fields = ['skill']
+    def skill_link(self, obj):
+        """Link to skill with category."""
+        url = f'/admin/skills/skill/{obj.skill.skill_id}/change/'
+        return format_html(
+            '<a href="{}">{}</a> <span style="color: #666;">({})</span>',
+            url, obj.skill.canonical_key, obj.skill.get_category_display()
+        )
+    skill_link.short_description = _('Skill')
     
-    date_hierarchy = 'analysis_period_start'
+    def mark_core(self, request, queryset):
+        """Mark skills as core/required."""
+        updated = queryset.update(importance='core')
+        self.message_user(
+            request,
+            _(f'{updated} skills marked as core'),
+            level='success'
+        )
+    mark_core.short_description = _("⭐ Mark as core/required")
     
-    def skill_name(self, obj):
-        """Display skill name."""
-        return obj.skill.skill_name if obj.skill else '-'
-    skill_name.short_description = _('Skill')
-    skill_name.admin_order_field = 'skill__skill_name'
-    
-    def average_salary_display(self, obj):
-        """Display average salary with currency."""
-        if obj.average_salary:
-            return f"{obj.average_salary:,.0f} {obj.salary_currency}"
-        return '-'
-    average_salary_display.short_description = _('Avg Salary')
-    
-    def growth_rate_display(self, obj):
-        """Display growth rate with formatting."""
-        if obj.growth_rate > 0:
-            return format_html(
-                '<span style="color: green;">▲ {:.1f}%</span>',
-                obj.growth_rate
-            )
-        elif obj.growth_rate < 0:
-            return format_html(
-                '<span style="color: red;">▼ {:.1f}%</span>',
-                abs(obj.growth_rate)
-            )
-        return '0%'
-    growth_rate_display.short_description = _('Growth')
+    def mark_secondary(self, request, queryset):
+        """Mark skills as secondary/nice-to-have."""
+        updated = queryset.update(importance='secondary')
+        self.message_user(
+            request,
+            _(f'{updated} skills marked as secondary'),
+            level='info'
+        )
+    mark_secondary.short_description = _("○ Mark as secondary")
     
     def get_queryset(self, request):
-        """Optimize with select_related."""
-        queryset = super().get_queryset(request)
-        return queryset.select_related('skill')
+        """Optimize queries."""
+        qs = super().get_queryset(request)
+        return qs.select_related('job_posting', 'skill')
