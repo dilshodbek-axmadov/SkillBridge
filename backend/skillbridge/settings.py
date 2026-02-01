@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-hj%p64g7@%qrs^m@sxn_1=as2*ndzha^j6o&&n(b)7k8n)zn!#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -38,6 +38,9 @@ INSTALLED_APPS = [
     'apps.career',
     'apps.analytics',
     'apps.interests',
+    'apps.projects',
+    'apps.cv',
+    'apps.chatbot',
 ]
 
 MIDDLEWARE = [

@@ -222,7 +222,7 @@ class JobSkill(models.Model):
         verbose_name_plural = _('job skills')
 
     def __str__(self):
-        return f"{self.job_posting.job_title} → {self.skill.canonical_key}"
+        return f"{self.job_posting.job_title} → {self.skill.name_en}"
     
 
 

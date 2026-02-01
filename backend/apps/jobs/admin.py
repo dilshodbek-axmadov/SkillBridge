@@ -431,7 +431,7 @@ class JobSkillAdmin(admin.ModelAdmin):
         url = f'/admin/skills/skill/{obj.skill.skill_id}/change/'
         return format_html(
             '<a href="{}">{}</a> <span style="color: #666;">({})</span>',
-            url, obj.skill.canonical_key, obj.skill.get_category_display()
+            url, obj.skill.name_en, obj.skill.get_category_display()
         )
     skill_link.short_description = _('Skill')
     
