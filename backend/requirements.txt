@@ -1,0 +1,26 @@
+# Django & DRF
+Django==4.2
+djangorestframework==3.14
+djangorestframework-simplejwt==5.3.0
+
+# Database
+psycopg2-binary==2.9
+
+# CORS
+django-cors-headers==4.3.1
+
+# File handling
+Pillow==10.1.0
+
+# NLP for CV parsing (optional, for CV upload feature)
+spacy==3.7.2
+PyPDF2==3.0.1
+python-docx==1.1.0
+
+# Utilities
+requests==2.31
+python-decouple==3.8
+
+# Job scraping (already have)
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.21.1
