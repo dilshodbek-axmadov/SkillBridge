@@ -21,14 +21,20 @@ logger = logging.getLogger(__name__)
 class CVProcessor:
     """Process CV files with hybrid extraction (NLP → Ollama)."""
     
-    def __init__(self, use_ollama_fallback: bool = True, quality_threshold: float = 0.6):
+    def __init__(
+        self,
+        use_ollama_fallback: bool = True,
+        quality_threshold: float = 0.6,
+        ai_first_mode: bool = True
+    ):
         self.pdf_parser = PDFParser()
         self.docx_parser = DOCXParser()
         self.extractor = HybridOllamaExtractor(
             use_ollama_fallback=use_ollama_fallback,
-            quality_threshold=quality_threshold
+            quality_threshold=quality_threshold,
+            ai_first_mode=ai_first_mode
         )
-        self.skill_matcher = SkillMatcher(fuzzy_threshold=85)
+        self.skill_matcher = SkillMatcher(fuzzy_threshold=85, auto_create=True)
     
     def process(self, file_path: str) -> Dict:
         """Process CV file and return extracted data."""

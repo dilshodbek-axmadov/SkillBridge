@@ -242,24 +242,29 @@ class NLPExtractor:
         """Comprehensive skill patterns covering 100+ technologies."""
         return [
             # Programming Languages
-            r'\b(Python|Java|JavaScript|TypeScript|C\+\+|C#|PHP|Ruby|Go|Rust|Swift|Kotlin|Scala|R|Perl|Julia|C)\b',
-            
+            r'\b(Python|Java|JavaScript|TypeScript|C\+\+|C#|PHP|Ruby|Go|Rust|Swift|Kotlin|Scala|R|Perl|Julia|C|Dart)\b',
+
             # JavaScript Frameworks/Libraries
             r'\b(React|ReactJS|React\.js|Angular|AngularJS|Angular\.js|Vue|Vue\.js|VueJS)\b',
             r'\b(Node\.?js|NodeJS|Express|ExpressJS|Express\.js|Next\.js|NextJS)\b',
             r'\b(jQuery|Svelte|Ember|Backbone|Redux|MobX)\b',
-            
+
             # Backend Frameworks
             r'\b(Django|Flask|FastAPI|Spring|Spring Boot|Laravel|Rails|Ruby on Rails)\b',
             r'\b(ASP\.NET|\.NET Core|Symfony|CodeIgniter)\b',
-            
-            # Mobile
-            r'\b(React Native|Flutter|SwiftUI|Kotlin|iOS|Android|Xamarin|Ionic)\b',
+
+            # Mobile Development
+            r'\b(React Native|Flutter|SwiftUI|Kotlin|iOS|Android|Xamarin|Ionic|Dart)\b',
             r'\b(ExponentJS|Expo)\b',
-            
-            # Databases
+
+            # Flutter/Dart State Management & Libraries
+            r'\b(Bloc|Cubit|Provider|Riverpod|GetX|MobX)\b',
+            r'\b(dio|http|Chopper|Retrofit)\b',
+
+            # Databases & Storage
             r'\b(SQL|PostgreSQL|MySQL|MongoDB|Redis|Elasticsearch|Oracle|MS SQL|SQLite)\b',
             r'\b(MariaDB|Cassandra|DynamoDB|Neo4j|CouchDB|Firebase)\b',
+            r'\b(Hive|SharedPreferences|Realm|ObjectBox)\b',
             
             # Data Science & ML
             r'\b(Pandas|NumPy|Numpy|Matplotlib|Seaborn|Scikit-learn|scikit-learn)\b',
@@ -288,10 +293,11 @@ class NLPExtractor:
             
             # Testing
             r'\b(Jest|Mocha|Pytest|JUnit|Selenium|Cypress|Jasmine|Karma)\b',
+            r'\b(Unit Testing|Widget Testing|Integration Testing|E2E Testing|Test Automation)\b',
             
             # Web Technologies
             r'\b(HTML|HTML5|CSS|CSS3|SASS|SCSS|Less|Bootstrap|Tailwind)\b',
-            r'\b(REST|RESTful|GraphQL|SOAP|gRPC|WebSocket)\b',
+            r'\b(REST|RESTful|RESTful APIs?|GraphQL|SOAP|gRPC|WebSocket|SOCKET)\b',
             
             # Message Queues
             r'\b(RabbitMQ|Kafka|Redis|Celery|SQS)\b',
@@ -308,6 +314,10 @@ class NLPExtractor:
             # Operating Systems
             r'\b(Linux|Unix|Ubuntu|CentOS|Windows|macOS)\b',
             
+            # SDKs & Services
+            r'\b(Firebase Cloud Messaging|FCM|Google Maps SDK|Yandex Maps SDK|Mapbox)\b',
+            r'\b(Google Maps|Yandex Maps|Apple Maps)\b',
+
             # Other
             r'\b(Socket\.io|OAuth|JWT|Passport|PassportJS|API|XML|JSON)\b',
             r'\b(Nginx|Apache|IIS|Microservices|Serverless)\b',
@@ -495,6 +505,7 @@ class NLPExtractor:
         normalized_text = normalized_text.replace('‑', '-').replace('‒', '-').replace('―', '-')
 
         patterns = [
+            r'\+\(\d{1,4}\)\d{2}[-.\s]?\d{3}[-.\s]?\d{4}',  # +(998)50-771-1655
             r'\+\d{1,3}[-.\s]?\d{2,3}[-.\s]?\d{3}[-.\s]?\d{2}[-.\s]?\d{2}',  # +998 90 472 69 29
             r'\(\d{3}\)\s?\d{3}[-.\s]?\d{4}',  # (480) 123-5689
             r'\d{3}[-.\s]\d{3}[-.\s]\d{4}',  # 480-123-5689
@@ -532,23 +543,43 @@ class NLPExtractor:
         # Search in first part of CV
         header_text = cv_text[:500]
 
+        # Known city names (to distinguish from person names)
+        known_cities = ['tashkent', 'new york', 'san francisco', 'los angeles', 'chicago',
+                       'seattle', 'boston', 'austin', 'denver', 'london', 'paris', 'berlin',
+                       'tokyo', 'singapore', 'dubai', 'mumbai', 'delhi', 'bangalore']
+
         # Pattern 1: City, State/Region with optional zip
         patterns = [
             r'([A-Z][a-zA-Z\s]+),\s+([A-Z][a-zA-Z\s]+)\s+\d{5,6}',  # San Francisco, California 94109
-            r'([A-Z][a-zA-Z\s]+),\s+([A-Z][a-zA-Z\s]+)',  # San Francisco, California
+            r'([A-Z][a-zA-Z\s]+),\s+([A-Z][a-zA-Z\s]+)',  # Tashkent, Uzbekistan
             r'([A-Z][a-zA-Z]{2,}),\s+([A-Z]{2})',  # San Francisco, CA
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, header_text)
-            if match:
+            matches = re.finditer(pattern, header_text)
+            for match in matches:
                 if len(match.groups()) >= 2:
-                    city, region = match.group(1), match.group(2)
-                    # Validate it's not a name or title
-                    if len(city) > 2 and len(region) > 1 and 'university' not in city.lower():
-                        location = f"{city.strip()}, {region.strip()}"
-                        logger.info(f"Found location: {location}")
-                        return location
+                    city, region = match.group(1).strip(), match.group(2).strip()
+
+                    # Validate it's actually a location
+                    city_lower = city.lower()
+
+                    # Skip if it looks like a name (has common name indicators)
+                    if city_lower in known_cities or region.lower() in ['california', 'uzbekistan', 'usa', 'uk']:
+                        # Make sure it's not part of a longer name string
+                        start_pos = match.start()
+                        if start_pos > 0:
+                            # Check if there's a capitalized word directly before (likely a name)
+                            prefix = header_text[max(0, start_pos-30):start_pos]
+                            if re.search(r'[A-Z][a-z]+\s+[A-Z][a-z]+\s*$', prefix):
+                                # There's a name before, skip to just the city part
+                                location = f"{city}, {region}"
+                                logger.info(f"Found location: {location}")
+                                return location
+                        else:
+                            location = f"{city}, {region}"
+                            logger.info(f"Found location: {location}")
+                            return location
 
         return ""
 
