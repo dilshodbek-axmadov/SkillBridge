@@ -1,0 +1,299 @@
+[
+  {
+    "model": "career.assessmentquestion",
+    "pk": 1,
+    "fields": {
+      "category": "interests",
+      "question_text": "What type of problems do you enjoy solving?",
+      "question_type": "multiple_choice",
+      "order": 1,
+      "is_active": true,
+      "options": [
+        {
+          "text": "Logic puzzles and algorithms",
+          "scores": {"problem_solving": 9, "technical_depth": 8, "data_analysis": 6}
+        },
+        {
+          "text": "Visual design and layouts",
+          "scores": {"creativity": 9, "visual_design": 10, "problem_solving": 4}
+        },
+        {
+          "text": "Data patterns and insights",
+          "scores": {"data_analysis": 10, "problem_solving": 8, "technical_depth": 6}
+        },
+        {
+          "text": "User experience and workflows",
+          "scores": {"creativity": 7, "communication": 7, "visual_design": 6}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 2,
+    "fields": {
+      "category": "aptitudes",
+      "question_text": "How would you describe your strengths?",
+      "question_type": "multiple_choice",
+      "order": 2,
+      "is_active": true,
+      "options": [
+        {
+          "text": "Logical thinking and mathematics",
+          "scores": {"problem_solving": 9, "technical_depth": 8, "data_analysis": 7}
+        },
+        {
+          "text": "Creativity and artistic expression",
+          "scores": {"creativity": 10, "visual_design": 9, "communication": 6}
+        },
+        {
+          "text": "Communication and explaining concepts",
+          "scores": {"communication": 10, "creativity": 6, "problem_solving": 5}
+        },
+        {
+          "text": "Attention to detail and organization",
+          "scores": {"data_analysis": 7, "problem_solving": 6, "technical_depth": 6}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 3,
+    "fields": {
+      "category": "work_style",
+      "question_text": "How do you prefer to work?",
+      "question_type": "multiple_choice",
+      "order": 3,
+      "is_active": true,
+      "options": [
+        {
+          "text": "Independently, focused on one task",
+          "scores": {"technical_depth": 8, "problem_solving": 7},
+          "work_style": {"independent": true, "collaborative": false}
+        },
+        {
+          "text": "Collaboratively in a team",
+          "scores": {"communication": 9, "creativity": 6},
+          "work_style": {"independent": false, "collaborative": true}
+        },
+        {
+          "text": "Mix of both",
+          "scores": {"communication": 6, "problem_solving": 6},
+          "work_style": {"independent": true, "collaborative": true}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 4,
+    "fields": {
+      "category": "interests",
+      "question_text": "Which activity sounds most appealing?",
+      "question_type": "multiple_choice",
+      "order": 4,
+      "is_active": true,
+      "options": [
+        {
+          "text": "Writing code to automate tasks",
+          "scores": {"technical_depth": 9, "problem_solving": 8, "creativity": 4}
+        },
+        {
+          "text": "Designing beautiful interfaces",
+          "scores": {"visual_design": 10, "creativity": 9, "communication": 5}
+        },
+        {
+          "text": "Analyzing data to find trends",
+          "scores": {"data_analysis": 10, "problem_solving": 7, "technical_depth": 6}
+        },
+        {
+          "text": "Improving user experiences",
+          "scores": {"communication": 8, "creativity": 7, "visual_design": 6}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 5,
+    "fields": {
+      "category": "learning",
+      "question_text": "How do you learn best?",
+      "question_type": "multiple_choice",
+      "order": 5,
+      "is_active": true,
+      "options": [
+        {
+          "text": "By doing hands-on projects",
+          "scores": {"technical_depth": 7, "problem_solving": 7, "creativity": 5}
+        },
+        {
+          "text": "By reading documentation and tutorials",
+          "scores": {"technical_depth": 6, "data_analysis": 6, "problem_solving": 6}
+        },
+        {
+          "text": "By watching visual demonstrations",
+          "scores": {"visual_design": 7, "creativity": 6, "communication": 5}
+        },
+        {
+          "text": "By discussing with others",
+          "scores": {"communication": 9, "creativity": 6, "problem_solving": 5}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 6,
+    "fields": {
+      "category": "aptitudes",
+      "question_text": "Rate your comfort with mathematics:",
+      "question_type": "rating",
+      "order": 6,
+      "is_active": true,
+      "options": [
+        {
+          "rating": 1,
+          "text": "Not comfortable",
+          "scores": {"problem_solving": 2, "technical_depth": 2, "data_analysis": 2}
+        },
+        {
+          "rating": 2,
+          "text": "Somewhat comfortable",
+          "scores": {"problem_solving": 4, "technical_depth": 4, "data_analysis": 4}
+        },
+        {
+          "rating": 3,
+          "text": "Comfortable",
+          "scores": {"problem_solving": 6, "technical_depth": 6, "data_analysis": 6}
+        },
+        {
+          "rating": 4,
+          "text": "Very comfortable",
+          "scores": {"problem_solving": 8, "technical_depth": 8, "data_analysis": 8}
+        },
+        {
+          "rating": 5,
+          "text": "Love it!",
+          "scores": {"problem_solving": 10, "technical_depth": 9, "data_analysis": 10}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 7,
+    "fields": {
+      "category": "goals",
+      "question_text": "What's most important to you in a career?",
+      "question_type": "multiple_choice",
+      "order": 7,
+      "is_active": true,
+      "options": [
+        {
+          "text": "High earning potential",
+          "scores": {"technical_depth": 7, "data_analysis": 7, "problem_solving": 7}
+        },
+        {
+          "text": "Creative expression",
+          "scores": {"creativity": 10, "visual_design": 9, "communication": 6}
+        },
+        {
+          "text": "Helping people",
+          "scores": {"communication": 9, "creativity": 6, "problem_solving": 5}
+        },
+        {
+          "text": "Continuous learning",
+          "scores": {"technical_depth": 8, "problem_solving": 7, "data_analysis": 6}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 8,
+    "fields": {
+      "category": "work_style",
+      "question_text": "What work pace do you prefer?",
+      "question_type": "multiple_choice",
+      "order": 8,
+      "is_active": true,
+      "options": [
+        {
+          "text": "Fast-paced with quick iterations",
+          "scores": {"problem_solving": 7, "creativity": 6},
+          "work_style": {"fast_paced": true}
+        },
+        {
+          "text": "Steady with deep focus",
+          "scores": {"technical_depth": 8, "data_analysis": 7},
+          "work_style": {"fast_paced": false}
+        },
+        {
+          "text": "Varied depending on project",
+          "scores": {"communication": 6, "problem_solving": 6},
+          "work_style": {"fast_paced": true}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 9,
+    "fields": {
+      "category": "interests",
+      "question_text": "Which best describes your ideal project?",
+      "question_type": "multiple_choice",
+      "order": 9,
+      "is_active": true,
+      "options": [
+        {
+          "text": "Building complex systems from scratch",
+          "scores": {"technical_depth": 10, "problem_solving": 9, "creativity": 5}
+        },
+        {
+          "text": "Making things look beautiful and user-friendly",
+          "scores": {"visual_design": 10, "creativity": 9, "communication": 6}
+        },
+        {
+          "text": "Discovering insights hidden in data",
+          "scores": {"data_analysis": 10, "problem_solving": 8, "technical_depth": 6}
+        },
+        {
+          "text": "Creating engaging user experiences",
+          "scores": {"creativity": 8, "visual_design": 7, "communication": 7}
+        }
+      ]
+    }
+  },
+  {
+    "model": "career.assessmentquestion",
+    "pk": 10,
+    "fields": {
+      "category": "aptitudes",
+      "question_text": "How do you approach new challenges?",
+      "question_type": "multiple_choice",
+      "order": 10,
+      "is_active": true,
+      "options": [
+        {
+          "text": "Break it down into logical steps",
+          "scores": {"problem_solving": 9, "technical_depth": 7, "data_analysis": 6}
+        },
+        {
+          "text": "Brainstorm creative solutions",
+          "scores": {"creativity": 9, "visual_design": 6, "communication": 6}
+        },
+        {
+          "text": "Research and analyze similar problems",
+          "scores": {"data_analysis": 8, "problem_solving": 7, "technical_depth": 6}
+        },
+        {
+          "text": "Collaborate and discuss with others",
+          "scores": {"communication": 10, "creativity": 6, "problem_solving": 5}
+        }
+      ]
+    }
+  }
+]

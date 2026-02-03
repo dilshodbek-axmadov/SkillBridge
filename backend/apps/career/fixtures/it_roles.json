@@ -1,0 +1,212 @@
+[
+  {
+    "model": "career.itrole",
+    "pk": 1,
+    "fields": {
+      "name": "Frontend Developer",
+      "description": "Creates the visual parts of websites and apps that users interact with. Works with HTML, CSS, JavaScript, and frameworks like React or Vue.",
+      "problem_solving_weight": 7,
+      "creativity_weight": 8,
+      "data_analysis_weight": 3,
+      "technical_depth_weight": 7,
+      "communication_weight": 6,
+      "visual_design_weight": 8,
+      "independent_work": false,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "beginner",
+      "avg_salary_uzs": 8000000.00,
+      "job_demand": "very_high", 
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 2,
+    "fields": {
+      "name": "Backend Developer",
+      "description": "Builds server-side logic, databases, and APIs that power applications. Works with Python, Java, Node.js, and databases.",
+      "problem_solving_weight": 9,
+      "creativity_weight": 5,
+      "data_analysis_weight": 6,
+      "technical_depth_weight": 9,
+      "communication_weight": 5,
+      "visual_design_weight": 2,
+      "independent_work": true,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "intermediate",
+      "avg_salary_uzs": 10000000.00,
+      "job_demand": "very_high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 3,
+    "fields": {
+      "name": "UI/UX Designer",
+      "description": "Designs user interfaces and experiences. Makes apps beautiful, intuitive, and easy to use. Works with Figma, Adobe XD, and user research.",
+      "problem_solving_weight": 6,
+      "creativity_weight": 10,
+      "data_analysis_weight": 4,
+      "technical_depth_weight": 4,
+      "communication_weight": 8,
+      "visual_design_weight": 10,
+      "independent_work": false,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "beginner",
+      "avg_salary_uzs": 7000000.00,
+      "job_demand": "high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 4,
+    "fields": {
+      "name": "Data Analyst",
+      "description": "Analyzes data to find insights that help businesses make decisions. Works with SQL, Excel, Python, Power BI, and Tableau.",
+      "problem_solving_weight": 8,
+      "creativity_weight": 5,
+      "data_analysis_weight": 10,
+      "technical_depth_weight": 6,
+      "communication_weight": 7,
+      "visual_design_weight": 4,
+      "independent_work": true,
+      "collaborative_work": true,
+      "fast_paced": false,
+      "difficulty_level": "beginner",
+      "avg_salary_uzs": 9000000.00,
+      "job_demand": "very_high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 5,
+    "fields": {
+      "name": "Full Stack Developer",
+      "description": "Works on both frontend and backend. Handles complete application development from user interface to database.",
+      "problem_solving_weight": 9,
+      "creativity_weight": 6,
+      "data_analysis_weight": 5,
+      "technical_depth_weight": 9,
+      "communication_weight": 6,
+      "visual_design_weight": 6,
+      "independent_work": true,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "intermediate",
+      "avg_salary_uzs": 12000000.00,
+      "job_demand": "very_high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 6,
+    "fields": {
+      "name": "Mobile Developer",
+      "description": "Creates apps for smartphones (iOS/Android). Works with Swift, Kotlin, or cross-platform tools like React Native or Flutter.",
+      "problem_solving_weight": 8,
+      "creativity_weight": 6,
+      "data_analysis_weight": 4,
+      "technical_depth_weight": 8,
+      "communication_weight": 6,
+      "visual_design_weight": 7,
+      "independent_work": true,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "intermediate",
+      "avg_salary_uzs": 10000000.00,
+      "job_demand": "high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 7,
+    "fields": {
+      "name": "QA Engineer",
+      "description": "Tests software to find bugs and ensure quality. Can involve manual testing or writing automated tests.",
+      "problem_solving_weight": 7,
+      "creativity_weight": 4,
+      "data_analysis_weight": 5,
+      "technical_depth_weight": 6,
+      "communication_weight": 7,
+      "visual_design_weight": 3,
+      "independent_work": false,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "beginner",
+      "avg_salary_uzs": 6000000.00,
+      "job_demand": "high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 8,
+    "fields": {
+      "name": "Product Manager",
+      "description": "Defines what to build and why. Works with users, stakeholders, and developers to create successful products. Less technical, more strategy and communication.",
+      "problem_solving_weight": 7,
+      "creativity_weight": 7,
+      "data_analysis_weight": 6,
+      "technical_depth_weight": 4,
+      "communication_weight": 10,
+      "visual_design_weight": 4,
+      "independent_work": false,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "intermediate",
+      "avg_salary_uzs": 11000000.00,
+      "job_demand": "high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 9,
+    "fields": {
+      "name": "DevOps Engineer",
+      "description": "Manages infrastructure and deployment. Works with cloud platforms (AWS, Azure), automation, CI/CD, and ensures systems run smoothly.",
+      "problem_solving_weight": 9,
+      "creativity_weight": 4,
+      "data_analysis_weight": 5,
+      "technical_depth_weight": 10,
+      "communication_weight": 6,
+      "visual_design_weight": 2,
+      "independent_work": true,
+      "collaborative_work": true,
+      "fast_paced": true,
+      "difficulty_level": "advanced",
+      "avg_salary_uzs": 13000000.00,
+      "job_demand": "very_high",
+      "is_active": true
+    }
+  },
+  {
+    "model": "career.itrole",
+    "pk": 10,
+    "fields": {
+      "name": "Data Scientist",
+      "description": "Uses machine learning and statistics to build predictive models. Works with Python, R, TensorFlow, and large datasets.",
+      "problem_solving_weight": 10,
+      "creativity_weight": 6,
+      "data_analysis_weight": 10,
+      "technical_depth_weight": 9,
+      "communication_weight": 6,
+      "visual_design_weight": 3,
+      "independent_work": true,
+      "collaborative_work": true,
+      "fast_paced": false,
+      "difficulty_level": "advanced",
+      "avg_salary_uzs": 15000000.00,
+      "job_demand": "high",
+      "is_active": true
+    }
+  }
+]
