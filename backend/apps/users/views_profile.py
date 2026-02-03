@@ -24,7 +24,8 @@ from .serializers import (
     AddUserSkillSerializer,
     UpdateUserSkillSerializer
 )
-
+from .utils.cv_processor import CVProcessor
+from apps.users.utils.profile_updater import ProfileUpdater
 
 class UserProfileView(APIView):
     """
@@ -171,110 +172,129 @@ class QuestionnaireProfileView(APIView):
 
 
 class CVUploadView(APIView):
-    """
-    Upload CV and extract profile data using NLP.
+    """Upload and process CV with hybrid extraction."""
     
-    POST /api/profile/cv-upload/
-    """
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
     
     @transaction.atomic
     def post(self, request):
+        # Validate
         serializer = CVUploadSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
         
-        if serializer.is_valid():
-            cv_file = serializer.validated_data['cv_file']
-            
-            # Save CV file
+        cv_file = serializer.validated_data['cv_file']
+        
+        try:
+            # Save file
             profile = request.user.profile
             profile.cv_file_path = cv_file
-            profile.profile_source = 'cv_upload'
             profile.save()
             
-            # Extract data from CV
-            try:
-                extracted_data = self._extract_cv_data(cv_file)
-                
-                # Update profile with extracted data
-                if extracted_data:
-                    profile.current_job_position = extracted_data.get('job_position', '')
-                    profile.experience_level = extracted_data.get('experience_level', 'beginner')
-                    profile.bio = extracted_data.get('summary', '')
-                    profile.save()
-                    
-                    # Add extracted skills
-                    skill_names = extracted_data.get('skills', [])
-                    added_skills = self._add_skills_from_cv(request.user, skill_names)
-                    
-                    # Mark profile as completed
-                    request.user.profile_completed = True
-                    request.user.save()
-                    
-                    return Response({
-                        'message': 'CV uploaded and analyzed successfully',
-                        'profile': UserProfileSerializer(profile).data,
-                        'extracted_data': {
-                            'job_position': extracted_data.get('job_position'),
-                            'experience_level': extracted_data.get('experience_level'),
-                            'skills_added': added_skills
-                        }
-                    }, status=status.HTTP_201_CREATED)
-                
-                else:
-                    return Response({
-                        'message': 'CV uploaded but extraction failed',
-                        'detail': 'Please complete your profile manually',
-                        'profile': UserProfileSerializer(profile).data
-                    }, status=status.HTTP_200_OK)
+            # Process
+            processor = CVProcessor(
+                use_ollama_fallback=True,
+                quality_threshold=0.6
+            )
+            result = processor.process(profile.cv_file_path.path)
             
-            except Exception as e:
+            if not result['success']:
                 return Response({
-                    'error': 'CV processing failed',
-                    'detail': str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    'success': False,
+                    'errors': result['errors']
+                }, status=500)
+            
+            # Update profile
+            updater = ProfileUpdater()
+            update_result = updater.update_from_cv(request.user, result['data'])
+            
+            # Validate
+            validation = updater.validate_for_roadmap(request.user)
+            
+            # Response
+            return Response({
+                'success': True,
+                'extraction': {
+                    'method': result['data'].get('_extraction_method'),
+                    'quality': result['data'].get('_quality_score'),
+                    'time': result['data'].get('_processing_time'),
+                    'job_position': result['data']['job_position'],
+                    'skills_found': len(result['data']['skill_matches']),
+                    'years': result['data']['years_of_experience']
+                },
+                'updates': update_result,
+                'roadmap_ready': validation['ready']
+            }, status=201)
         
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
     
-    def _extract_cv_data(self, cv_file):
+    def _update_profile(self, user, extracted_data: dict) -> list:
         """
-        Extract data from CV using NLP.
+        Update user profile with extracted data.
         
-        Uses spaCy or other NLP library to extract:
-        - Job position
-        - Skills
-        - Experience level
-        - Summary/bio
+        Returns list of updated field names.
         """
-        # TODO: Implement NLP extraction
-        # For now, return None (will be implemented in next step)
-        return None
+        profile = user.profile
+        updated_fields = []
+        
+        # Update job position
+        if extracted_data.get('job_position'):
+            profile.current_job_position = extracted_data['job_position']
+            updated_fields.append('job_position')
+        
+        # Update experience level
+        if extracted_data.get('experience_level'):
+            profile.experience_level = extracted_data['experience_level']
+            updated_fields.append('experience_level')
+        
+        # Update bio
+        if extracted_data.get('bio'):
+            profile.bio = extracted_data['bio']
+            updated_fields.append('bio')
+        
+        # Update education (if not already set)
+        if extracted_data.get('education') and not profile.bio:
+            profile.bio = extracted_data['education']
+            updated_fields.append('education')
+        
+        # Update phone (if user doesn't have one)
+        if extracted_data.get('phone') and not user.phone:
+            user.phone = extracted_data['phone']
+            user.save()
+            updated_fields.append('phone')
+        
+        profile.save()
+        return updated_fields
     
-    def _add_skills_from_cv(self, user, skill_names):
+    def _add_skills(self, user, skill_ids: list) -> int:
         """
-        Match extracted skill names to database skills and add to user.
+        Add extracted skills to user profile.
+        
+        Returns count of skills added.
         """
         added_count = 0
         
-        for skill_name in skill_names:
-            # Try to find skill by name (case-insensitive)
-            skill = Skill.objects.filter(
-                name_en__iexact=skill_name
-            ).first()
+        for skill_id in skill_ids:
+            _, created = UserSkill.objects.get_or_create(
+                user=user,
+                skill_id=skill_id,
+                defaults={
+                    'source': 'cv',
+                    'proficiency_level': 'intermediate',  # Default
+                    'years_of_experience': 0.0
+                }
+            )
             
-            if skill:
-                UserSkill.objects.get_or_create(
-                    user=user,
-                    skill=skill,
-                    defaults={'source': 'cv'}
-                )
+            if created:
                 added_count += 1
         
         return added_count
-
 
 class UserSkillsView(APIView):
     """
