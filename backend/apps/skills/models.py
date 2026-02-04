@@ -520,7 +520,9 @@ class MarketTrend(models.Model):
 
     growth_rate = models.FloatField(
         _('growth rate (%)'),
-        help_text=_("Demand growth compared to previous period")
+        null=True,
+        blank=True,
+        help_text=_("Demand growth compared to previous period. NULL if no previous data.")
     )
 
     avg_salary = models.DecimalField(

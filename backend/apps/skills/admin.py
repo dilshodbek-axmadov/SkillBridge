@@ -480,6 +480,8 @@ class MarketTrendAdmin(admin.ModelAdmin):
 
     def growth_rate_display(self, obj):
         """Display growth rate with color coding."""
+        if obj.growth_rate is None:
+            return format_html('<span style="color: gray;">N/A</span>')
         if obj.growth_rate > 0:
             return format_html(
                 '<span style="color: green;">+{:.1f}%</span>',
