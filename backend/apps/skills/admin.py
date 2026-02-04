@@ -13,7 +13,7 @@ from django.contrib import admin
 from django.db.models import Count, Q
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import Skill, SkillAlias, UserSkill, SkillGap
+from .models import Skill, SkillAlias, UserSkill, SkillGap, MarketTrend
 from apps.jobs.models import  JobSkillExtraction
 
 
@@ -428,3 +428,67 @@ class JobSkillExtractionAdmin(admin.ModelAdmin):
             obj.alias.get_status_display()
         )
     alias_status.short_description = 'Status'
+
+
+# ==================== MARKET TREND ADMIN ====================
+
+@admin.register(MarketTrend)
+class MarketTrendAdmin(admin.ModelAdmin):
+    """
+    Admin interface for market trends.
+    """
+
+    list_display = [
+        'trend_id',
+        'skill',
+        'period',
+        'demand_score',
+        'job_count',
+        'growth_rate_display',
+        'avg_salary',
+        'calculated_at',
+    ]
+
+    list_filter = [
+        'period',
+        'calculated_at',
+        'skill__category',
+    ]
+
+    search_fields = [
+        'skill__name_en',
+        'skill__name_ru',
+    ]
+
+    readonly_fields = [
+        'trend_id',
+        'calculated_at',
+    ]
+
+    fieldsets = [
+        ('Skill & Period', {
+            'fields': ['skill', 'period'],
+        }),
+        ('Metrics', {
+            'fields': ['demand_score', 'job_count', 'growth_rate', 'avg_salary'],
+        }),
+        ('Metadata', {
+            'fields': ['trend_id', 'calculated_at'],
+            'classes': ['collapse'],
+        }),
+    ]
+
+    def growth_rate_display(self, obj):
+        """Display growth rate with color coding."""
+        if obj.growth_rate > 0:
+            return format_html(
+                '<span style="color: green;">+{:.1f}%</span>',
+                obj.growth_rate
+            )
+        elif obj.growth_rate < 0:
+            return format_html(
+                '<span style="color: red;">{:.1f}%</span>',
+                obj.growth_rate
+            )
+        return f'{obj.growth_rate:.1f}%'
+    growth_rate_display.short_description = 'Growth Rate'

@@ -28,13 +28,24 @@ class Skill(models.Model):
     """
 
     CATEGORY_CHOICES = [
-        ('programming', _('Programming Language')),
-        ('framework', _('Framework / Library')),
+        ('programming_language', _('Programming Language')),
+        ('library_or_package', _('Library / Package')),
+        ('framework', _('Framework')),
         ('database', _('Database')),
-        ('tool', _('Tool / Software')),
-        ('cloud', _('Cloud Platform')),
-        ('methodology', _('Methodology / Practice')),
+        ('data_engineering', _('Data Engineering')),
+        ('cloud_platform', _('Cloud Platform')),
+        ('devops_infrastructure', _('DevOps / Infrastructure')),
+        ('testing_qa', _('Testing / QA')),
+        ('bi_analytics', _('BI / Analytics')),
+        ('tools_software', _('Tools / Software')),
+        ('design_creative', _('Design / Creative')),
+        ('business_product_management', _('Business / Product Management')),
+        ('security', _('Security')),
+        ('networking', _('Networking')),
+        ('operating_system', _('Operating System')),
+        ('methodology_process', _('Methodology / Process')),
         ('soft_skill', _('Soft Skill')),
+        ('domain_specific', _('Domain Specific')),
         ('other', _('Other')),
     ]
 
@@ -465,3 +476,72 @@ class SkillGap(models.Model):
 
     def __str__(self):
         return f"{self.user.email} – gap: {self.skill.name_en}"
+
+
+# MARKET TREND
+
+class MarketTrend(models.Model):
+    """
+    Aggregated market demand trends for skills.
+    Derived from job postings over time.
+    """
+
+    PERIOD_CHOICES = [
+        ('7d', _('Last 7 days')),
+        ('30d', _('Last 30 days')),
+        ('90d', _('Last 90 days')),
+        ('1y', _('Last year')),
+    ]
+
+    trend_id = models.AutoField(primary_key=True)
+
+    skill = models.ForeignKey(
+        Skill,
+        on_delete=models.CASCADE,
+        related_name='market_trends',
+        verbose_name=_('skill')
+    )
+
+    period = models.CharField(
+        _('period'),
+        max_length=10,
+        choices=PERIOD_CHOICES
+    )
+
+    demand_score = models.FloatField(
+        _('demand score'),
+        help_text=_("Normalized demand index (0–100)")
+    )
+
+    job_count = models.IntegerField(
+        _('job count'),
+        help_text=_("Number of job postings containing this skill")
+    )
+
+    growth_rate = models.FloatField(
+        _('growth rate (%)'),
+        help_text=_("Demand growth compared to previous period")
+    )
+
+    avg_salary = models.DecimalField(
+        _('average salary'),
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    calculated_at = models.DateTimeField(
+        _('calculated at'),
+        auto_now_add=True
+    )
+
+    class Meta:
+        db_table = 'market_trends'
+        unique_together = [('skill', 'period')]
+        ordering = ['-calculated_at']
+        verbose_name = _('market trend')
+        verbose_name_plural = _('market trends')
+
+    def __str__(self):
+        return f"{self.skill.name_en} – {self.period}"

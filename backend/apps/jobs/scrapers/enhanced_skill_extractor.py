@@ -155,7 +155,7 @@ class EnhancedSkillExtractor:
         """Extract skills using regex patterns (fallback)."""
         found_skills = set()
         
-        for category, pattern in self.skill_patterns.items():
+        for _, pattern in self.skill_patterns.items():
             matches = re.findall(pattern, text, re.IGNORECASE)
             found_skills.update(match.strip() for match in matches)
         
@@ -226,57 +226,498 @@ class EnhancedSkillExtractor:
         }
 
 
+# Comprehensive skill categorization mappings
+SKILL_CATEGORIES = {
+    'programming_language': {
+        'exact': [
+            'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'csharp', 'c',
+            'c #', 'php', 'ruby', 'go', 'golang', 'rust', 'swift', 'kotlin', 'scala', 'r',
+            'perl', 'lua', 'haskell', 'erlang', 'elixir', 'clojure', 'f#', 'fsharp',
+            'dart', 'groovy', 'objective-c', 'objectivec', 'cobol', 'fortran',
+            'assembly', 'vba', 'delphi', 'pascal', 'matlab', 'julia', 'apex',
+            'abap', 'pl/sql', 'plsql', 't-sql', 'tsql', 'solidity', 'move',
+            'bash', 'shell', 'powershell', 'zsh', 'html', 'css', 'sass', 'scss', 'less',
+            '1c', '1c programming', '1c configuration', 'xml', 'json', 'yaml', 'graphql'
+        ],
+        'contains': ['programming']
+    },
+    'library_or_package': {
+        'exact': [
+            'pandas', 'numpy', 'scipy', 'matplotlib', 'seaborn', 'plotly', 'bokeh',
+            'tensorflow', 'pytorch', 'keras', 'scikit-learn', 'sklearn', 'xgboost',
+            'lightgbm', 'catboost', 'opencv', 'pillow', 'nltk', 'spacy', 'gensim',
+            'transformers', 'huggingface', 'langchain', 'openai', 'anthropic',
+            'selenium', 'beautifulsoup', 'scrapy', 'requests', 'httpx', 'aiohttp',
+            'pytest', 'unittest', 'nose', 'mock', 'faker', 'factory_boy',
+            'celery', 'dramatiq', 'rq', 'huey', 'apscheduler',
+            'sqlalchemy', 'peewee', 'tortoise-orm', 'mongoengine', 'motor',
+            'pydantic', 'marshmallow', 'attrs', 'dataclasses',
+            'jwt', 'bcrypt', 'cryptography', 'passlib',
+            'boto3', 'botocore', 's3fs', 'paramiko', 'fabric',
+            'lodash', 'underscore', 'ramda', 'axios', 'fetch', 'jquery',
+            'moment', 'dayjs', 'date-fns', 'luxon',
+            'redux', 'mobx', 'zustand', 'recoil', 'jotai', 'valtio',
+            'rxjs', 'ngrx', 'akita', 'ngxs',
+            'styled-components', 'emotion', 'tailwindcss', 'material-ui', 'mui',
+            'chakra-ui', 'ant-design', 'antd', 'bootstrap', 'bulma', 'semantic-ui',
+            'three.js', 'threejs', 'd3', 'd3.js', 'chart.js', 'chartjs', 'echarts',
+            'socket.io', 'ws', 'primus',
+            'bloc', 'cubit', 'provider', 'riverpod', 'getx', 'mobx',
+            'dio', 'http', 'chopper', 'retrofit',
+            'hive', 'sharedpreferences', 'realm', 'objectbox', 'isar',
+            'get_it', 'injectable', 'freezed', 'json_serializable',
+            'spring-boot', 'spring-security', 'spring-data', 'spring-cloud',
+            'hibernate', 'mybatis', 'jpa', 'jdbc',
+            'lombok', 'mapstruct', 'gson', 'jackson', 'okhttp',
+            'junit', 'testng', 'mockito', 'powermock', 'assertj',
+            'log4j', 'slf4j', 'logback',
+            'guava', 'apache-commons', 'commons-lang', 'commons-io',
+            'newtonsoft', 'json.net', 'automapper', 'mediatr', 'fluentvalidation',
+            'entity-framework', 'ef-core', 'dapper', 'npgsql',
+            'xunit', 'nunit', 'mstest', 'moq', 'nsubstitute'
+        ],
+        'contains': ['sdk', 'library', 'package', 'module', 'plugin', 'extension']
+    },
+    'framework': {
+        'exact': [
+            'django', 'flask', 'fastapi', 'tornado', 'pyramid', 'bottle', 'falcon',
+            'starlette', 'sanic', 'aiohttp', 'quart', 'litestar',
+            'react', 'vue', 'vuejs', 'angular', 'angularjs', 'svelte', 'solid',
+            'next.js', 'nextjs', 'nuxt', 'nuxtjs', 'gatsby', 'remix', 'astro',
+            'express', 'expressjs', 'koa', 'hapi', 'fastify', 'nestjs', 'adonis',
+            'spring', 'springboot', 'spring-boot', 'struts', 'jsf', 'vaadin', 'micronaut', 'quarkus',
+            'laravel', 'symfony', 'codeigniter', 'yii', 'cakephp', 'zend', 'slim', 'lumen',
+            'rails', 'ruby on rails', 'sinatra', 'hanami',
+            'asp.net', 'aspnet', '.net', 'dotnet', '.net core', 'dotnet core', 'blazor', 'maui',
+            'gin', 'echo', 'fiber', 'beego', 'revel', 'buffalo',
+            'flutter', 'react-native', 'react native', 'ionic', 'xamarin', 'cordova', 'capacitor',
+            'electron', 'tauri', 'qt', 'gtk', 'wxwidgets', 'tkinter',
+            'unity', 'unreal', 'godot', 'cocos2d', 'phaser',
+            'wordpress', 'drupal', 'joomla', 'magento', 'shopify', 'woocommerce',
+            'strapi', 'directus', 'payload', 'keystone', 'sanity',
+            'graphql', 'apollo', 'relay', 'hasura', 'prisma',
+            'grpc', 'thrift', 'protobuf',
+            'airflow', 'prefect', 'dagster', 'luigi', 'argo',
+            'dbt', 'great-expectations', 'mlflow', 'kubeflow', 'metaflow'
+        ],
+        'contains': ['framework', '.js', 'js']
+    },
+    'database': {
+        'exact': [
+            'sql', 'postgresql', 'postgres', 'mysql', 'mariadb', 'sqlite', 'oracle',
+            'mssql', 'ms sql', 'sql server', 'sqlserver',
+            'mongodb', 'mongo', 'couchdb', 'couchbase', 'dynamodb', 'cosmosdb',
+            'redis', 'memcached', 'hazelcast', 'ignite',
+            'elasticsearch', 'elastic', 'opensearch', 'solr', 'algolia', 'meilisearch',
+            'neo4j', 'arangodb', 'orientdb', 'janusgraph', 'neptune', 'tigergraph',
+            'cassandra', 'scylladb', 'hbase', 'bigtable',
+            'timescaledb', 'influxdb', 'questdb', 'clickhouse', 'druid', 'pinot',
+            'cockroachdb', 'tidb', 'yugabytedb', 'vitess', 'planetscale',
+            'firebase', 'firestore', 'supabase', 'appwrite', 'neon', 'turso',
+            'snowflake', 'bigquery', 'redshift', 'synapse', 'athena', 'presto', 'trino',
+            'duckdb', 'polars', 'datafusion'
+        ],
+        'contains': ['sql', 'database', 'db', 'nosql']
+    },
+    'data_engineering': {
+        'exact': [
+            'etl', 'elt', 'data pipeline', 'data warehouse', 'dwh', 'data lake',
+            'spark', 'pyspark', 'databricks', 'delta lake', 'iceberg', 'hudi',
+            'hadoop', 'hdfs', 'hive', 'pig', 'sqoop', 'flume', 'oozie',
+            'kafka', 'kafka streams', 'ksqldb', 'confluent',
+            'flink', 'storm', 'samza', 'beam', 'pulsar',
+            'nifi', 'streamsets', 'talend', 'informatica', 'fivetran', 'airbyte', 'stitch',
+            'dbt', 'dataform', 'sqlmesh',
+            'great expectations', 'soda', 'monte carlo', 'data quality',
+            'data modeling', 'dimensional modeling', 'star schema', 'snowflake schema',
+            'data governance', 'data catalog', 'data lineage', 'metadata',
+            'cdc', 'change data capture', 'debezium',
+            'data orchestration', 'workflow orchestration',
+            'lakehouse', 'data mesh', 'data fabric',
+            'big data', 'data science', 'machine learning', 'ml', 'deep learning', 'dl',
+            'ai', 'artificial intelligence', 'neural networks', 'nlp', 'computer vision',
+            'data preprocessing', 'feature engineering', 'model training', 'mlops'
+        ],
+        'contains': ['etl', 'data engineer', 'data pipeline', 'warehouse', 'lakehouse', 'big data']
+    },
+    'cloud_platform': {
+        'exact': [
+            'aws', 'amazon web services', 'ec2', 's3', 'lambda', 'ecs', 'eks', 'fargate',
+            'rds', 'aurora', 'dynamodb', 'elasticache', 'sqs', 'sns', 'kinesis',
+            'cloudfront', 'route53', 'api gateway', 'cloudwatch', 'iam', 'cognito',
+            'azure', 'microsoft azure', 'azure devops', 'azure functions', 'azure aks',
+            'gcp', 'google cloud', 'google cloud platform', 'gke', 'cloud run', 'cloud functions',
+            'bigquery', 'cloud storage', 'pub/sub', 'dataflow', 'composer',
+            'digitalocean', 'linode', 'vultr', 'hetzner', 'ovh',
+            'heroku', 'render', 'railway', 'fly.io', 'vercel', 'netlify', 'cloudflare',
+            'alibaba cloud', 'aliyun', 'tencent cloud', 'huawei cloud', 'yandex cloud',
+            'openstack', 'vmware', 'vsphere', 'vcenter', 'proxmox'
+        ],
+        'contains': ['aws', 'azure', 'gcp', 'cloud']
+    },
+    'devops_infrastructure': {
+        'exact': [
+            'docker', 'containerd', 'podman', 'buildah', 'kaniko', 'skopeo',
+            'kubernetes', 'k8s', 'openshift', 'rancher', 'nomad',
+            'helm', 'kustomize', 'argocd', 'argo cd', 'fluxcd', 'spinnaker',
+            'terraform', 'terragrunt', 'pulumi', 'crossplane', 'cdktf',
+            'ansible', 'puppet', 'chef', 'salt', 'saltstack',
+            'packer', 'vagrant', 'cloud-init',
+            'jenkins', 'gitlab ci', 'github actions', 'circleci', 'travis ci',
+            'azure pipelines', 'bitbucket pipelines', 'teamcity', 'bamboo', 'drone',
+            'nginx', 'apache', 'httpd', 'haproxy', 'traefik', 'envoy', 'istio', 'linkerd',
+            'prometheus', 'grafana', 'datadog', 'new relic', 'splunk', 'elastic stack', 'elk',
+            'jaeger', 'zipkin', 'opentelemetry', 'otel',
+            'vault', 'consul', 'etcd', 'zookeeper',
+            'linux', 'ubuntu', 'centos', 'rhel', 'debian', 'alpine', 'fedora', 'rocky linux',
+            'systemd', 'cron', 'ssh', 'sftp', 'rsync',
+            'ci/cd', 'cicd', 'continuous integration', 'continuous delivery', 'continuous deployment',
+            'gitops', 'infrastructure as code', 'iac', 'configuration management',
+            'site reliability', 'sre', 'platform engineering',
+            'load balancing', 'auto scaling', 'high availability', 'disaster recovery'
+        ],
+        'contains': ['devops', 'infrastructure', 'deployment', 'container', 'orchestration']
+    },
+    'testing_qa': {
+        'exact': [
+            'unit testing', 'integration testing', 'e2e testing', 'end-to-end testing',
+            'functional testing', 'regression testing', 'smoke testing', 'sanity testing',
+            'acceptance testing', 'uat', 'user acceptance testing',
+            'performance testing', 'load testing', 'stress testing', 'soak testing',
+            'security testing', 'penetration testing', 'pentest', 'vulnerability testing',
+            'api testing', 'contract testing', 'pact', 'consumer-driven contracts',
+            'mutation testing', 'property-based testing', 'fuzzing', 'fuzz testing',
+            'tdd', 'test-driven development', 'bdd', 'behavior-driven development',
+            'jest', 'mocha', 'jasmine', 'karma', 'cypress', 'playwright', 'puppeteer',
+            'selenium', 'webdriver', 'appium', 'detox', 'espresso', 'xcuitest',
+            'junit', 'testng', 'mockito', 'pytest', 'unittest', 'robot framework',
+            'postman', 'insomnia', 'httpie', 'curl',
+            'jmeter', 'gatling', 'locust', 'k6', 'artillery', 'wrk', 'ab',
+            'testrail', 'testlink', 'zephyr', 'xray', 'qtest', 'practitest',
+            'qase', 'testmo', 'testomat', 'allure', 'reportportal',
+            'sonarqube', 'sonar', 'codeclimate', 'codecov', 'coveralls',
+            'quality assurance', 'qa', 'qc', 'quality control',
+            'test automation', 'test management', 'test strategy', 'test plan',
+            'defect tracking', 'bug tracking', 'issue tracking'
+        ],
+        'contains': ['testing', 'test', 'qa', 'quality']
+    },
+    'bi_analytics': {
+        'exact': [
+            'power bi', 'powerbi', 'tableau', 'looker', 'metabase', 'superset', 'redash',
+            'qlik', 'qlikview', 'qliksense', 'sisense', 'mode', 'thoughtspot', 'domo',
+            'google analytics', 'ga4', 'google tag manager', 'gtm', 'mixpanel', 'amplitude',
+            'segment', 'heap', 'pendo', 'fullstory', 'hotjar', 'clarity',
+            'data studio', 'looker studio', 'google data studio',
+            'excel', 'google sheets', 'pivot tables', 'vlookup', 'xlookup',
+            'data visualization', 'data analysis', 'business intelligence', 'bi',
+            'reporting', 'dashboards', 'kpi', 'metrics', 'analytics',
+            'a/b testing', 'ab testing', 'experimentation', 'optimizely', 'vwo',
+            'attribution', 'funnel analysis', 'cohort analysis', 'retention analysis',
+            'predictive analytics', 'descriptive analytics', 'prescriptive analytics',
+            'statistical analysis', 'statistics', 'hypothesis testing', 'regression analysis',
+            'sas', 'spss', 'stata', 'minitab', 'r studio', 'rstudio', 'jupyter'
+        ],
+        'contains': ['analytics', 'visualization', 'bi', 'reporting', 'dashboard']
+    },
+    'tools_software': {
+        'exact': [
+            'git', 'github', 'gitlab', 'bitbucket', 'svn', 'mercurial', 'perforce',
+            'jira', 'confluence', 'trello', 'asana', 'monday', 'clickup', 'notion',
+            'linear', 'height', 'shortcut', 'basecamp', 'wrike', 'smartsheet',
+            'slack', 'discord', 'teams', 'microsoft teams', 'zoom', 'google meet',
+            'vscode', 'visual studio', 'intellij', 'pycharm', 'webstorm', 'rider',
+            'xcode', 'android studio', 'eclipse', 'netbeans', 'vim', 'neovim', 'emacs',
+            'postman', 'insomnia', 'swagger', 'openapi', 'graphql playground',
+            'dbeaver', 'datagrip', 'pgadmin', 'mongodb compass', 'redis insight',
+            'charles', 'fiddler', 'wireshark', 'mitmproxy',
+            'terminal', 'iterm', 'warp', 'alacritty', 'hyper',
+            'ms office', 'microsoft office', 'word', 'powerpoint', 'outlook',
+            'google workspace', 'g suite', 'google docs', 'google drive',
+            'obsidian', 'roam', 'logseq', 'bear', 'apple notes', 'evernote',
+            '1password', 'lastpass', 'bitwarden', 'dashlane',
+            'loom', 'screen recording', 'obs', 'camtasia',
+            'bitrix', 'bitrix24', 'bitrix 1c', 'amocrm', 'zoho',
+            'chatgpt', 'ai tools', 'copilot', 'github copilot', 'cursor',
+            'camunda', 'bizagi', 'bpmn tools',
+            'arduino', 'raspberry pi', 'esp32', 'stm32', 'microcontroller',
+            'anydesk', 'teamviewer', 'remote desktop',
+            'cmake', 'make', 'gradle', 'maven', 'npm', 'yarn', 'pnpm', 'pip', 'poetry',
+            'cocoapods', 'carthage', 'spm', 'swift package manager',
+            'webpack', 'vite', 'rollup', 'parcel', 'esbuild', 'turbopack'
+        ],
+        'contains': ['tool', 'software', 'ide', 'editor']
+    },
+    'design_creative': {
+        'exact': [
+            'figma', 'sketch', 'adobe xd', 'xd', 'invision', 'framer', 'principle',
+            'photoshop', 'illustrator', 'indesign', 'lightroom', 'after effects', 'premiere',
+            'affinity designer', 'affinity photo', 'affinity publisher',
+            'canva', 'miro', 'figjam', 'whimsical', 'lucidchart', 'draw.io',
+            'blender', '3ds max', 'maya', 'cinema 4d', 'zbrush', 'substance',
+            'autocad', 'solidworks', 'fusion 360', 'revit', 'sketchup',
+            'ui design', 'ux design', 'ui/ux', 'user interface', 'user experience',
+            'wireframing', 'prototyping', 'mockups', 'design systems', 'design tokens',
+            'motion design', 'animation', 'motion graphics', 'video editing',
+            'graphic design', 'visual design', 'brand design', 'logo design',
+            'typography', 'color theory', 'composition', 'layout design',
+            '3d modeling', '3d rendering', 'cad', 'product design', 'industrial design',
+            'lottie', 'rive', 'spine', 'dragonbones'
+        ],
+        'contains': ['design', 'creative', 'adobe', '3d', 'animation', 'ux', 'ui']
+    },
+    'business_product_management': {
+        'exact': [
+            'product management', 'product owner', 'product strategy', 'product roadmap',
+            'project management', 'program management', 'portfolio management',
+            'pmp', 'prince2', 'pmbok', 'pmi', 'capm',
+            'business analysis', 'business analyst', 'requirements gathering', 'requirements management',
+            'bpmn', 'business process', 'process modeling', 'process improvement',
+            'stakeholder management', 'change management', 'risk management',
+            'okr', 'kpi', 'objectives and key results', 'goal setting',
+            'market research', 'competitive analysis', 'swot', 'pest',
+            'user research', 'customer research', 'user interviews', 'surveys',
+            'personas', 'user stories', 'use cases', 'job stories', 'jtbd',
+            'prioritization', 'rice', 'moscow', 'kano', 'weighted scoring',
+            'roadmapping', 'sprint planning', 'backlog grooming', 'refinement',
+            'go-to-market', 'gtm', 'product launch', 'mvp', 'minimum viable product',
+            'product-led growth', 'plg', 'growth hacking', 'growth marketing',
+            'saas', 'b2b', 'b2c', 'enterprise', 'startup',
+            'six sigma', 'lean', 'lean startup', 'design thinking', 'design sprint',
+            'branding', 'brand promotion', 'brand management', 'brand strategy',
+            'btl', 'atl', 'advertising', 'marketing strategy', 'content strategy',
+            'customer journey', 'cjm', 'customer experience', 'cx',
+            'brd', 'prd', 'frd', 'srs', 'functional requirements', 'technical requirements',
+            'budgeting', 'forecasting', 'financial planning', 'cost management',
+            'vendor management', 'contract negotiation', 'procurement',
+            'operations management', 'supply chain management', 'logistics management'
+        ],
+        'contains': ['product', 'management', 'business', 'strategy', 'roadmap', 'branding']
+    },
+    'security': {
+        'exact': [
+            'cybersecurity', 'information security', 'infosec', 'appsec', 'application security',
+            'network security', 'cloud security', 'endpoint security', 'mobile security',
+            'owasp', 'owasp top 10', 'secure coding', 'security best practices',
+            'penetration testing', 'pentest', 'ethical hacking', 'red team', 'blue team',
+            'vulnerability assessment', 'vulnerability management', 'cve', 'cvss',
+            'siem', 'splunk', 'elk security', 'qradar', 'sentinel', 'chronicle',
+            'soar', 'security orchestration', 'incident response', 'ir', 'dfir',
+            'soc', 'security operations', 'threat hunting', 'threat intelligence',
+            'malware analysis', 'reverse engineering', 'forensics', 'digital forensics',
+            'encryption', 'cryptography', 'pki', 'ssl', 'tls', 'https', 'certificates',
+            'iam', 'identity management', 'access management', 'sso', 'saml', 'oauth', 'oidc',
+            'mfa', 'multi-factor authentication', '2fa', 'passwordless',
+            'firewall', 'waf', 'ids', 'ips', 'nids', 'hids',
+            'vpn', 'zero trust', 'ztna', 'sase', 'casb',
+            'dlp', 'data loss prevention', 'data protection', 'gdpr', 'pci dss', 'hipaa', 'sox',
+            'iso 27001', 'soc 2', 'nist', 'cis', 'security frameworks',
+            'devsecops', 'security automation', 'security as code',
+            'burp suite', 'nessus', 'qualys', 'nmap', 'metasploit', 'wireshark',
+            'snyk', 'veracode', 'checkmarx', 'sonarqube', 'semgrep', 'trivy',
+            'check point', 'checkpoint', 'kaspersky', 'symantec', 'mcafee', 'crowdstrike',
+            'carbon black', 'sentinelone', 'defender', 'antivirus', 'edr', 'xdr',
+            'kali linux', 'parrot os', 'ctf', 'capture the flag'
+        ],
+        'contains': ['security', 'cyber', 'encryption', 'firewall', 'vulnerability']
+    },
+    'networking': {
+        'exact': [
+            'tcp/ip', 'tcpip', 'tcp', 'ip', 'udp', 'icmp', 'arp',
+            'dns', 'dhcp', 'http', 'https', 'ftp', 'sftp', 'ssh', 'telnet',
+            'smtp', 'imap', 'pop3', 'snmp', 'ntp', 'syslog',
+            'osi model', 'networking fundamentals', 'network protocols',
+            'lan', 'wan', 'man', 'vlan', 'vxlan', 'mpls', 'sd-wan',
+            'routing', 'switching', 'bgp', 'ospf', 'eigrp', 'rip', 'is-is',
+            'cisco', 'ccna', 'ccnp', 'ccie', 'juniper', 'jncia', 'jncip',
+            'arista', 'mikrotik', 'ubiquiti', 'unifi', 'fortinet', 'palo alto',
+            'network administration', 'network engineering', 'network architecture',
+            'load balancer', 'f5', 'nginx', 'haproxy', 'cdn', 'cloudflare',
+            'wireless', 'wifi', 'wi-fi', '802.11', 'bluetooth', '5g', 'lte',
+            'network monitoring', 'nagios', 'zabbix', 'prtg', 'cacti', 'netflow',
+            'packet analysis', 'tcpdump', 'wireshark', 'network troubleshooting',
+            'network security', 'firewall', 'acl', 'nat', 'pat', 'vpn', 'ipsec'
+        ],
+        'contains': ['network', 'cisco', 'routing', 'switching', 'tcp', 'dns', 'vlan']
+    },
+    'operating_system': {
+        'exact': [
+            'linux', 'unix', 'ubuntu', 'debian', 'centos', 'rhel', 'red hat',
+            'fedora', 'arch linux', 'alpine', 'rocky linux', 'alma linux', 'suse', 'opensuse',
+            'windows', 'windows server', 'windows 10', 'windows 11', 'active directory', 'ad',
+            'macos', 'mac os', 'darwin', 'ios', 'ipados',
+            'android', 'aosp', 'lineageos',
+            'freebsd', 'openbsd', 'netbsd',
+            'kernel', 'shell scripting', 'bash scripting', 'powershell scripting',
+            'system administration', 'sysadmin', 'system engineering',
+            'file systems', 'ext4', 'xfs', 'btrfs', 'zfs', 'ntfs', 'apfs',
+            'process management', 'memory management', 'disk management',
+            'virtualization', 'vmware', 'hyper-v', 'kvm', 'qemu', 'virtualbox',
+            'containerization', 'lxc', 'lxd', 'cgroups', 'namespaces',
+            'package management', 'apt', 'yum', 'dnf', 'pacman', 'brew', 'chocolatey'
+        ],
+        'contains': ['linux', 'windows', 'macos', 'unix', 'operating system', 'os admin']
+    },
+    'methodology_process': {
+        'exact': [
+            'agile', 'scrum', 'kanban', 'lean', 'xp', 'extreme programming',
+            'safe', 'scaled agile', 'less', 'nexus', 'spotify model',
+            'waterfall', 'v-model', 'spiral', 'incremental', 'iterative',
+            'sdlc', 'software development lifecycle', 'devops', 'devsecops', 'gitops',
+            'ci/cd', 'cicd', 'continuous integration', 'continuous delivery', 'continuous deployment',
+            'tdd', 'test-driven development', 'bdd', 'behavior-driven development', 'atdd',
+            'ddd', 'domain-driven design', 'clean architecture', 'hexagonal architecture',
+            'microservices', 'monolith', 'soa', 'service-oriented', 'event-driven', 'cqrs', 'event sourcing',
+            'oop', 'object-oriented', 'functional programming', 'fp', 'reactive programming',
+            'solid', 'dry', 'kiss', 'yagni', 'grasp', 'design patterns',
+            'code review', 'pair programming', 'mob programming', 'trunk-based development',
+            'feature flags', 'feature toggles', 'a/b testing', 'canary deployment', 'blue-green',
+            'documentation', 'technical writing', 'api design', 'system design',
+            'refactoring', 'technical debt', 'legacy modernization',
+            'sprint', 'retrospective', 'daily standup', 'planning poker', 'story points',
+            'api', 'api development', 'rest', 'restful', 'rest api', 'soap',
+            'backend development', 'frontend development', 'fullstack development', 'full-stack',
+            'software architecture', 'architecture', 'system architecture', 'solution architecture',
+            'code optimization', 'performance optimization', 'scalability',
+            'mvc', 'mvvm', 'mvp', 'clean code', 'software design',
+            'version control', 'branching strategy', 'git flow', 'github flow'
+        ],
+        'contains': ['agile', 'methodology', 'process', 'sdlc', 'development lifecycle', 'architecture']
+    },
+    'soft_skill': {
+        'exact': [
+            'communication', 'written communication', 'verbal communication', 'presentation',
+            'leadership', 'team leadership', 'people management', 'mentoring', 'coaching',
+            'teamwork', 'collaboration', 'cross-functional', 'remote collaboration',
+            'problem solving', 'critical thinking', 'analytical thinking', 'logical thinking',
+            'creativity', 'innovation', 'ideation', 'brainstorming',
+            'time management', 'prioritization', 'organization', 'planning',
+            'adaptability', 'flexibility', 'resilience', 'growth mindset',
+            'attention to detail', 'accuracy', 'precision', 'thoroughness',
+            'decision making', 'judgment', 'risk assessment', 'cost-benefit analysis',
+            'conflict resolution', 'negotiation', 'mediation', 'diplomacy',
+            'emotional intelligence', 'eq', 'empathy', 'self-awareness',
+            'customer focus', 'client management', 'stakeholder communication',
+            'public speaking', 'facilitation', 'training', 'knowledge sharing',
+            'initiative', 'proactivity', 'self-motivation', 'ownership',
+            'work ethic', 'reliability', 'accountability', 'integrity',
+            'stress management', 'work-life balance', 'mindfulness',
+            'networking', 'relationship building', 'influence',
+            'analytical skills', 'analytical ability', 'analytical studies',
+            'communicability', 'articulate speech', 'presentation skills',
+            'client focus', 'client orientation', 'customer orientation',
+            'attentiveness', 'diligence', 'punctuality', 'responsibility',
+            'multitasking', 'multi-tasking', 'quick learner', 'fast learner',
+            'desire to learn', 'learning ability', 'self-development',
+            'patience', 'persistence', 'determination', 'motivation'
+        ],
+        'contains': ['communication', 'leadership', 'teamwork', 'interpersonal', 'skill']
+    },
+    'domain_specific': {
+        'exact': [
+            'accounting', 'bookkeeping', 'financial reporting', 'gaap', 'ifrs',
+            'finance', 'financial analysis', 'financial modeling', 'valuation', 'dcf',
+            'banking', 'investment banking', 'retail banking', 'fintech',
+            'trading', 'algorithmic trading', 'quantitative finance', 'risk modeling',
+            'insurance', 'actuarial', 'underwriting', 'claims processing',
+            'healthcare', 'health informatics', 'hl7', 'fhir', 'hipaa', 'medical coding',
+            'pharmaceutical', 'pharmacology', 'clinical trials', 'fda', 'gxp',
+            'biotechnology', 'genomics', 'bioinformatics', 'drug discovery',
+            'ecommerce', 'retail', 'pos', 'inventory management', 'supply chain',
+            'logistics', 'transportation', 'fleet management', 'last mile',
+            'manufacturing', 'mes', 'erp', 'mrp', 'lean manufacturing', 'six sigma',
+            'real estate', 'property management', 'proptech', 'mls',
+            'legal', 'legal tech', 'contract management', 'ediscovery', 'compliance',
+            'education', 'edtech', 'lms', 'e-learning', 'curriculum design',
+            'hr', 'human resources', 'hris', 'talent acquisition', 'payroll',
+            'marketing', 'digital marketing', 'seo', 'sem', 'ppc', 'social media marketing',
+            'sales', 'crm', 'salesforce', 'hubspot', 'pipedrive', 'sales ops',
+            'gaming', 'game development', 'game design', 'game mechanics',
+            'media', 'publishing', 'content management', 'cms', 'journalism',
+            'telecommunications', 'telecom', '5g', 'voip', 'sip',
+            'automotive', 'autonomous vehicles', 'adas', 'can bus', 'autosar',
+            'aerospace', 'aviation', 'satellite', 'space tech',
+            'energy', 'oil and gas', 'renewable energy', 'smart grid', 'utilities',
+            'government', 'govtech', 'civic tech', 'public sector'
+        ],
+        'contains': ['industry', 'domain', 'sector', 'vertical']
+    }
+}
+
+
 def categorize_skill(skill_text: str) -> str:
     """
-    Auto-categorize skill based on name.
-    
+    Auto-categorize skill based on comprehensive pattern matching.
+
     Args:
         skill_text: Skill name
-    
+
     Returns:
-        Category: programming/framework/database/tool/etc
+        Category from SKILL_CATEGORIES keys
     """
-    skill_lower = skill_text.lower()
-    
-    # Programming languages
-    programming = ['python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'csharp',
-                   'php', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'scala', 'r']
-    if skill_lower in programming:
-        return 'programming'
-    
-    # Frameworks
-    frameworks = ['django', 'flask', 'fastapi', 'react', 'vue', 'angular', 'spring',
-                  'laravel', 'express', 'nodejs', 'nextjs', 'nuxt']
-    if skill_lower in frameworks or 'framework' in skill_lower:
-        return 'framework'
-    
-    # Databases
-    if any(db in skill_lower for db in ['sql', 'postgres', 'mysql', 'mongodb', 'redis',
-                                          'oracle', 'cassandra', 'elasticsearch', 'database', 'mariadb', 'couchdb', 'dynomodb']):
-        return 'database'
-    
-    # Cloud
-    if skill_lower in ['aws', 'azure', 'gcp', 'digitalocean', 'heroku']:
-        return 'cloud'
-    
-    # BI Tools
-    if any(bi in skill_lower for bi in ['power bi', 'tableau', 'superset', 'metabase',
-                                          'looker', 'qlik', 'bi']):
-        return 'tool'
-    
-    # Tools
-    tools = ['git', 'docker', 'kubernetes', 'jenkins', 'nginx', 'apache', 'kafka',
-             'airflow', 'celery', 'rabbitmq']
-    if skill_lower in tools:
-        return 'tool'
-    
-    # Methodologies
-    if skill_lower in ['oop', 'ооп', 'agile', 'scrum', 'devops', 'ci/cd', 'tdd']:
-        return 'methodology'
-    
-    # Soft skills
-    soft_skills = ['leadership', 'communication', 'teamwork', 'problem solving']
-    if any(soft in skill_lower for soft in soft_skills):
-        return 'soft_skill'
-    
+    import re
+
+    if not skill_text:
+        return 'other'
+
+    skill_lower = skill_text.lower().strip()
+    # Normalize: remove dots, replace separators with spaces
+    skill_normalized = skill_lower.replace('-', ' ').replace('_', ' ').replace('.', ' ')
+    skill_normalized = ' '.join(skill_normalized.split())  # Normalize whitespace
+
+    # First pass: exact matches only (highest priority)
+    for category, patterns in SKILL_CATEGORIES.items():
+        exact_patterns = patterns.get('exact', [])
+        if skill_lower in exact_patterns or skill_normalized in exact_patterns:
+            return category
+
+    # Second pass: check if skill starts with or equals a known pattern
+    # This handles cases like "Python 3", "React.js", "AWS S3"
+    for category, patterns in SKILL_CATEGORIES.items():
+        exact_patterns = patterns.get('exact', [])
+        for pattern in exact_patterns:
+            # Check if skill starts with pattern followed by space/number/version
+            if len(pattern) >= 3:  # Only for patterns with 3+ chars
+                if skill_normalized.startswith(pattern + ' ') or skill_normalized.startswith(pattern + '3'):
+                    return category
+                # Check if pattern is a complete word in the skill
+                word_pattern = r'\b' + re.escape(pattern) + r'\b'
+                if re.search(word_pattern, skill_normalized):
+                    return category
+
+    # Third pass: contains patterns (for suffix/keyword matching)
+    for category, patterns in SKILL_CATEGORIES.items():
+        contains_patterns = patterns.get('contains', [])
+        for contains_pattern in contains_patterns:
+            # Must be a complete word match, not a substring
+            word_pattern = r'\b' + re.escape(contains_pattern) + r'\b'
+            if re.search(word_pattern, skill_normalized):
+                return category
+
     return 'other'
+
+
+def get_category_display_name(category: str) -> str:
+    """Get human-readable category name."""
+    display_names = {
+        'programming_language': 'Programming Language',
+        'library_or_package': 'Library / Package',
+        'framework': 'Framework',
+        'database': 'Database',
+        'data_engineering': 'Data Engineering',
+        'cloud_platform': 'Cloud Platform',
+        'devops_infrastructure': 'DevOps / Infrastructure',
+        'testing_qa': 'Testing / QA',
+        'bi_analytics': 'BI / Analytics',
+        'tools_software': 'Tools / Software',
+        'design_creative': 'Design / Creative',
+        'business_product_management': 'Business / Product Management',
+        'security': 'Security',
+        'networking': 'Networking',
+        'operating_system': 'Operating System',
+        'methodology_process': 'Methodology / Process',
+        'soft_skill': 'Soft Skill',
+        'domain_specific': 'Domain Specific',
+        'other': 'Other'
+    }
+    return display_names.get(category, 'Other')

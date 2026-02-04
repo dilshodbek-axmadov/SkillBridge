@@ -200,37 +200,84 @@ class SkillMatcher:
 
     def _infer_category(self, skill_name: str) -> str:
         """
-        Infer skill category from name.
+        Infer skill category from name using shared categorization logic.
 
-        Categories in skills model: programming, framework, database, tool, cloud, methodology, soft_skill, other
+        Uses the comprehensive categorize_skill function from enhanced_skill_extractor
+        to ensure consistent categorization across the application.
+        """
+        try:
+            from apps.jobs.scrapers.enhanced_skill_extractor import categorize_skill
+            return categorize_skill(skill_name)
+        except ImportError:
+            # Fallback if import fails
+            return self._infer_category_fallback(skill_name)
+
+    def _infer_category_fallback(self, skill_name: str) -> str:
+        """
+        Fallback category inference if main categorizer is unavailable.
         """
         skill_lower = skill_name.lower()
 
         # Programming languages
-        if any(lang in skill_lower for lang in ['python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'php', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'dart', 'scala']):
-            return 'programming'
+        programming = [
+            'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'php',
+            'ruby', 'go', 'rust', 'swift', 'kotlin', 'dart', 'scala', 'r'
+        ]
+        if skill_lower in programming:
+            return 'programming_language'
 
-        # Frameworks & Libraries
-        if any(fw in skill_lower for fw in ['react', 'angular', 'vue', 'django', 'flask', 'spring', 'laravel', 'flutter', 'bloc', 'cubit', 'provider', 'riverpod', 'express', 'next', 'bootstrap', 'tailwind']):
+        # Frameworks
+        frameworks = [
+            'react', 'angular', 'vue', 'django', 'flask', 'spring', 'laravel',
+            'flutter', 'express', 'next', 'fastapi', 'rails'
+        ]
+        if any(fw in skill_lower for fw in frameworks):
             return 'framework'
 
+        # Libraries/Packages
+        libraries = [
+            'pandas', 'numpy', 'tensorflow', 'pytorch', 'selenium', 'pytest',
+            'bloc', 'cubit', 'provider', 'riverpod', 'dio', 'redux', 'axios'
+        ]
+        if any(lib in skill_lower for lib in libraries):
+            return 'library_or_package'
+
         # Databases
-        if any(db in skill_lower for db in ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'sqlite', 'hive', 'firebase', 'elasticsearch', 'cassandra', 'sharedpreferences']):
+        if any(db in skill_lower for db in ['sql', 'mysql', 'postgres', 'mongo', 'redis', 'firebase']):
             return 'database'
 
         # Cloud platforms
-        if any(cloud in skill_lower for cloud in ['aws', 'azure', 'gcp', 'google cloud', 'amazon web services', 'heroku', 'digitalocean']):
-            return 'cloud'
+        if any(cloud in skill_lower for cloud in ['aws', 'azure', 'gcp', 'heroku']):
+            return 'cloud_platform'
+
+        # DevOps/Infrastructure
+        if any(devops in skill_lower for devops in ['docker', 'kubernetes', 'jenkins', 'terraform', 'ansible', 'ci/cd']):
+            return 'devops_infrastructure'
+
+        # Testing/QA
+        if any(test in skill_lower for test in ['testing', 'test', 'qa', 'junit', 'jest', 'cypress']):
+            return 'testing_qa'
+
+        # Tools/Software
+        if any(tool in skill_lower for tool in ['git', 'jira', 'postman', 'vscode', 'notion']):
+            return 'tools_software'
+
+        # BI/Analytics
+        if any(bi in skill_lower for bi in ['power bi', 'tableau', 'analytics', 'visualization']):
+            return 'bi_analytics'
+
+        # Design/Creative
+        if any(design in skill_lower for design in ['figma', 'photoshop', 'ui', 'ux', 'design']):
+            return 'design_creative'
 
         # Methodologies
-        if any(method in skill_lower for method in ['agile', 'scrum', 'kanban', 'devops', 'ci/cd', 'tdd', 'bdd', 'oop', 'solid']):
-            return 'methodology'
+        if any(method in skill_lower for method in ['agile', 'scrum', 'kanban', 'devops', 'oop', 'solid']):
+            return 'methodology_process'
 
-        # Tools
-        if any(tool in skill_lower for tool in ['git', 'docker', 'kubernetes', 'jenkins', 'gitlab', 'github', 'jira', 'postman', 'vscode', 'testing', 'sdk', 'dio', 'http']):
-            return 'tool'
+        # Soft skills
+        if any(soft in skill_lower for soft in ['communication', 'leadership', 'teamwork']):
+            return 'soft_skill'
 
-        # Default
         return 'other'
 
     def _load_skill_cache(self):
