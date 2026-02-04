@@ -1,9 +1,7 @@
 """
-Users App Serializers
-=====================
-backend/apps/users/serializers.py
+Users App Serializers 1
 
-Serializers for user authentication and profile management.
+Serializers for user authentication
 """
 
 from rest_framework import serializers
@@ -225,68 +223,6 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class QuestionnaireProfileSerializer(serializers.Serializer):
-    """
-    Serializer for step-by-step questionnaire profile creation.
-    """
-    current_job_position = serializers.CharField(
-        max_length=200,
-        required=False,
-        allow_blank=True
-    )
-    desired_role = serializers.CharField(
-        max_length=200,
-        required=False,
-        allow_blank=True
-    )
-    experience_level = serializers.ChoiceField(
-        choices=UserProfile.EXPERIENCE_LEVELS,
-        required=True
-    )
-    skills = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=False,
-        help_text="List of skill IDs"
-    )
-    interests = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=False,
-        help_text="List of interest IDs"
-    )
-    bio = serializers.CharField(
-        required=False,
-        allow_blank=True
-    )
-    location = serializers.CharField(
-        max_length=100,
-        required=False,
-        allow_blank=True
-    )
-    
-    def validate_skills(self, value):
-        """Validate that all skill IDs exist."""
-        if value:
-            existing_skills = Skill.objects.filter(skill_id__in=value).count()
-            if existing_skills != len(value):
-                raise serializers.ValidationError(
-                    "Some skill IDs are invalid."
-                )
-        return value
-    
-    def validate_interests(self, value):
-        """Validate that all interest IDs exist."""
-        if value:
-            from apps.interests.models import Interest
-            existing_interests = Interest.objects.filter(
-                interest_id__in=value
-            ).count()
-            if existing_interests != len(value):
-                raise serializers.ValidationError(
-                    "Some interest IDs are invalid."
-                )
-        return value
-
-
 class CVUploadSerializer(serializers.Serializer):
     """
     Serializer for CV upload.
@@ -311,73 +247,3 @@ class CVUploadSerializer(serializers.Serializer):
             )
         
         return value
-
-
-class UserSkillSerializer(serializers.ModelSerializer):
-    """
-    Serializer for UserSkill model.
-    """
-    skill_name = serializers.CharField(source='skill.name_en', read_only=True)
-    skill_category = serializers.CharField(source='skill.category', read_only=True)
-    
-    class Meta:
-        model = UserSkill
-        fields = [
-            'user_skill_id',
-            'skill',
-            'skill_name',
-            'skill_category',
-            'proficiency_level',
-            'years_of_experience', 
-            'source',
-            'is_primary',  
-            'added_at',
-            'updated_at'
-        ]
-        read_only_fields = ['user_skill_id', 'added_at', 'updated_at']
-
-class AddUserSkillSerializer(serializers.Serializer):
-    """
-    Serializer for adding user skills.
-    """
-    skill_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=True
-    )
-    proficiency_level = serializers.ChoiceField(
-        choices=UserSkill.PROFICIENCY_LEVELS,
-        default='beginner'
-    )
-    years_of_experience = serializers.FloatField(  
-        default=0.0,
-        min_value=0.0
-    )
-    source = serializers.ChoiceField(
-        choices=UserSkill.SOURCE_CHOICES,  
-        default='manual'
-    )
-    is_primary = serializers.BooleanField(  
-        default=False
-    )
-    
-    def validate_skill_ids(self, value):
-        """Validate that all skill IDs exist."""
-        existing_skills = Skill.objects.filter(skill_id__in=value).count()
-        if existing_skills != len(value):
-            raise serializers.ValidationError(
-                "Some skill IDs are invalid."
-            )
-        return value
-
-
-class UpdateUserSkillSerializer(serializers.ModelSerializer):
-    """
-    Serializer for updating user skill.
-    """
-    class Meta:
-        model = UserSkill
-        fields = [
-            'proficiency_level',
-            'years_of_experience',  
-            'is_primary'  
-        ]

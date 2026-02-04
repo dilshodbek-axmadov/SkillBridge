@@ -19,12 +19,28 @@ from .views import (
 )
 from .views_profile import (
     UserProfileView,
-    QuestionnaireProfileView,
-    CVUploadView,
-    UserSkillsView,
-    AddUserSkillsView,
-    UpdateUserSkillView,
-    DeleteUserSkillView
+    CVUploadView
+)
+from .views_profile import (
+    # Skills browsing
+    GetAllSkillsView,
+    SearchSkillsView,
+    GetSkillCategoriesView,
+    
+    # Profile creation
+    CreateManualProfileView,
+    GetProfileSummaryView,
+    
+    # Skills management
+    GetMySkillsView,
+    AddSkillView,
+    BulkAddSkillsView,
+    UpdateSkillView,
+    DeleteSkillView,
+    
+    # Quick updates
+    UpdateJobPositionView,
+    UpdateExperienceLevelView,
 )
 
 app_name = 'users'
@@ -52,15 +68,28 @@ urlpatterns = [
     # Profile CRUD
     path('profile/', UserProfileView.as_view(), name='profile'),
     
-    # Profile creation methods
-    path('profile/questionnaire/', QuestionnaireProfileView.as_view(), name='profile_questionnaire'),
+    # CV upload profile creation
     path('profile/cv-upload/', CVUploadView.as_view(), name='cv_upload'),
+
+    # ===== MANUAL PROFILE CREATION =====
+    path('profile/create-manual/', CreateManualProfileView.as_view(), name='create_manual'),
+    path('profile/summary/', GetProfileSummaryView.as_view(), name='profile_summary'),
+
+    # ==================== Skills Management =====================
+
+    # ===== SKILLS BROWSING =====
+    path('skills/browse/', GetAllSkillsView.as_view(), name='browse_skills'),
+    path('skills/search/', SearchSkillsView.as_view(), name='search_skills'),
+    path('skills/categories/', GetSkillCategoriesView.as_view(), name='skill_categories'),
     
-    # ==================== SKILLS MANAGEMENT ====================
+    # ===== USER SKILLS MANAGEMENT (CRUD) =====
+    path('profile/my-skills/', GetMySkillsView.as_view(), name='my_skills'),
+    path('profile/skills/add/', AddSkillView.as_view(), name='add_skill'),
+    path('profile/skills/bulk-add/', BulkAddSkillsView.as_view(), name='bulk_add_skills'),
+    path('profile/skills/update/<int:user_skill_id>/', UpdateSkillView.as_view(), name='update_skill'),
+    path('profile/skills/delete/<int:user_skill_id>/', DeleteSkillView.as_view(), name='delete_skill'),
     
-    # User skills
-    path('profile/skills/', UserSkillsView.as_view(), name='user_skills'),
-    path('profile/skills/add/', AddUserSkillsView.as_view(), name='add_skills'),
-    path('profile/skills/<int:skill_id>/', UpdateUserSkillView.as_view(), name='update_skill'),
-    path('profile/skills/<int:skill_id>/delete/', DeleteUserSkillView.as_view(), name='delete_skill'),
+    # ===== QUICK UPDATES =====
+    path('profile/update-position/', UpdateJobPositionView.as_view(), name='update_position'),
+    path('profile/update-experience/', UpdateExperienceLevelView.as_view(), name='update_experience'),
 ]

@@ -1,7 +1,5 @@
 """
 Users App Views - Part 2: Profile & Skills Management
-======================================================
-backend/apps/users/views_profile.py
 
 API endpoints for profile management and user skills.
 """
@@ -11,18 +9,23 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db import transaction
+from django.db.models import Q
 
 from .models import User, UserProfile
 from apps.skills.models import Skill, UserSkill
-from apps.interests.models import Interest, UserInterest
 from .serializers import (
     UserProfileSerializer,
     UserProfileUpdateSerializer,
-    QuestionnaireProfileSerializer,
     CVUploadSerializer,
-    UserSkillSerializer,
+)
+from .serializers_profile import (
+    StepByStepProfileSerializer,
+    UserProfileSummarySerializer,
     AddUserSkillSerializer,
-    UpdateUserSkillSerializer
+    UpdateUserSkillSerializer,
+    BulkAddSkillsSerializer,
+    UserSkillSerializer,
+    SkillListSerializer
 )
 from .utils.cv_processor import CVProcessor
 from apps.users.utils.profile_updater import ProfileUpdater
@@ -110,65 +113,6 @@ class UserProfileView(APIView):
                 {'error': 'Profile not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-
-
-class QuestionnaireProfileView(APIView):
-    """
-    Create/update profile via step-by-step questionnaire.
-    
-    POST /api/profile/questionnaire/
-    """
-    permission_classes = [permissions.IsAuthenticated]
-    
-    @transaction.atomic
-    def post(self, request):
-        serializer = QuestionnaireProfileSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            data = serializer.validated_data
-            
-            # Update profile
-            profile = request.user.profile
-            profile.current_job_position = data.get('current_job_position', '')
-            profile.desired_role = data.get('desired_role', '')
-            profile.experience_level = data['experience_level']
-            profile.bio = data.get('bio', '')
-            profile.location = data.get('location', '')
-            profile.profile_source = 'assessment'
-            profile.save()
-            
-            # Add skills
-            skill_ids = data.get('skills', [])
-            if skill_ids:
-                for skill_id in skill_ids:
-                    UserSkill.objects.get_or_create(
-                        user=request.user,
-                        skill_id=skill_id,
-                        defaults={'source': 'assessment'}
-                    )
-            
-            # Add interests
-            interest_ids = data.get('interests', [])
-            if interest_ids:
-                for interest_id in interest_ids:
-                    UserInterest.objects.get_or_create(
-                        user=request.user,
-                        interest_id=interest_id
-                    )
-            
-            # Mark profile as completed
-            request.user.profile_completed = True
-            request.user.save()
-            
-            return Response({
-                'message': 'Profile created successfully',
-                'profile': UserProfileSerializer(profile).data
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
 
 
 class CVUploadView(APIView):
@@ -295,140 +239,520 @@ class CVUploadView(APIView):
                 added_count += 1
         
         return added_count
-
-class UserSkillsView(APIView):
-    """
-    Get all user skills.
     
-    GET /api/profile/skills/
+# ===== SKILLS BROWSING =====
+
+class GetAllSkillsView(APIView):
     """
+    Get all available skills for selection.
+    
+    GET /api/skills/browse/
+    
+    Query params:
+    - category: Filter by category (optional)
+    - search: Search by name (optional)
+    - verified_only: true/false (default: true)
+    - page: Page number (default: 1)
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        # Base queryset
+        skills = Skill.objects.all()
+        
+        # Filter by verified
+        verified_only = request.query_params.get('verified_only', 'true').lower() == 'true'
+        if verified_only:
+            skills = skills.filter(is_verified=True)
+        
+        # Filter by category
+        category = request.query_params.get('category')
+        if category:
+            skills = skills.filter(category=category)
+        
+        # Search by name
+        search = request.query_params.get('search', '').strip()
+        if search:
+            skills = skills.filter(
+                Q(name_en__icontains=search) |
+                Q(name_ru__icontains=search) |
+                Q(name_uz__icontains=search) |
+                Q(normalized_key__icontains=search)
+            )
+        
+        # Order by name
+        skills = skills.order_by('name_en')
+        
+        # Pagination
+        page_size = 50
+        page = int(request.query_params.get('page', 1))
+        start = (page - 1) * page_size
+        end = start + page_size
+        
+        total_count = skills.count()
+        skills_page = skills[start:end]
+        
+        serializer = SkillListSerializer(skills_page, many=True)
+        
+        return Response({
+            'skills': serializer.data,
+            'total': total_count,
+            'page': page,
+            'page_size': page_size,
+            'has_next': end < total_count,
+            'total_pages': (total_count + page_size - 1) // page_size
+        })
+
+
+class SearchSkillsView(APIView):
+    """
+    Search skills by name (for autocomplete).
+    
+    GET /api/skills/search/?q=python
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        query = request.query_params.get('q', '').strip()
+        
+        if not query or len(query) < 2:
+            return Response({
+                'message': 'Query must be at least 2 characters',
+                'skills': []
+            })
+        
+        # Search in all language fields and normalized key
+        skills = Skill.objects.filter(
+            Q(name_en__icontains=query) |
+            Q(name_ru__icontains=query) |
+            Q(name_uz__icontains=query) |
+            Q(normalized_key__icontains=query),
+            is_verified=True
+        ).order_by('name_en')[:20]
+        
+        serializer = SkillListSerializer(skills, many=True)
+        
+        return Response({
+            'query': query,
+            'skills': serializer.data,
+            'count': len(serializer.data)
+        })
+
+
+class GetSkillCategoriesView(APIView):
+    """
+    Get available skill categories.
+    
+    GET /api/skills/categories/
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        categories = [
+            {'value': code, 'label': label}
+            for code, label in Skill.CATEGORY_CHOICES
+        ]
+        
+        return Response({'categories': categories})
+
+
+# ===== MANUAL PROFILE CREATION =====
+
+class CreateManualProfileView(APIView):
+    """
+    Create user profile manually (step-by-step).
+    
+    POST /api/profile/create-manual/
+    
+    Body:
+    {
+        "current_job_position": "Backend Developer",
+        "experience_level": "mid",
+        "skills": [
+            {"skill_id": 1, "proficiency_level": "intermediate", "years_of_experience": 2.0},
+            {"skill_id": 5, "proficiency_level": "beginner"}
+        ],
+        "interest_ids": [1, 3, 5],
+        "bio": "Optional bio"
+    }
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @transaction.atomic
+    def post(self, request):
+        # Validate input
+        serializer = StepByStepProfileSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        # Create profile
+        result = serializer.create_profile(request.user)
+        
+        # Prepare response
+        profile_serializer = UserProfileSummarySerializer(result['profile'])
+        
+        return Response({
+            'message': 'Profile created successfully',
+            'profile': profile_serializer.data,
+            'stats': {
+                'skills_added': result['skills_added'],
+                'interests_added': result['interests_added']
+            },
+            'profile_completed': True
+        }, status=201)
+
+
+class GetProfileSummaryView(APIView):
+    """
+    Get user's complete profile summary.
+    
+    GET /api/profile/summary/
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        profile = user.profile
+        
+        # Get skills
+        user_skills = UserSkill.objects.filter(user=user).select_related('skill')
+        primary_skills = user_skills.filter(is_primary=True)
+        
+        # Check profile completion
+        has_position = bool(profile.current_job_position or profile.desired_role)
+        has_skills = user_skills.count() >= 1
+        has_experience = bool(profile.experience_level)
+        profile_completed = has_position and has_skills and has_experience
+        
+        # Get interests
+        from apps.interests.models import UserInterest
+        user_interests = UserInterest.objects.filter(user=user).select_related('interest')
+        
+        return Response({
+            'user': {
+                'email': user.email,
+                'profile_completed': user.profile_completed
+            },
+            'profile': {
+                'current_job_position': profile.current_job_position,
+                'desired_role': profile.desired_role,
+                'experience_level': profile.experience_level,
+                'bio': profile.bio,
+                'profile_source': profile.profile_source
+            },
+            'skills': {
+                'total': user_skills.count(),
+                'primary': primary_skills.count(),
+                'list': [
+                    {
+                        'user_skill_id': skill.user_skill_id,
+                        'name_en': skill.skill.name_en,
+                        'name_ru': skill.skill.name_ru,
+                        'category': skill.skill.category,
+                        'proficiency': skill.proficiency_level,
+                        'years': skill.years_of_experience,
+                        'is_primary': skill.is_primary,
+                        'source': skill.source
+                    }
+                    for skill in user_skills
+                ]
+            },
+            'interests': [
+                {
+                    'interest_id': ui.interest.interest_id,
+                    'name': ui.interest.name,
+                    'category': ui.interest.category
+                }
+                for ui in user_interests
+            ],
+            'completion': {
+                'profile_completed': profile_completed,
+                'has_position': has_position,
+                'has_skills': has_skills,
+                'has_experience': has_experience,
+                'completion_percentage': int((
+                    (has_position + has_skills + has_experience) / 3.0
+                ) * 100)
+            }
+        })
+
+
+# ===== USER SKILLS MANAGEMENT (CRUD) =====
+
+class GetMySkillsView(APIView):
+    """
+    Get user's skills.
+    
+    GET /api/profile/my-skills/
+    """
+    
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
         user_skills = UserSkill.objects.filter(
             user=request.user
-        ).select_related('skill').order_by('-added_at')
+        ).select_related('skill').order_by('-is_primary', 'skill__name_en')
         
         serializer = UserSkillSerializer(user_skills, many=True)
         
         return Response({
-            'count': user_skills.count(),
-            'skills': serializer.data
-        }, status=status.HTTP_200_OK)
+            'skills': serializer.data,
+            'count': user_skills.count()
+        })
 
 
-class AddUserSkillsView(APIView):
+class AddSkillView(APIView):
     """
-    Add skills to user profile.
+    Add a skill to user's profile.
     
     POST /api/profile/skills/add/
+    
+    Body:
+    {
+        "skill_id": 1,
+        "proficiency_level": "intermediate",
+        "years_of_experience": 2.0,
+        "is_primary": false
+    }
     """
+    
     permission_classes = [permissions.IsAuthenticated]
     
     @transaction.atomic
     def post(self, request):
         serializer = AddUserSkillSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
         
-        if serializer.is_valid():
-            skill_ids = serializer.validated_data['skill_ids']
-            proficiency_level = serializer.validated_data['proficiency_level']
-            years_of_experience = serializer.validated_data.get('years_of_experience', 0.0)
-            source = serializer.validated_data['source']
-            is_primary = serializer.validated_data.get('is_primary', False) 
-            
-            added_skills = []
-            
-            for skill_id in skill_ids:
-                user_skill, created = UserSkill.objects.get_or_create(
-                    user=request.user,
-                    skill_id=skill_id,
-                    defaults={
-                        'proficiency_level': proficiency_level,
-                        'years_of_experience': years_of_experience,
-                        'source': source,
-                        'is_primary': is_primary
-                    }
-                )
-                
-                if created:
-                    added_skills.append(user_skill)
-            
+        data = serializer.validated_data
+        
+        # Check if skill already exists
+        if UserSkill.objects.filter(user=request.user, skill_id=data['skill_id']).exists():
             return Response({
-                'message': f'{len(added_skills)} skill(s) added successfully',
-                'skills': UserSkillSerializer(added_skills, many=True).data
-            }, status=status.HTTP_201_CREATED)
+                'error': 'This skill is already in your profile'
+            }, status=400)
         
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+        # Create UserSkill
+        user_skill = UserSkill.objects.create(
+            user=request.user,
+            skill_id=data['skill_id'],
+            proficiency_level=data['proficiency_level'],
+            years_of_experience=data['years_of_experience'],
+            is_primary=data['is_primary'],
+            source='manual'
         )
-
-
-class UpdateUserSkillView(APIView):
-    """
-    Update user skill proficiency.
-    
-    PATCH /api/profile/skills/<skill_id>/
-    """
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def patch(self, request, skill_id):
-        try:
-            user_skill = UserSkill.objects.get(
-                user=request.user,
-                user_skill_id=skill_id
-            )
-            
-            serializer = UpdateUserSkillSerializer(
-                user_skill,
-                data=request.data,
-                partial=True
-            )
-            
-            if serializer.is_valid():
-                serializer.save()
-                
-                return Response({
-                    'message': 'Skill updated successfully',
-                    'skill': UserSkillSerializer(user_skill).data
-                }, status=status.HTTP_200_OK)
-            
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
         
-        except UserSkill.DoesNotExist:
-            return Response(
-                {'error': 'Skill not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        response_serializer = UserSkillSerializer(user_skill)
+        
+        return Response({
+            'message': 'Skill added successfully',
+            'skill': response_serializer.data
+        }, status=201)
 
 
-class DeleteUserSkillView(APIView):
+class BulkAddSkillsView(APIView):
     """
-    Delete user skill.
+    Add multiple skills at once.
     
-    DELETE /api/profile/skills/<skill_id>/
+    POST /api/profile/skills/bulk-add/
+    
+    Body:
+    {
+        "skills": [
+            {"skill_id": 1, "proficiency_level": "intermediate", "years_of_experience": 2.0},
+            {"skill_id": 5, "proficiency_level": "beginner"}
+        ]
+    }
     """
+    
     permission_classes = [permissions.IsAuthenticated]
     
-    def delete(self, request, skill_id):
+    @transaction.atomic
+    def post(self, request):
+        serializer = BulkAddSkillsSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        skills_data = serializer.validated_data['skills']
+        
+        added = 0
+        skipped = 0
+        
+        for skill_data in skills_data:
+            # Check if already exists
+            if UserSkill.objects.filter(user=request.user, skill_id=skill_data['skill_id']).exists():
+                skipped += 1
+                continue
+            
+            # Create UserSkill
+            UserSkill.objects.create(
+                user=request.user,
+                skill_id=skill_data['skill_id'],
+                proficiency_level=skill_data['proficiency_level'],
+                years_of_experience=skill_data['years_of_experience'],
+                is_primary=skill_data['is_primary'],
+                source='manual'
+            )
+            added += 1
+        
+        return Response({
+            'message': f'Added {added} skills',
+            'added': added,
+            'skipped': skipped,
+            'total': added + skipped
+        }, status=201)
+
+
+class UpdateSkillView(APIView):
+    """
+    Update a user's skill.
+    
+    PATCH /api/profile/skills/update/<int:user_skill_id>/
+    
+    Body:
+    {
+        "proficiency_level": "advanced",
+        "years_of_experience": 3.0,
+        "is_primary": true
+    }
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @transaction.atomic
+    def patch(self, request, user_skill_id):
+        # Get user skill
         try:
             user_skill = UserSkill.objects.get(
-                user=request.user,
-                user_skill_id=skill_id
+                user_skill_id=user_skill_id,
+                user=request.user
             )
-            
-            skill_name = user_skill.skill.name_en
-            user_skill.delete()
-            
+        except UserSkill.DoesNotExist:
             return Response({
-                'message': f'Skill "{skill_name}" removed successfully'
-            }, status=status.HTTP_200_OK)
+                'error': 'Skill not found in your profile'
+            }, status=404)
         
-        except UserSkill.DoesNotExist:
-            return Response(
-                {'error': 'Skill not found'},
-                status=status.HTTP_404_NOT_FOUND
+        # Validate input
+        serializer = UpdateUserSkillSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        # Update fields
+        data = serializer.validated_data
+        
+        if 'proficiency_level' in data:
+            user_skill.proficiency_level = data['proficiency_level']
+        
+        if 'years_of_experience' in data:
+            user_skill.years_of_experience = data['years_of_experience']
+        
+        if 'is_primary' in data:
+            user_skill.is_primary = data['is_primary']
+        
+        user_skill.save()
+        
+        response_serializer = UserSkillSerializer(user_skill)
+        
+        return Response({
+            'message': 'Skill updated successfully',
+            'skill': response_serializer.data
+        })
+
+
+class DeleteSkillView(APIView):
+    """
+    Delete a user's skill.
+    
+    DELETE /api/profile/skills/delete/<int:user_skill_id>/
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @transaction.atomic
+    def delete(self, request, user_skill_id):
+        try:
+            user_skill = UserSkill.objects.select_related('skill').get(
+                user_skill_id=user_skill_id,
+                user=request.user
             )
+        except UserSkill.DoesNotExist:
+            return Response({
+                'error': 'Skill not found in your profile'
+            }, status=404)
+        
+        skill_name = user_skill.skill.name_en
+        user_skill.delete()
+        
+        return Response({
+            'message': f'Skill "{skill_name}" removed from profile'
+        })
+
+
+class UpdateJobPositionView(APIView):
+    """
+    Update job position only.
+    
+    PATCH /api/profile/update-position/
+    
+    Body:
+    {
+        "current_job_position": "Senior Backend Developer"
+    }
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def patch(self, request):
+        job_position = request.data.get('current_job_position', '').strip()
+        
+        if not job_position:
+            return Response({
+                'error': 'Job position cannot be empty'
+            }, status=400)
+        
+        profile = request.user.profile
+        profile.current_job_position = job_position
+        profile.save()
+        
+        return Response({
+            'message': 'Job position updated',
+            'current_job_position': profile.current_job_position
+        })
+
+
+class UpdateExperienceLevelView(APIView):
+    """
+    Update experience level only.
+    
+    PATCH /api/profile/update-experience/
+    
+    Body:
+    {
+        "experience_level": "senior"
+    }
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def patch(self, request):
+        experience_level = request.data.get('experience_level', '').strip()
+        
+        valid_levels = ['beginner', 'junior', 'mid', 'senior', 'lead']
+        if experience_level not in valid_levels:
+            return Response({
+                'error': f'Invalid experience level. Must be one of: {", ".join(valid_levels)}'
+            }, status=400)
+        
+        profile = request.user.profile
+        profile.experience_level = experience_level
+        profile.save()
+        
+        return Response({
+            'message': 'Experience level updated',
+            'experience_level': profile.experience_level
+        })

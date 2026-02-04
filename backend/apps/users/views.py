@@ -1,7 +1,5 @@
 """
 Users App Views - Part 1: Authentication
-=========================================
-backend/apps/users/views.py
 
 API endpoints for user authentication.
 """

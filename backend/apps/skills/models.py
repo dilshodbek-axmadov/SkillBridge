@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.users.models import User
 
 
-# ==================== SKILL (Canonical Concept) ====================
+# SKILL
 
 class Skill(models.Model):
     """
@@ -163,7 +163,7 @@ class Skill(models.Model):
         ).order_by('-usage_count').first()
 
 
-# ==================== SKILL ALIAS (Raw Observed Strings) ====================
+# SKILL ALIAS
 
 class SkillAlias(models.Model):
     """
@@ -301,7 +301,7 @@ class SkillAlias(models.Model):
         return self.status == 'resolved' and self.skill_id is not None
 
 
-# ==================== USER SKILL (Unchanged) ====================
+# USER SKILL
 
 class UserSkill(models.Model):
     """
@@ -384,7 +384,7 @@ class UserSkill(models.Model):
         return f"{self.user.email} – {self.skill.name_en}"
 
 
-# ==================== SKILL GAP (Unchanged) ====================
+# SKILL GAP
 
 class SkillGap(models.Model):
     """
