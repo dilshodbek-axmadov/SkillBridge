@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/v1/resources/', include('apps.learning.urls_resources')),
     path('api/v1/projects/', include('apps.projects.urls')),
     path('api/v1/analytics/', include('apps.analytics.urls')),
+    path('api/v1/chatbot/', include('apps.chatbot.urls')),
 ]
 
 if settings.DEBUG:
