@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/v1/roadmaps/', include('apps.learning.urls')),
     path('api/v1/resources/', include('apps.learning.urls_resources')),
     path('api/v1/projects/', include('apps.projects.urls')),
+    path('api/v1/analytics/', include('apps.analytics.urls')),
 ]
 
 if settings.DEBUG:
