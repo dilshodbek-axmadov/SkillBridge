@@ -111,6 +111,7 @@ class CVSection(models.Model):
     """
     
     SECTION_TYPE_CHOICES = [
+        ('personal_info', _('Personal Information')),
         ('summary', _('Professional Summary')),
         ('experience', _('Work Experience')),
         ('education', _('Education')),
