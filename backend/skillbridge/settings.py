@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'drf_spectacular',
 
     # apps
     'apps.users',
@@ -66,6 +67,7 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 
@@ -107,6 +109,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware', # cors middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -174,11 +177,23 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('ru', 'Russian'),
+    ('uz', 'Uzbek'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
+
+USE_L10N = True
 
 USE_TZ = True
 
@@ -214,3 +229,35 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
 
 # Frontend URL for password reset links
 FRONTEND_URL = 'http://localhost:3000'  # React app URL
+
+
+# drf-spectacular (Swagger / OpenAPI)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SkillBridge API',
+    'DESCRIPTION': (
+        'SkillBridge - AI-powered career guidance platform for IT newcomers.\n\n'
+        'Features: skill gap analysis, learning roadmaps, project ideas, '
+        'CV builder, chatbot, analytics dashboard.\n\n'
+        'Supports three languages: English, Russian, Uzbek.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': '/api/v1/',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+    },
+    'TAGS': [
+        {'name': 'Users', 'description': 'Authentication and user profile management'},
+        {'name': 'Career', 'description': 'Career assessment and skill gap analysis'},
+        {'name': 'Skills', 'description': 'Skill management and market trends'},
+        {'name': 'Roadmaps', 'description': 'AI-powered learning roadmaps'},
+        {'name': 'Resources', 'description': 'Learning resource recommendations'},
+        {'name': 'Projects', 'description': 'AI-generated portfolio project ideas'},
+        {'name': 'Analytics', 'description': 'Market analytics dashboard'},
+        {'name': 'Chatbot', 'description': 'AI-powered career guidance chatbot'},
+        {'name': 'CV', 'description': 'CV builder with templates and export'},
+    ],
+}
