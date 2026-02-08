@@ -1,5 +1,6 @@
 import Hero from '../components/landing/Hero';
 import StatsBar from '../components/landing/StatsBar';
+import AssessmentCTA from '../components/landing/AssessmentCTA';
 import Features from '../components/landing/Features';
 import HowItWorks from '../components/landing/HowItWorks';
 
@@ -8,6 +9,7 @@ export default function LandingPage() {
     <>
       <Hero />
       <StatsBar />
+      <AssessmentCTA />
       <Features />
       <HowItWorks />
     </>

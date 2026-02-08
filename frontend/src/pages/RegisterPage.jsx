@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Zap, TrendingUp, BarChart3, Target, Check } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
@@ -20,6 +20,8 @@ function getPasswordStrength(password) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/profile-setup';
   const { register, loading, error, clearError } = useAuthStore();
 
   const [form, setForm] = useState({
@@ -73,7 +75,7 @@ export default function RegisterPage() {
         password: form.password,
         password_confirm: form.password_confirm,
       });
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch {
       // error is set in the store
     }
@@ -367,7 +369,7 @@ export default function RegisterPage() {
           {/* Login link */}
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
+            <Link to={`/login${redirectTo !== '/assessment' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
               Log in
             </Link>
           </p>
