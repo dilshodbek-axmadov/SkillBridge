@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/v1/analytics/', include('apps.analytics.urls')),
     path('api/v1/chatbot/', include('apps.chatbot.urls')),
     path('api/v1/cv/', include('apps.cv.urls')),
+    path('api/v1/interests/', include('apps.interests.urls')),
 
     # API Schema & Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
