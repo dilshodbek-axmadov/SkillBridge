@@ -11,9 +11,11 @@ import ManualProfilePage from './pages/ManualProfilePage';
 import CVUploadPage from './pages/CVUploadPage';
 import DashboardPage from './pages/DashboardPage';
 import MarketAnalyticsPage from './pages/MarketAnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
+import JobsPage from './pages/JobsPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
-const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics'];
+const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs'];
 
 function AppLayout() {
   const location = useLocation();
@@ -31,6 +33,8 @@ function AppLayout() {
         <Route path="/recommendations" element={<RecommendationsPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/market-analytics" element={<MarketAnalyticsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/jobs" element={<JobsPage />} />
       </Routes>
     );
   }

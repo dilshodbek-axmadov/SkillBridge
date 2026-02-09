@@ -223,6 +223,22 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    """Serializer for changing password while logged in."""
+    current_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(
+        required=True, write_only=True, validators=[validate_password]
+    )
+    new_password_confirm = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({
+                'new_password': "Password fields didn't match."
+            })
+        return attrs
+
+
 class CVUploadSerializer(serializers.Serializer):
     """
     Serializer for CV upload.

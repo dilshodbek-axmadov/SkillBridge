@@ -21,6 +21,7 @@ from .serializers import (
     UserLoginSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
+    ChangePasswordSerializer,
     UserSerializer,
     UserProfileSerializer
 )
@@ -280,8 +281,153 @@ class CurrentUserView(APIView):
             # Create profile if doesn't exist
             profile = UserProfile.objects.create(user=request.user)
             profile_serializer = UserProfileSerializer(profile)
-            
+
             return Response({
                 'user': user_serializer.data,
                 'profile': profile_serializer.data
             }, status=status.HTTP_200_OK)
+
+
+class UpdateUserView(APIView):
+    """
+    Update current user's basic info.
+
+    PATCH /api/auth/update/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+        allowed = ['first_name', 'last_name', 'phone', 'preferred_language']
+        updated = []
+
+        for field in allowed:
+            if field in request.data:
+                setattr(user, field, request.data[field])
+                updated.append(field)
+
+        if not updated:
+            return Response(
+                {'error': 'No valid fields provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.save(update_fields=updated + ['updated_at'])
+        return Response({
+            'message': 'User updated successfully',
+            'user': UserSerializer(user).data
+        })
+
+
+class ChangePasswordView(APIView):
+    """
+    Change password for authenticated user.
+
+    POST /api/auth/change-password/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if not request.user.check_password(serializer.validated_data['current_password']):
+            return Response(
+                {'current_password': ['Current password is incorrect.']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save()
+
+        return Response({'message': 'Password changed successfully'})
+
+
+class DeleteAccountView(APIView):
+    """
+    Delete the current user's account.
+
+    POST /api/auth/delete-account/
+    Requires password confirmation.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        password = request.data.get('password', '')
+        if not password:
+            return Response(
+                {'error': 'Password is required to delete account'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not request.user.check_password(password):
+            return Response(
+                {'error': 'Incorrect password'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        request.user.delete()
+        return Response({'message': 'Account deleted successfully'})
+
+
+class ExportUserDataView(APIView):
+    """
+    Export all user data as JSON.
+
+    GET /api/auth/export-data/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        from apps.skills.models import UserSkill
+        from apps.interests.models import UserInterest
+
+        try:
+            profile = user.profile
+            profile_data = {
+                'current_job_position': profile.current_job_position,
+                'desired_role': profile.desired_role,
+                'experience_level': profile.experience_level,
+                'bio': profile.bio,
+                'location': profile.location,
+                'profile_source': profile.profile_source,
+                'github_url': profile.github_url,
+                'linkedin_url': profile.linkedin_url,
+                'portfolio_url': profile.portfolio_url,
+                'created_at': str(profile.created_at),
+                'updated_at': str(profile.updated_at),
+            }
+        except UserProfile.DoesNotExist:
+            profile_data = None
+
+        skills = list(
+            UserSkill.objects.filter(user=user)
+            .select_related('skill')
+            .values(
+                'skill__name_en', 'proficiency_level',
+                'years_of_experience', 'is_primary', 'source'
+            )
+        )
+
+        interests = list(
+            UserInterest.objects.filter(user=user)
+            .select_related('interest')
+            .values('interest__name_en', 'interest__category')
+        )
+
+        return Response({
+            'user': {
+                'email': user.email,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'phone': user.phone,
+                'preferred_language': user.preferred_language,
+                'created_at': str(user.created_at),
+            },
+            'profile': profile_data,
+            'skills': skills,
+            'interests': interests,
+        })

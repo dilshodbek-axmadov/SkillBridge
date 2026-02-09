@@ -15,7 +15,11 @@ from .views import (
     LogoutView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
-    CurrentUserView
+    CurrentUserView,
+    UpdateUserView,
+    ChangePasswordView,
+    DeleteAccountView,
+    ExportUserDataView,
 )
 from .views_profile import (
     UserProfileView,
@@ -62,6 +66,10 @@ urlpatterns = [
     
     # Current user
     path('auth/me/', CurrentUserView.as_view(), name='current_user'),
+    path('auth/update/', UpdateUserView.as_view(), name='update_user'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('auth/delete-account/', DeleteAccountView.as_view(), name='delete_account'),
+    path('auth/export-data/', ExportUserDataView.as_view(), name='export_data'),
     
     # ==================== PROFILE MANAGEMENT ====================
     
