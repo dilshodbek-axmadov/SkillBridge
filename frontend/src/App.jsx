@@ -9,9 +9,10 @@ import AssessmentPage from './pages/AssessmentPage';
 import RecommendationsPage from './pages/RecommendationsPage';
 import ManualProfilePage from './pages/ManualProfilePage';
 import CVUploadPage from './pages/CVUploadPage';
+import DashboardPage from './pages/DashboardPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
-const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations'];
+const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard'];
 
 function AppLayout() {
   const location = useLocation();
@@ -27,6 +28,7 @@ function AppLayout() {
         <Route path="/profile-cv" element={<CVUploadPage />} />
         <Route path="/assessment" element={<AssessmentPage />} />
         <Route path="/recommendations" element={<RecommendationsPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
     );
   }
