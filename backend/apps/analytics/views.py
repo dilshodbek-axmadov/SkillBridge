@@ -187,6 +187,36 @@ class UserProgressByIdView(APIView):
         return Response(progress)
 
 
+class TopJobTitlesView(APIView):
+    """
+    GET /api/v1/analytics/market/top-titles/
+
+    Get top job titles by posting count.
+
+    Query params:
+    - limit: number of results (default: 10)
+    - period: time period (7d, 30d, 90d, all) (default: all)
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        limit = int(request.query_params.get('limit', 10))
+        period = request.query_params.get('period', 'all')
+
+        if period not in ('7d', '30d', '90d', 'all'):
+            period = 'all'
+
+        service = DashboardService()
+        titles = service.get_top_job_titles(limit=limit, period=period)
+
+        return Response({
+            'period': period,
+            'count': len(titles),
+            'titles': titles,
+        })
+
+
 class DashboardSummaryView(APIView):
     """
     GET /api/v1/analytics/dashboard/
@@ -205,4 +235,5 @@ class DashboardSummaryView(APIView):
             'trending_skills': service.get_trending_skills(limit=10, period='30d'),
             'job_categories': service.get_job_categories(limit=10),
             'top_salaries': service.get_salary_insights(limit=10),
+            'top_job_titles': service.get_top_job_titles(limit=10, period='all'),
         })

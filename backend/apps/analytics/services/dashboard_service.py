@@ -50,9 +50,17 @@ class DashboardService:
                 snapshot_date=today
             ).latest('created_at')
 
+            # Last updated: most recent job posting update
+            last_job_update = JobPosting.objects.order_by('-updated_at').values_list('updated_at', flat=True).first()
+            hours_ago = None
+            if last_job_update:
+                delta = timezone.now() - last_job_update
+                hours_ago = round(delta.total_seconds() / 3600, 1)
+
             return {
                 'source': 'cached',
                 'snapshot_date': snapshot.snapshot_date.isoformat(),
+                'last_updated_hours_ago': hours_ago,
                 'total_active_jobs': snapshot.total_active_jobs,
                 'jobs_posted_last_7d': snapshot.jobs_posted_last_7d,
                 'jobs_posted_last_30d': snapshot.jobs_posted_last_30d,
@@ -114,9 +122,17 @@ class DashboardService:
             .values_list('experience_required', 'count')
         )
 
+        # Last updated: most recent job posting update
+        last_job_update = active_jobs.order_by('-updated_at').values_list('updated_at', flat=True).first()
+        hours_ago = None
+        if last_job_update:
+            delta = now - last_job_update
+            hours_ago = round(delta.total_seconds() / 3600, 1)
+
         return {
             'source': 'real-time',
             'snapshot_date': date.today().isoformat(),
+            'last_updated_hours_ago': hours_ago,
             'total_active_jobs': total_active,
             'jobs_posted_last_7d': jobs_7d,
             'jobs_posted_last_30d': jobs_30d,
@@ -448,6 +464,39 @@ class DashboardService:
                 'total_hours_logged': round(total_hours, 1),
             },
         }
+
+
+    def get_top_job_titles(
+        self,
+        limit: int = 10,
+        period: str = 'all'
+    ) -> List[Dict[str, Any]]:
+        """
+        Get top job titles by posting count.
+
+        Args:
+            limit: Number of titles to return (default 10).
+            period: Time filter — '7d', '30d', '90d', or 'all'.
+        """
+
+        jobs = JobPosting.objects.filter(is_active=True)
+
+        if period != 'all':
+            days = {'7d': 7, '30d': 30, '90d': 90}.get(period, 30)
+            cutoff = timezone.now() - timedelta(days=days)
+            jobs = jobs.filter(posted_date__gte=cutoff)
+
+        titles = (
+            jobs
+            .values('job_title')
+            .annotate(count=Count('job_id'))
+            .order_by('-count')[:limit]
+        )
+
+        return [
+            {'job_title': t['job_title'], 'count': t['count']}
+            for t in titles
+        ]
 
 
 class SnapshotGenerator:

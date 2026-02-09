@@ -31,6 +31,7 @@ urlpatterns = [
     path('market/skills/<int:skill_id>/trend/', views.SkillTrendView.as_view(), name='skill_trend'),
     path('market/salaries/', views.SalaryInsightsView.as_view(), name='salaries'),
     path('market/categories/', views.JobCategoriesView.as_view(), name='categories'),
+    path('market/top-titles/', views.TopJobTitlesView.as_view(), name='top_job_titles'),
 
     # User analytics
     path('user/progress/', views.UserProgressView.as_view(), name='user_progress'),
