@@ -21,7 +21,7 @@ function getPasswordStrength(password) {
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/profile-setup';
+  const finalRedirect = searchParams.get('redirect') || '';
   const { register, loading, error, clearError } = useAuthStore();
 
   const [form, setForm] = useState({
@@ -75,7 +75,11 @@ export default function RegisterPage() {
         password: form.password,
         password_confirm: form.password_confirm,
       });
-      navigate(redirectTo);
+      // Always go to profile-setup first; forward final redirect if present
+      const profileSetupUrl = finalRedirect
+        ? `/profile-setup?redirect=${encodeURIComponent(finalRedirect)}`
+        : '/profile-setup';
+      navigate(profileSetupUrl);
     } catch {
       // error is set in the store
     }
@@ -369,7 +373,7 @@ export default function RegisterPage() {
           {/* Login link */}
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{' '}
-            <Link to={`/login${redirectTo !== '/assessment' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
+            <Link to={`/login${finalRedirect ? `?redirect=${encodeURIComponent(finalRedirect)}` : ''}`} className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
               Log in
             </Link>
           </p>

@@ -6,7 +6,7 @@ import useAuthStore from '../store/authStore';
 export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/assessment';
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
   const { login, loading, error, clearError } = useAuthStore();
 
   const [email, setEmail] = useState('');
@@ -221,7 +221,7 @@ export default function LoginPage() {
           {/* Sign up link */}
           <p className="text-center text-sm text-gray-500 mt-6">
             Don&apos;t have an account?{' '}
-            <Link to={`/register${redirectTo !== '/assessment' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
+            <Link to={`/register${redirectTo !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
               Sign up
             </Link>
           </p>

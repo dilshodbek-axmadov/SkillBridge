@@ -328,9 +328,14 @@ class SearchSkillsView(APIView):
             Q(name_en__icontains=query) |
             Q(name_ru__icontains=query) |
             Q(name_uz__icontains=query) |
-            Q(normalized_key__icontains=query),
-            is_verified=True
-        ).order_by('name_en')[:20]
+            Q(normalized_key__icontains=query)
+        )
+
+        verified_only = request.query_params.get('verified_only', 'true').lower() == 'true'
+        if verified_only:
+            skills = skills.filter(is_verified=True)
+
+        skills = skills.order_by('name_en')[:20]
         
         serializer = SkillListSerializer(skills, many=True)
         

@@ -7,9 +7,11 @@ import RegisterPage from './pages/RegisterPage';
 import ProfileChoicePage from './pages/ProfileChoicePage';
 import AssessmentPage from './pages/AssessmentPage';
 import RecommendationsPage from './pages/RecommendationsPage';
+import ManualProfilePage from './pages/ManualProfilePage';
+import CVUploadPage from './pages/CVUploadPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
-const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/assessment', '/recommendations'];
+const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations'];
 
 function AppLayout() {
   const location = useLocation();
@@ -21,6 +23,8 @@ function AppLayout() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile-setup" element={<ProfileChoicePage />} />
+        <Route path="/profile-manual" element={<ManualProfilePage />} />
+        <Route path="/profile-cv" element={<CVUploadPage />} />
         <Route path="/assessment" element={<AssessmentPage />} />
         <Route path="/recommendations" element={<RecommendationsPage />} />
       </Routes>

@@ -1,73 +1,12 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Zap, FileText, Upload, Clock, ArrowRight, Loader2, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
-import api from '../services/api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Zap, FileText, Upload, Clock, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function ProfileChoicePage() {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
+  const [searchParams] = useSearchParams();
+  const finalRedirect = searchParams.get('redirect') || '/dashboard';
 
-  const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState(null);
-  const [uploadError, setUploadError] = useState('');
-  const [dragOver, setDragOver] = useState(false);
-
-  const handleCVUpload = async (file) => {
-    if (!file) return;
-
-    // Validate file type
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (!['pdf', 'docx', 'doc'].includes(ext)) {
-      setUploadError('Please upload a PDF or DOCX file.');
-      return;
-    }
-
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File size must be under 5MB.');
-      return;
-    }
-
-    setUploading(true);
-    setUploadError('');
-
-    try {
-      const formData = new FormData();
-      formData.append('cv_file', file);
-
-      const { data } = await api.post('/users/profile/cv-upload/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      setUploadResult(data);
-
-      // Auto-navigate to assessment after 2 seconds
-      setTimeout(() => {
-        navigate('/assessment');
-      }, 2500);
-    } catch (err) {
-      const msg =
-        err.response?.data?.cv_file?.[0] ||
-        err.response?.data?.error ||
-        err.response?.data?.detail ||
-        'Failed to upload CV. Please try again.';
-      setUploadError(msg);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) handleCVUpload(file);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleCVUpload(file);
-  };
+  const redirectParam = `?redirect=${encodeURIComponent(finalRedirect)}`;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -115,7 +54,7 @@ export default function ProfileChoicePage() {
               </div>
 
               <button
-                onClick={() => navigate('/profile-manual')}
+                onClick={() => navigate(`/profile-manual${redirectParam}`)}
                 className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-colors cursor-pointer border-none"
               >
                 Start Manual Entry
@@ -139,91 +78,20 @@ export default function ProfileChoicePage() {
                 <span>~2 minutes</span>
               </div>
 
-              {/* Upload result */}
-              {uploadResult && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-semibold text-green-700">CV Processed Successfully</span>
-                  </div>
-                  <p className="text-xs text-green-600 ml-6">
-                    Found {uploadResult.extraction?.skills_found || 0} skills.
-                    Redirecting to assessment...
-                  </p>
-                </div>
-              )}
-
-              {/* Upload error */}
-              {uploadError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-red-600">{uploadError}</span>
-                </div>
-              )}
-
-              {/* Drop zone / Upload button */}
-              {!uploadResult && (
-                <div
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                  className={`w-full border-2 border-dashed rounded-xl p-4 text-center transition-colors mb-3 ${
-                    dragOver
-                      ? 'border-purple-400 bg-purple-50'
-                      : 'border-gray-300 hover:border-purple-300'
-                  }`}
-                >
-                  {uploading ? (
-                    <div className="flex flex-col items-center gap-2 py-2">
-                      <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
-                      <span className="text-sm text-purple-600 font-medium">Processing your CV...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">
-                        Drag & drop your CV here
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">PDF, DOCX — max 5MB</p>
-                    </>
-                  )}
-                </div>
-              )}
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.docx,.doc"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-
-              {!uploadResult && (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 disabled:bg-purple-400 transition-colors cursor-pointer border-none"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      Upload CV
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                onClick={() => navigate(`/profile-cv${redirectParam}`)}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors cursor-pointer border-none"
+              >
+                <Upload className="w-4 h-4" />
+                Upload CV
+              </button>
             </div>
           </div>
 
           {/* Skip link */}
           <div className="text-center mt-8">
             <button
-              onClick={() => navigate('/assessment')}
+              onClick={() => navigate(finalRedirect)}
               className="text-sm text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer underline"
             >
               I&apos;ll do this later

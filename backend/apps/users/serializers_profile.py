@@ -274,7 +274,7 @@ class StepByStepProfileSerializer(serializers.Serializer):
 class UserProfileSummarySerializer(serializers.ModelSerializer):
     """Complete user profile with skills and interests."""
     
-    skills = UserSkillSerializer(many=True, read_only=True, source='skills')
+    skills = UserSkillSerializer(many=True, read_only=True)
     interests = serializers.SerializerMethodField()
     
     class Meta:
