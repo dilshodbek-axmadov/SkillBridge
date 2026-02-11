@@ -15,9 +15,10 @@ import SettingsPage from './pages/SettingsPage';
 import JobsPage from './pages/JobsPage';
 import SkillGapPage from './pages/SkillGapPage';
 import ManageSkillsPage from './pages/ManageSkillsPage';
+import LearningRoadmapPage from './pages/LearningRoadmapPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
-const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills'];
+const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills', '/roadmap'];
 
 function AppLayout() {
   const location = useLocation();
@@ -39,6 +40,7 @@ function AppLayout() {
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/skills-gap" element={<SkillGapPage />} />
         <Route path="/manage-skills" element={<ManageSkillsPage />} />
+        <Route path="/roadmap" element={<LearningRoadmapPage />} />
       </Routes>
     );
   }

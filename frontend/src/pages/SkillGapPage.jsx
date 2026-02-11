@@ -58,6 +58,10 @@ export default function SkillGapPage() {
   const [error, setError] = useState('');
   const [loadingStep, setLoadingStep] = useState(0);
 
+  // re-analyze confirmation
+  const [showReanalyzeModal, setShowReanalyzeModal] = useState(false);
+  const [clearing, setClearing] = useState(false);
+
   // filters
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterImportance, setFilterImportance] = useState('all');
@@ -163,6 +167,25 @@ export default function SkillGapPage() {
     }
   };
 
+  /* ─── re-analyze (confirm + clear) ────── */
+  const handleReanalyzeConfirm = async () => {
+    setClearing(true);
+    try {
+      await api.post('/skills/gaps/clear/');
+      setGaps([]);
+      setByStatus({});
+      setAnalysisResult(null);
+      setShowReanalyzeModal(false);
+      setPhase('confirm');
+    } catch {
+      // silent fail — still go to confirm
+      setShowReanalyzeModal(false);
+      setPhase('confirm');
+    } finally {
+      setClearing(false);
+    }
+  };
+
   /* ─── filtered gaps ────────────────────── */
   const filtered = gaps.filter((g) => {
     if (filterPriority !== 'all' && g.priority !== filterPriority) return false;
@@ -231,10 +254,43 @@ export default function SkillGapPage() {
             onFilterImportance={setFilterImportance}
             onFilterStatus={setFilterStatus}
             onUpdateStatus={updateGapStatus}
-            onReanalyze={() => setPhase('confirm')}
+            onReanalyze={() => setShowReanalyzeModal(true)}
           />
         )}
       </div>
+
+      {/* Re-analyze confirmation modal */}
+      {showReanalyzeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !clearing && setShowReanalyzeModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-6 h-6 text-amber-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Re-analyze Skills?</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              This will clear your current gap analysis results. You will need to run a new analysis to see updated recommendations.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReanalyzeModal(false)}
+                disabled={clearing}
+                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold border-none cursor-pointer hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReanalyzeConfirm}
+                disabled={clearing}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors disabled:opacity-50"
+              >
+                {clearing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                {clearing ? 'Clearing...' : 'Yes, Re-analyze'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
@@ -556,7 +612,6 @@ function ResultsPhase({
               { value: 'pending', label: 'Pending' },
               { value: 'learning', label: 'Learning' },
               { value: 'completed', label: 'Completed' },
-              { value: 'skipped', label: 'Skipped' },
             ]}
           />
         </div>

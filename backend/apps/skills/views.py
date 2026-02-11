@@ -105,18 +105,21 @@ class UserGapsView(APIView):
         analyzer = SkillGapAnalyzer(user=request.user)
         gaps = analyzer.get_user_gaps(status=status_filter)
 
-        # Calculate status counts
+        # Exclude archived (skipped) gaps from default listing
+        if not status_filter:
+            gaps = [g for g in gaps if g['status'] != 'skipped']
+
+        # Calculate status counts (exclude skipped from total)
         all_gaps = SkillGap.objects.filter(user=request.user)
         by_status = {
             'pending': all_gaps.filter(status='pending').count(),
             'learning': all_gaps.filter(status='learning').count(),
             'completed': all_gaps.filter(status='completed').count(),
-            'skipped': all_gaps.filter(status='skipped').count(),
         }
 
         return Response({
             'gaps': gaps,
-            'total': len(gaps) if status_filter else sum(by_status.values()),
+            'total': len(gaps),
             'by_status': by_status,
         })
 
@@ -173,6 +176,29 @@ class UpdateGapStatusView(APIView):
                 {'error': 'Skill gap not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class ClearGapsView(APIView):
+    """
+    POST /api/v1/skills/gaps/clear/
+
+    Archive all user's skill gaps by setting status to 'skipped'.
+    Used before re-analyzing to clear previous results.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        updated = SkillGap.objects.filter(
+            user=request.user
+        ).exclude(
+            status='completed'
+        ).update(status='skipped')
+
+        return Response({
+            'cleared': updated,
+            'message': f'{updated} skill gap(s) archived.',
+        }, status=status.HTTP_200_OK)
 
 
 class MarketTrendsView(APIView):

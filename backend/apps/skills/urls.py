@@ -23,6 +23,7 @@ urlpatterns = [
 
     # User Gaps
     path('gaps/', views.UserGapsView.as_view(), name='user_gaps'),
+    path('gaps/clear/', views.ClearGapsView.as_view(), name='clear_gaps'),
     path('gaps/<int:gap_id>/', views.GapDetailView.as_view(), name='gap_detail'),
     path('gaps/<int:gap_id>/status/', views.UpdateGapStatusView.as_view(), name='update_gap_status'),
 
