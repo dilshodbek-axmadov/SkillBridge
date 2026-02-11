@@ -8,7 +8,7 @@ import {
 import api from '../services/api';
 
 const STEPS = [
-  { id: 1, label: 'Job Position' },
+  { id: 1, label: 'Career Goals' },
   { id: 2, label: 'Experience' },
   { id: 3, label: 'Skills' },
   { id: 4, label: 'Interests' },
@@ -66,7 +66,7 @@ const COMMON_POSITIONS = [
   'Product Manager', 'Project Manager', 'System Administrator',
 ];
 
-function StepJobPosition({ value, onChange }) {
+function RoleInput({ label, value, onChange, placeholder, required }) {
   const [query, setQuery] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef(null);
@@ -94,19 +94,13 @@ function StepJobPosition({ value, onChange }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-          What's your current or desired role?
-        </h2>
-        <p className="text-gray-500">
-          Choose from common IT positions or type your own.
-        </p>
-      </div>
-
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
       <div className="relative" ref={wrapperRef}>
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             value={query}
@@ -116,26 +110,26 @@ function StepJobPosition({ value, onChange }) {
               setShowSuggestions(true);
             }}
             onFocus={() => setShowSuggestions(true)}
-            placeholder="e.g. Backend Developer"
-            className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl text-lg focus:outline-none focus:border-primary-500 transition-colors"
+            placeholder={placeholder}
+            className="w-full pl-11 pr-9 py-3.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 transition-colors"
           />
           {query && (
             <button
               onClick={() => { setQuery(''); onChange(''); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
 
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
             {suggestions.map((pos) => (
               <button
                 key={pos}
                 onClick={() => handleSelect(pos)}
-                className={`w-full text-left px-4 py-3 text-sm hover:bg-primary-50 transition-colors border-none bg-transparent cursor-pointer ${
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-primary-50 transition-colors border-none bg-transparent cursor-pointer ${
                   pos === value ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700'
                 }`}
               >
@@ -145,19 +139,50 @@ function StepJobPosition({ value, onChange }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
 
-      {/* Quick-pick chips */}
+function StepCareerGoals({ currentRole, desiredRole, onCurrentChange, onDesiredChange }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          Tell us about your career goals
+        </h2>
+        <p className="text-gray-500">
+          This helps us create a personalized learning roadmap and skill gap analysis.
+        </p>
+      </div>
+
+      <RoleInput
+        label="What's your current role?"
+        value={currentRole}
+        onChange={onCurrentChange}
+        placeholder="e.g. Junior Frontend Developer (leave empty if student)"
+        required={false}
+      />
+
+      <RoleInput
+        label="What role do you want to achieve?"
+        value={desiredRole}
+        onChange={onDesiredChange}
+        placeholder="e.g. Full-Stack Developer"
+        required={true}
+      />
+
+      {/* Quick-pick chips for desired role */}
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-          Popular choices
+          Popular target roles
         </p>
         <div className="flex flex-wrap gap-2">
           {COMMON_POSITIONS.slice(0, 8).map((pos) => (
             <button
               key={pos}
-              onClick={() => handleSelect(pos)}
+              onClick={() => onDesiredChange(pos)}
               className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all cursor-pointer ${
-                pos === value
+                pos === desiredRole
                   ? 'border-primary-500 bg-primary-50 text-primary-700'
                   : 'border-gray-200 bg-white text-gray-600 hover:border-primary-300'
               }`}
@@ -588,13 +613,14 @@ export default function ManualProfilePage() {
 
   // Form data
   const [jobPosition, setJobPosition] = useState('');
+  const [desiredRole, setDesiredRole] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('');
   const [skills, setSkills] = useState([]);
   const [interestIds, setInterestIds] = useState([]);
 
   const canProceed = () => {
     switch (step) {
-      case 1: return jobPosition.trim().length > 0;
+      case 1: return desiredRole.trim().length > 0;
       case 2: return experienceLevel.length > 0;
       case 3: return skills.length >= 1;
       case 4: return true; // optional
@@ -627,6 +653,7 @@ export default function ManualProfilePage() {
     try {
       await api.post('/users/profile/create-manual/', {
         current_job_position: jobPosition.trim(),
+        desired_role: desiredRole.trim(),
         experience_level: experienceLevel,
         skills: skills.map((s) => ({
           skill_id: s.skill_id,
@@ -758,7 +785,12 @@ export default function ManualProfilePage() {
           {/* Step content */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
             {step === 1 && (
-              <StepJobPosition value={jobPosition} onChange={setJobPosition} />
+              <StepCareerGoals
+                currentRole={jobPosition}
+                desiredRole={desiredRole}
+                onCurrentChange={setJobPosition}
+                onDesiredChange={setDesiredRole}
+              />
             )}
             {step === 2 && (
               <StepExperience value={experienceLevel} onChange={setExperienceLevel} />

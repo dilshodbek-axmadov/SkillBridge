@@ -118,7 +118,8 @@ class StepByStepProfileSerializer(serializers.Serializer):
     
     Expected data:
     {
-        "current_job_position": "Backend Developer",
+        "current_job_position": "Frontend Developer",
+        "desired_role": "Full-Stack Developer",
         "experience_level": "mid",
         "skills": [
             {"skill_id": 1, "proficiency_level": "intermediate", "years_of_experience": 2.0},
@@ -128,12 +129,21 @@ class StepByStepProfileSerializer(serializers.Serializer):
         "bio": "Optional bio text"
     }
     """
-    
-    # Step 1: Job position
+
+    # Step 1: Current job position (optional - user might be a student)
     current_job_position = serializers.CharField(
-        max_length=100,
+        max_length=200,
+        required=False,
+        allow_blank=True,
+        default='',
+        help_text="Current job position"
+    )
+
+    # Step 1: Desired role (required - drives gap analysis and roadmap)
+    desired_role = serializers.CharField(
+        max_length=200,
         required=True,
-        help_text="Current or desired job position"
+        help_text="Target career role user wants to achieve"
     )
     
     # Step 2: Experience level
@@ -222,7 +232,8 @@ class StepByStepProfileSerializer(serializers.Serializer):
         
         # Update profile
         profile = user.profile
-        profile.current_job_position = validated_data['current_job_position']
+        profile.current_job_position = validated_data.get('current_job_position', '')
+        profile.desired_role = validated_data['desired_role']
         profile.experience_level = validated_data['experience_level']
         profile.bio = validated_data.get('bio', '')
         profile.profile_source = 'manual'

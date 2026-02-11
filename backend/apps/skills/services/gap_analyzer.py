@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Any
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from apps.skills.models import Skill, UserSkill, SkillGap, MarketTrend
 from apps.users.models import User, UserProfile
@@ -112,14 +112,15 @@ class SkillGapAnalyzer:
                 'user_skills': self.user_skill_names,
             }
 
-        # Get top skills from market
-        top_market_skills = self._get_top_market_skills(market_trends, limit=50)
+        # Get role-specific skills from actual job postings
+        role_skills, total_jobs = self._get_role_required_skills(target_role)
 
         # Use AI to analyze gaps
         ai_analysis = self._ai_analyze_gaps(
             target_role=target_role,
             user_skills=self.user_skill_names,
-            market_skills=top_market_skills,
+            role_skills=role_skills,
+            total_jobs=total_jobs,
             language=language
         )
 
@@ -135,6 +136,44 @@ class SkillGapAnalyzer:
             'analysis_summary': ai_analysis.get('summary', ''),
             'period': period,
         }
+
+    def _get_role_required_skills(
+        self,
+        target_role: str,
+        limit: int = 30
+    ) -> tuple:
+        """Get skills required by actual job postings matching target role."""
+        from apps.jobs.models import JobPosting, JobSkill
+
+        # Find jobs matching the target role (case-insensitive title search)
+        matching_jobs = JobPosting.objects.filter(
+            job_title__icontains=target_role,
+            is_active=True
+        )
+
+        total_jobs = matching_jobs.count()
+        if total_jobs == 0:
+            return [], 0
+
+        # Count how often each skill appears across these jobs
+        skill_stats = (
+            JobSkill.objects
+            .filter(job_posting__in=matching_jobs)
+            .values('skill__skill_id', 'skill__name_en', 'skill__category', 'importance')
+            .annotate(job_count=Count('job_posting', distinct=True))
+            .order_by('-job_count')[:limit]
+        )
+
+        return [
+            {
+                'name': s['skill__name_en'],
+                'category': s['skill__category'],
+                'job_count': s['job_count'],
+                'percentage': round(s['job_count'] / total_jobs * 100, 1),
+                'importance': s['importance'],
+            }
+            for s in skill_stats
+        ], total_jobs
 
     def _get_top_market_skills(
         self,
@@ -155,7 +194,7 @@ class SkillGapAnalyzer:
                 'category': t.skill.category,
                 'demand_score': t.demand_score,
                 'job_count': t.job_count,
-                'growth_rate': t.growth_rate,
+                'growth_rate': t.growth_rate or 0,
             }
             for t in sorted_trends
         ]
@@ -164,7 +203,8 @@ class SkillGapAnalyzer:
         self,
         target_role: str,
         user_skills: List[str],
-        market_skills: List[Dict],
+        role_skills: List[Dict] = None,
+        total_jobs: int = 0,
         language: str = 'en'
     ) -> Dict[str, Any]:
         """Use AI to analyze skill gaps."""
@@ -175,25 +215,33 @@ class SkillGapAnalyzer:
             'uz': "Respond in Uzbek (O'zbek tili).",
         }.get(language, 'Respond in English.')
 
-        # Prepare market skills summary
-        market_summary = "\n".join([
-            f"- {s['name']} (demand: {s['demand_score']:.1f}, jobs: {s['job_count']}, growth: {s['growth_rate']:.1f}%)"
-            for s in market_skills[:30]
-        ])
+        # Prepare role-specific skills from actual job postings
+        role_summary = ""
+        if role_skills:
+            role_summary = f"\nSKILLS REQUIRED BY \"{target_role}\" JOBS ({total_jobs} real job postings analyzed):\n"
+            role_summary += "\n".join([
+                f"- {s['name']}: required by {s['percentage']}% of jobs ({s['importance']}, {s['job_count']} postings)"
+                for s in role_skills
+            ])
+            role_summary += "\n"
 
         prompt = f"""Analyze skill gaps for a professional targeting the "{target_role}" role.
 
 CURRENT USER SKILLS:
 {', '.join(user_skills) if user_skills else 'No skills listed'}
-
-TOP MARKET DEMAND SKILLS:
-{market_summary}
-
+{role_summary}
 TASK:
-1. Identify which skills the user is MISSING that are important for "{target_role}"
-2. Classify each missing skill as "core" (essential) or "secondary" (nice-to-have)
-3. Prioritize based on market demand
-4. Provide actionable recommendations
+1. Based on the job postings data above, identify skills the user is MISSING that are DIRECTLY relevant to the "{target_role}" role
+2. ONLY include skills that a "{target_role}" would actually use day-to-day — do NOT include unrelated skills from other fields
+3. Classify each missing skill as "core" (essential, required by most jobs) or "secondary" (nice-to-have)
+4. Set priority: "high" for skills required by >50% of jobs, "medium" for 20-50%, "low" for <20%
+5. Provide actionable recommendations for learning order
+6. Return between 5 and 12 missing skills total — focus on the most important ones
+
+CRITICAL RULES:
+- ONLY recommend skills directly relevant to "{target_role}". For example, do NOT recommend graphic design tools for a developer role, or programming languages for a designer role.
+- If a skill from the job data is clearly unrelated to "{target_role}", skip it.
+- Focus on technical skills, tools, and frameworks that this specific role requires.
 
 {language_instruction}
 
@@ -204,7 +252,7 @@ Return ONLY valid JSON in this exact format:
             "skill_name": "Python",
             "importance": "core",
             "priority": "high",
-            "reason": "Essential for data analysis roles"
+            "reason": "Required by 85% of {target_role} jobs"
         }}
     ],
     "recommendations": [
@@ -218,7 +266,7 @@ Return ONLY valid JSON in this exact format:
             response = self.ollama.generate(
                 prompt=prompt,
                 temperature=0.2,
-                max_tokens=2000
+                max_tokens=3000
             )
 
             # Parse JSON from response
@@ -227,7 +275,7 @@ Return ONLY valid JSON in this exact format:
 
         except Exception as e:
             logger.error(f"AI analysis failed: {e}")
-            return self._fallback_analysis(user_skills, market_skills)
+            return self._fallback_analysis(user_skills, role_skills)
 
     def _parse_ai_response(self, response: str) -> Dict[str, Any]:
         """Parse AI response with multiple strategies."""
@@ -264,34 +312,36 @@ Return ONLY valid JSON in this exact format:
     def _fallback_analysis(
         self,
         user_skills: List[str],
-        market_skills: List[Dict]
+        role_skills: List[Dict] = None
     ) -> Dict[str, Any]:
         """Fallback analysis when AI is unavailable."""
 
         user_skills_lower = {s.lower() for s in user_skills}
-
         missing = []
-        for skill in market_skills:
-            if skill['name'].lower() not in user_skills_lower:
-                importance = 'core' if skill['demand_score'] > 50 else 'secondary'
-                priority = 'high' if skill['demand_score'] > 70 else (
-                    'medium' if skill['demand_score'] > 40 else 'low'
-                )
 
-                missing.append({
-                    'skill_name': skill['name'],
-                    'importance': importance,
-                    'priority': priority,
-                    'reason': f"High market demand ({skill['job_count']} jobs)"
-                })
+        # Use only role-specific skills from job postings (most relevant)
+        if role_skills:
+            for skill in role_skills:
+                if skill['name'].lower() not in user_skills_lower:
+                    importance = 'core' if skill['percentage'] > 30 else 'secondary'
+                    priority = 'high' if skill['percentage'] > 50 else (
+                        'medium' if skill['percentage'] > 20 else 'low'
+                    )
+                    missing.append({
+                        'skill_name': skill['name'],
+                        'importance': importance,
+                        'priority': priority,
+                        'reason': f"Required by {skill['percentage']}% of matching jobs ({skill['job_count']} postings)"
+                    })
 
         return {
-            'missing_skills': missing[:20],
+            'missing_skills': missing[:12],
             'recommendations': [
-                'Focus on high-demand skills first',
-                'Consider skills with positive growth rate',
+                'Focus on skills required by the most job postings for your target role',
+                'Start with core skills before moving to secondary ones',
+                'Consider skills with positive growth rate for future-proofing',
             ],
-            'summary': f'Found {len(missing)} potential skill gaps based on market demand.'
+            'summary': f'Found {len(missing)} potential skill gaps based on job postings and market demand.'
         }
 
     def _process_and_save_gaps(

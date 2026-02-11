@@ -136,11 +136,11 @@ function QuickStats({ skills, careerStatus, recommendations }) {
 function YourSkills({ skills }) {
   if (!skills || skills.length === 0) {
     return (
-      <Section title="Your Skills" actionLabel="Add Skills" actionTo="/profile-manual">
+      <Section title="Your Skills" actionLabel="Add Skills" actionTo="/manage-skills">
         <div className="text-center py-10 text-gray-400">
           <Code2 className="w-10 h-10 mx-auto mb-3 opacity-50" />
           <p className="text-sm">No skills added yet.</p>
-          <Link to="/profile-manual" className="text-primary-600 text-sm font-medium no-underline hover:underline mt-1 inline-block">
+          <Link to="/manage-skills" className="text-primary-600 text-sm font-medium no-underline hover:underline mt-1 inline-block">
             Add your skills
           </Link>
         </div>
@@ -152,7 +152,7 @@ function YourSkills({ skills }) {
   const sorted = [...skills].sort((a, b) => order.indexOf(a.proficiency_level) - order.indexOf(b.proficiency_level));
 
   return (
-    <Section title="Your Skills" actionLabel="View All" actionTo="/profile-manual">
+    <Section title="Your Skills" actionLabel="View All" actionTo="/manage-skills">
       <div className="flex flex-wrap gap-2">
         {sorted.map((s) => {
           const colors = PROFICIENCY_COLORS[s.proficiency_level] || PROFICIENCY_COLORS.beginner;
