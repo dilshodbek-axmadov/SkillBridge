@@ -66,7 +66,7 @@ function PageHeader({ overview }) {
         </h1>
       </div>
       <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-        Real-time insights from <span className="font-semibold text-gray-700">{totalJobs.toLocaleString()}</span> active job postings across Uzbekistan IT market
+        Real-time insights from <span className="font-semibold text-gray-700 dark:text-gray-300">{totalJobs.toLocaleString()}</span> active job postings across Uzbekistan IT market
       </p>
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
         <Clock className="w-3 h-3" />
@@ -134,7 +134,7 @@ function OverviewStats({ overview }) {
             {c.icon}
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{c.value}</p>
-          <p className="text-sm font-medium text-gray-600 mt-0.5">{c.label}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mt-0.5">{c.label}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{c.sub}</p>
         </div>
       ))}
@@ -171,7 +171,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer transition-colors ${
               period === p
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : p === '90d' ? '90 Days' : 'All Time'}
@@ -193,7 +193,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
           </div>
 
           {skills.map((s, i) => (
-            <div key={s.skill_id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">
+            <div key={s.skill_id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <div className="col-span-1">
                 <span className={`text-xs font-bold ${i < 3 ? 'text-primary-600' : 'text-gray-400'}`}>
                   {s.rank}
@@ -201,7 +201,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
               </div>
               <div className="col-span-4">
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{s.skill_name}</p>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${CATEGORY_COLORS[s.category] || 'bg-gray-100 text-gray-600'}`}>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${CATEGORY_COLORS[s.category] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200'}`}>
                   {(s.category || 'other').replace(/_/g, ' ')}
                 </span>
               </div>
@@ -210,7 +210,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
                 <MiniBar value={s.job_count} max={maxJobCount} />
               </div>
               <div className="col-span-2 text-right">
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {s.avg_salary ? `${formatSalary(s.avg_salary)}` : '—'}
                 </p>
                 {s.avg_salary && <p className="text-[10px] text-gray-400 dark:text-gray-500">UZS</p>}
@@ -254,11 +254,11 @@ function JobCategories({ categories }) {
                 <MiniBar value={cat.job_count} max={maxCount} color={COLORS[i % COLORS.length]} />
               </div>
               <div className="w-16 text-right flex-shrink-0">
-                <span className="text-sm font-bold text-gray-700">{cat.job_count}</span>
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{cat.job_count}</span>
               </div>
               <div className="w-24 text-right flex-shrink-0 hidden sm:block">
                 {cat.avg_salary_min ? (
-                  <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {formatSalary(cat.avg_salary_min)} – {formatSalary(cat.avg_salary_max)}
                   </span>
                 ) : (
@@ -300,7 +300,7 @@ function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer transition-colors ${
               expFilter === opt.value
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {opt.label}
@@ -319,7 +319,7 @@ function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
             const barMax = avgMax ? (avgMax / (data[0]?.salary_max || avgMax || 1)) * 100 : 0;
 
             return (
-              <div key={i} className="bg-gray-50 rounded-lg px-4 py-3 hover:bg-gray-100 transition-colors">
+              <div key={i} className="bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{s.job_title}</p>
@@ -334,7 +334,7 @@ function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
                 </div>
 
                 {/* Salary range bar */}
-                <div className="relative w-full h-2 bg-gray-200 rounded-full">
+                <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                   <div
                     className="absolute h-2 bg-gradient-to-r from-primary-400 to-purple-500 rounded-full"
                     style={{
@@ -404,7 +404,7 @@ function ExperienceDistribution({ distribution }) {
           <div key={e.key} className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-sm ${e.color} flex-shrink-0`} />
             <div>
-              <p className="text-xs font-medium text-gray-700">{e.label}</p>
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{e.label}</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">{e.count.toLocaleString()} ({e.pct.toFixed(1)}%)</p>
             </div>
           </div>
@@ -425,12 +425,12 @@ function TopSkillsByCategory({ categories }) {
     <Section title="Top Skills by Category" subtitle="Most requested skills in each job category">
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {withSkills.map((cat) => (
-          <div key={cat.category} className="bg-gray-50 rounded-xl p-4">
+          <div key={cat.category} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
             <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-3">{cat.category}</h4>
             <div className="space-y-2">
               {cat.top_skills.slice(0, 5).map((skill, i) => (
                 <div key={skill.skill_id || i} className="flex items-center justify-between">
-                  <span className="text-xs text-gray-700">{skill.name}</span>
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{skill.name}</span>
                   <span className="text-xs font-medium text-primary-600">{skill.count} jobs</span>
                 </div>
               ))}
@@ -467,7 +467,7 @@ function TopJobTitles({ titles, period, onPeriodChange }) {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer transition-colors ${
               period === p
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : p === '90d' ? '90 Days' : 'All Time'}
@@ -480,9 +480,9 @@ function TopJobTitles({ titles, period, onPeriodChange }) {
       ) : (
         <div className="space-y-2.5">
           {titles.map((t, i) => (
-            <div key={t.job_title} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">
+            <div key={t.job_title} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                i < 3 ? RANK_COLORS[i] : 'bg-gray-200 text-gray-500'
+                i < 3 ? RANK_COLORS[i] : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
               }`}>
                 {i + 1}
               </div>
@@ -493,7 +493,7 @@ function TopJobTitles({ titles, period, onPeriodChange }) {
                 </div>
               </div>
               <div className="flex-shrink-0 text-right">
-                <span className="text-sm font-bold text-gray-700">{t.count}</span>
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{t.count}</span>
                 <p className="text-[10px] text-gray-400 dark:text-gray-500">posts</p>
               </div>
             </div>
@@ -612,7 +612,7 @@ export default function MarketAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     );
@@ -620,10 +620,10 @@ export default function MarketAnalyticsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-          <p className="text-gray-600">{error}</p>
+          <p className="text-gray-600 dark:text-gray-300">{error}</p>
           <button onClick={() => window.location.reload()} className="mt-3 text-primary-600 text-sm font-medium underline bg-transparent border-none cursor-pointer">
             Retry
           </button>

@@ -10,10 +10,10 @@ import api from '../services/api';
 
 /* ─── constants ──────────────────────────────── */
 const PROFICIENCY_LEVELS = [
-  { value: 'beginner',     label: 'Beginner',     color: 'bg-gray-100 text-gray-600 border-gray-200',     active: 'bg-gray-600 text-white border-gray-600' },
-  { value: 'intermediate', label: 'Intermediate', color: 'bg-amber-50 text-amber-600 border-amber-200',   active: 'bg-amber-500 text-white border-amber-500' },
-  { value: 'advanced',     label: 'Advanced',     color: 'bg-blue-50 text-blue-600 border-blue-200',      active: 'bg-blue-600 text-white border-blue-600' },
-  { value: 'expert',       label: 'Expert',       color: 'bg-emerald-50 text-emerald-600 border-emerald-200', active: 'bg-emerald-600 text-white border-emerald-600' },
+  { value: 'beginner',     label: 'Beginner',     color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700',     active: 'bg-gray-600 dark:bg-gray-700 text-white border-gray-600 dark:border-gray-600' },
+  { value: 'intermediate', label: 'Intermediate', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',   active: 'bg-amber-500/90 dark:bg-amber-700 text-white border-amber-500 dark:border-amber-700' },
+  { value: 'advanced',     label: 'Advanced',     color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',      active: 'bg-blue-600/90 dark:bg-blue-700 text-white border-blue-600 dark:border-blue-700' },
+  { value: 'expert',       label: 'Expert',       color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800', active: 'bg-emerald-600/90 dark:bg-emerald-700 text-white border-emerald-600 dark:border-emerald-700' },
 ];
 
 const CATEGORY_LABELS = {
@@ -217,7 +217,7 @@ export default function ManageSkillsPage() {
   /* ─── loading / error ──────────────────── */
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400 text-sm">Loading your skills...</p>
@@ -227,10 +227,10 @@ export default function ManageSkillsPage() {
   }
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-          <p className="text-gray-600">{error}</p>
+          <p className="text-gray-600 dark:text-gray-300">{error}</p>
           <button onClick={() => window.location.reload()} className="mt-4 px-5 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors">
             Retry
           </button>
@@ -246,12 +246,12 @@ export default function ManageSkillsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-600 transition-colors no-underline">
+              <Link to="/dashboard" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors no-underline">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">My Skills</h1>
             </div>
-            <p className="text-sm text-gray-500 ml-7">
+            <p className="text-sm text-gray-500 dark:text-gray-400 ml-7">
               {mySkills.length} skill{mySkills.length !== 1 ? 's' : ''} in your profile
             </p>
           </div>
@@ -259,7 +259,7 @@ export default function ManageSkillsPage() {
             onClick={() => setShowAddPanel(!showAddPanel)}
             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
               showAddPanel
-                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
                 : 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm shadow-primary-600/20'
             }`}
           >
@@ -287,7 +287,7 @@ export default function ManageSkillsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search skills (e.g. Python, React, Docker...)"
-                className="w-full pl-12 pr-10 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 transition-colors"
+                className="w-full pl-12 pr-10 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none focus:border-primary-500 transition-colors"
               />
               {searching && (
                 <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-500 animate-spin" />
@@ -295,7 +295,7 @@ export default function ManageSkillsPage() {
               {searchQuery && !searching && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-transparent border-none cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -310,7 +310,7 @@ export default function ManageSkillsPage() {
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                     !activeCategory
                       ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
                   All
@@ -322,7 +322,7 @@ export default function ManageSkillsPage() {
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                       activeCategory === cat.value
                         ? 'border-primary-500 bg-primary-50 text-primary-700'
-                        : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
                     {cat.label}
@@ -350,8 +350,8 @@ export default function ManageSkillsPage() {
                         isAdded
                           ? 'border-primary-300 bg-primary-50 text-primary-600 font-semibold cursor-default opacity-70'
                           : isAdding
-                            ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-wait'
-                            : 'border-gray-200 bg-white text-gray-700 hover:border-primary-300 hover:bg-primary-50'
+                            ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-wait'
+                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1">
@@ -398,7 +398,7 @@ export default function ManageSkillsPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{skillName}</h3>
                         {catLabel && (
-                          <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-semibold uppercase">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 rounded text-[10px] font-semibold uppercase">
                             {catLabel}
                           </span>
                         )}
@@ -436,7 +436,7 @@ export default function ManageSkillsPage() {
                         className={`p-2 rounded-lg border transition-all cursor-pointer ${
                           s.is_primary
                             ? 'bg-amber-50 border-amber-200 text-amber-500 hover:bg-amber-100'
-                            : 'bg-white border-gray-200 text-gray-300 hover:text-amber-400 hover:border-amber-200'
+                            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-500 hover:text-amber-400 dark:hover:text-amber-300 hover:border-amber-200 dark:hover:border-amber-800'
                         }`}
                       >
                         <Star className="w-4 h-4" fill={s.is_primary ? 'currentColor' : 'none'} />
@@ -444,7 +444,7 @@ export default function ManageSkillsPage() {
                       <button
                         onClick={() => setDeleteTarget(s.user_skill_id)}
                         title="Remove skill"
-                        className="p-2 rounded-lg border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer"
+                        className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -460,18 +460,18 @@ export default function ManageSkillsPage() {
       {/* delete confirmation modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setDeleteTarget(null)}>
-          <div className="bg-white rounded-2xl p-6 max-w-sm mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 max-w-sm mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="text-base font-bold text-gray-900 text-center mb-1">Remove Skill</h3>
-            <p className="text-sm text-gray-500 text-center mb-5">
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 text-center mb-1">Remove Skill</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-5">
               Are you sure you want to remove this skill from your profile?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-50 transition-colors bg-white dark:bg-gray-800"
+                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-gray-800"
               >
                 Cancel
               </button>

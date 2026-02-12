@@ -18,9 +18,10 @@ import ManageSkillsPage from './pages/ManageSkillsPage';
 import LearningRoadmapPage from './pages/LearningRoadmapPage';
 import CVBuilderPage from './pages/CVBuilderPage';
 import ChatbotPage from './pages/ChatbotPage';
+import ProjectIdeasPage from './pages/ProjectIdeasPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
-const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills', '/roadmap', '/cv-builder', '/chat'];
+const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills', '/roadmap', '/cv-builder', '/chat', '/project-ideas'];
 
 function AppLayout() {
   const location = useLocation();
@@ -45,6 +46,7 @@ function AppLayout() {
         <Route path="/roadmap" element={<LearningRoadmapPage />} />
         <Route path="/cv-builder" element={<CVBuilderPage />} />
         <Route path="/chat" element={<ChatbotPage />} />
+        <Route path="/project-ideas" element={<ProjectIdeasPage />} />
       </Routes>
     );
   }

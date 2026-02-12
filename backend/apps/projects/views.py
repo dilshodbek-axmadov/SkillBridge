@@ -184,6 +184,38 @@ class UserProjectsView(APIView):
         })
 
 
+class AllProjectsView(APIView):
+    """
+    GET /api/v1/projects/all/
+
+    List all project ideas with optional filters.
+
+    Query params:
+    - difficulty_level: filter by difficulty
+    - search: search title/description
+    - limit: max results (default 50)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        difficulty = request.query_params.get('difficulty_level')
+        search = request.query_params.get('search', '')
+        limit = int(request.query_params.get('limit', 50))
+
+        generator = ProjectIdeaGenerator(user=request.user)
+        projects = generator.get_all_projects(
+            difficulty_level=difficulty,
+            search=search,
+            limit=limit,
+        )
+
+        return Response({
+            'count': len(projects),
+            'projects': projects,
+        })
+
+
 class ProjectDetailView(APIView):
     """
     GET /api/v1/projects/{project_id}/

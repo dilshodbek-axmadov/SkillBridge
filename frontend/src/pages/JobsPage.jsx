@@ -68,7 +68,7 @@ function JobCard({ job, showMatch }) {
   const missing = job.missing_skills || [];
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-md hover:border-gray-200 transition-all group">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700 transition-all group">
       <div className="flex gap-4">
         {/* Match ring */}
         {showMatch && job.match_percentage != null && (
@@ -81,7 +81,7 @@ function JobCard({ job, showMatch }) {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{job.job_title}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">{job.company_name || 'Company'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{job.company_name || 'Company'}</p>
             </div>
             <a
               href={job.job_url}
@@ -98,22 +98,22 @@ function JobCard({ job, showMatch }) {
           {/* Meta badges */}
           <div className="flex flex-wrap items-center gap-2 mt-3">
             {job.location && (
-              <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+              <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
                 <MapPin className="w-3 h-3" />{job.location}
               </span>
             )}
             {job.is_remote && (
-              <span className="flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">
+              <span className="flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg">
                 <Wifi className="w-3 h-3" />Remote
               </span>
             )}
             {job.experience_required && (
-              <span className="flex items-center gap-1 text-xs text-purple-700 bg-purple-50 px-2 py-1 rounded-lg">
+              <span className="flex items-center gap-1 text-xs text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-lg">
                 <Star className="w-3 h-3" />{job.experience_required.replace('_', ' ')}
               </span>
             )}
             {salary && (
-              <span className="flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-lg font-medium">
+              <span className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg font-medium">
                 <DollarSign className="w-3 h-3" />{salary}
               </span>
             )}
@@ -128,24 +128,26 @@ function JobCard({ job, showMatch }) {
           {showMatch && (matched.length > 0 || missing.length > 0) ? (
             <div className="flex flex-wrap gap-1.5 mt-3">
               {matched.map((s) => (
-                <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium">{s}</span>
+                <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-medium">{s}</span>
               ))}
               {missing.slice(0, 3).map((s) => (
-                <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-500 font-medium">{s}</span>
+                <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-300 font-medium">{s}</span>
               ))}
               {missing.length > 3 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 dark:text-gray-500">+{missing.length - 3} more</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">+{missing.length - 3} more</span>
               )}
             </div>
           ) : skills.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 mt-3">
               {skills.slice(0, 6).map((s) => (
                 <span key={s.skill_id} className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                  s.importance === 'core' ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 text-gray-500'
+                  s.importance === 'core'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
                 }`}>{s.name}</span>
               ))}
               {skills.length > 6 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 dark:text-gray-500">+{skills.length - 6}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">+{skills.length - 6}</span>
               )}
             </div>
           ) : null}
@@ -163,7 +165,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           <Filter className="w-4 h-4 text-gray-400 dark:text-gray-500" /> Filters
         </h3>
         {hasFilters && (
@@ -181,7 +183,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
           value={filters.q}
           onChange={(e) => onChange('q', e.target.value)}
           placeholder="Search jobs..."
-          className="w-full h-10 pl-9 pr-3 rounded-xl border border-gray-200 text-sm text-gray-900 outline-none
+          className="w-full h-10 pl-9 pr-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none
             focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
         />
       </div>
@@ -192,7 +194,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
         <select
           value={filters.category}
           onChange={(e) => onChange('category', e.target.value)}
-          className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white outline-none
+          className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none
             focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
         >
           <option value="">All categories</option>
@@ -208,7 +210,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
         <select
           value={filters.experience}
           onChange={(e) => onChange('experience', e.target.value)}
-          className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white outline-none
+          className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none
             focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
         >
           <option value="">All levels</option>
@@ -224,7 +226,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
         <select
           value={filters.location}
           onChange={(e) => onChange('location', e.target.value)}
-          className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white outline-none
+          className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none
             focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
         >
           <option value="">All locations</option>
@@ -236,12 +238,12 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
 
       {/* Remote */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-700">Remote only</span>
+        <span className="text-sm text-gray-700 dark:text-gray-300">Remote only</span>
         <button
           type="button"
           onClick={() => onChange('is_remote', filters.is_remote ? '' : 'true')}
           className={`relative w-10 h-5.5 rounded-full transition-colors border-none cursor-pointer ${
-            filters.is_remote ? 'bg-primary-600' : 'bg-gray-300'
+            filters.is_remote ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-700'
           }`}
           style={{ width: 40, height: 22 }}
         >
@@ -257,7 +259,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
         <select
           value={filters.sort}
           onChange={(e) => onChange('sort', e.target.value)}
-          className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white outline-none
+          className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none
             focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
         >
           <option value="posted_date">Most recent</option>
@@ -398,7 +400,7 @@ export default function JobsPage() {
             className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
               tab === 'recommended'
                 ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
-                : 'bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             For You
@@ -408,7 +410,7 @@ export default function JobsPage() {
             className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
               tab === 'all'
                 ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
-                : 'bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             All Jobs
@@ -419,8 +421,8 @@ export default function JobsPage() {
         {tab === 'all' && (
           <button
             onClick={() => setMobileFilters(!mobileFilters)}
-            className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium
-              border-none cursor-pointer hover:bg-gray-200 transition-colors"
+            className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-medium
+              border-none cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             <Filter className="w-4 h-4" />
             Filters
@@ -439,7 +441,7 @@ export default function JobsPage() {
           ) : jobs.length === 0 ? (
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
               <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {tab === 'recommended'
                   ? 'No matching jobs found. Add more skills to your profile for better recommendations.'
                   : 'No jobs found matching your filters. Try adjusting your search criteria.'}
@@ -461,8 +463,8 @@ export default function JobsPage() {
                   <button
                     onClick={loadMore}
                     disabled={loadingMore}
-                    className="h-10 px-6 bg-white text-primary-600 border border-primary-200 rounded-xl text-sm font-semibold
-                      cursor-pointer hover:bg-primary-50 disabled:opacity-60 transition-all"
+                    className="h-10 px-6 bg-white dark:bg-gray-900 text-primary-600 dark:text-primary-300 border border-primary-200 dark:border-primary-800 rounded-xl text-sm font-semibold
+                      cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20 disabled:opacity-60 transition-all"
                   >
                     {loadingMore ? 'Loading...' : `Load more (${allTotal - allJobs.length} remaining)`}
                   </button>
@@ -491,12 +493,12 @@ export default function JobsPage() {
             {mobileFilters && (
               <div className="fixed inset-0 z-40 lg:hidden">
                 <div className="fixed inset-0 bg-black/30" onClick={() => setMobileFilters(false)} />
-                <div className="fixed inset-y-0 right-0 w-[300px] bg-gray-50 shadow-xl z-50 overflow-y-auto p-4">
+                <div className="fixed inset-y-0 right-0 w-[300px] bg-gray-50 dark:bg-gray-900 shadow-xl z-50 overflow-y-auto p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-gray-800">Filters</h3>
+                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">Filters</h3>
                     <button
                       onClick={() => setMobileFilters(false)}
-                      className="p-1 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-transparent border-none cursor-pointer"
                     >
                       <X className="w-5 h-5" />
                     </button>

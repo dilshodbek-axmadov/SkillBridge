@@ -24,6 +24,30 @@ from apps.cv.serializers import (
 )
 
 
+def _build_export_response(cv, export_format):
+    """Build file download response for a CV export request."""
+    export_service = CVExportService(cv)
+
+    if export_format == 'pdf':
+        buffer = export_service.export_pdf()
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type='application/pdf',
+        )
+        filename = f"{cv.title.replace(' ', '_')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    buffer = export_service.export_docx()
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    )
+    filename = f"{cv.title.replace(' ', '_')}.docx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
 class CreateCVView(APIView):
     """
     POST /api/v1/cv/create/
@@ -63,6 +87,21 @@ class CVDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, cv_id):
+        # Backward-compatible export fallback via detail route:
+        # GET /api/v1/cv/{cv_id}/?download=1&export_format=pdf|docx
+        if request.query_params.get('download') in ('1', 'true', 'True'):
+            serializer = ExportCVRequestSerializer(data=request.query_params)
+            serializer.is_valid(raise_exception=True)
+            export_format = serializer.validated_data.get('export_format', 'pdf')
+            try:
+                cv = CV.objects.prefetch_related('cv_sections').get(cv_id=cv_id, user=request.user)
+            except CV.DoesNotExist:
+                return Response(
+                    {'error': 'CV not found.'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return _build_export_response(cv, export_format)
+
         try:
             service = CVService(user=request.user)
             cv = service.get_cv_detail(cv_id)
@@ -230,7 +269,7 @@ class ExportCVView(APIView):
     def get(self, request, cv_id):
         serializer = ExportCVRequestSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
-        export_format = serializer.validated_data.get('format', 'pdf')
+        export_format = serializer.validated_data.get('export_format', 'pdf')
 
         try:
             cv = CV.objects.prefetch_related(
@@ -242,27 +281,7 @@ class ExportCVView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        export_service = CVExportService(cv)
-
-        if export_format == 'pdf':
-            buffer = export_service.export_pdf()
-            response = HttpResponse(
-                buffer.getvalue(),
-                content_type='application/pdf',
-            )
-            filename = f"{cv.title.replace(' ', '_')}.pdf"
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
-
-        else:  # docx
-            buffer = export_service.export_docx()
-            response = HttpResponse(
-                buffer.getvalue(),
-                content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            )
-            filename = f"{cv.title.replace(' ', '_')}.docx"
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
+        return _build_export_response(cv, export_format)
 
 
 class TemplateListView(APIView):

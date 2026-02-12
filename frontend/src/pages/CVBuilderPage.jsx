@@ -41,9 +41,9 @@ const TEMPLATE_ORDERS = {
 
 const PROFICIENCY_OPTIONS = ['Native', 'Fluent', 'Professional', 'Intermediate', 'Basic'];
 
-const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all';
+const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all';
 const btnPrimary = 'inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors disabled:opacity-50';
-const btnOutline = 'inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-semibold border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50';
+const btnOutline = 'inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-semibold border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50';
 
 /* ═══════════════════════════════════════════
    Main Page
@@ -195,10 +195,12 @@ export default function CVBuilderPage() {
   const handleDownload = async (format) => {
     if (!cv) return;
     try {
+      // Use export_format (not format) — DRF reserves ?format= for content negotiation
       const response = await api.get(`/cv/${cv.cv_id}/export/`, {
-        params: { format },
+        params: { export_format: format },
         responseType: 'blob',
       });
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -261,7 +263,7 @@ export default function CVBuilderPage() {
             className={`flex-1 py-2 rounded-lg text-sm font-semibold border-none cursor-pointer transition-colors ${
               activeTab === 'edit'
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-600'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
             }`}
           >
             <Pen className="w-4 h-4 inline mr-1.5" />Edit
@@ -271,7 +273,7 @@ export default function CVBuilderPage() {
             className={`flex-1 py-2 rounded-lg text-sm font-semibold border-none cursor-pointer transition-colors ${
               activeTab === 'preview'
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-600'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
             }`}
           >
             <Eye className="w-4 h-4 inline mr-1.5" />Preview
@@ -341,7 +343,7 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
         <FileText className="w-10 h-10 text-primary-500" />
       </div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Build Your Professional CV</h1>
-      <p className="text-gray-500 text-center max-w-md mb-8">
+      <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-8">
         Create an ATS-friendly CV in minutes using your profile data, skills, and projects.
       </p>
 
@@ -354,7 +356,7 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
             className={`px-4 py-2 rounded-xl text-sm font-medium border-2 cursor-pointer transition-all ${
               template === key
                 ? 'border-primary-500 bg-primary-50 text-primary-700'
-                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
             {t.name}
@@ -412,7 +414,7 @@ function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onDownload 
         <select
           value={template}
           onChange={(e) => onTemplateSwitch(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 cursor-pointer"
+          className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 cursor-pointer"
         >
           {Object.entries(TEMPLATES).map(([key, t]) => (
             <option key={key} value={key}>{t.name} Template</option>
@@ -439,8 +441,8 @@ function SectionCard({
   const Icon = meta.icon;
 
   return (
-    <div className={`bg-white rounded-xl border transition-all ${
-      isOpen ? 'border-primary-200 shadow-sm' : 'border-gray-100'
+    <div className={`bg-white dark:bg-gray-900 rounded-xl border transition-all ${
+      isOpen ? 'border-primary-200 dark:border-primary-800 shadow-sm' : 'border-gray-100 dark:border-gray-800'
     }`}>
       {/* Header */}
       <div
@@ -448,12 +450,12 @@ function SectionCard({
         onClick={onToggle}
       >
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-          section.is_visible ? 'bg-primary-50' : 'bg-gray-100'
+          section.is_visible ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-gray-100 dark:bg-gray-800'
         }`}>
           <Icon className={`w-4 h-4 ${section.is_visible ? 'text-primary-600' : 'text-gray-400'}`} />
         </div>
         <span className={`flex-1 text-sm font-semibold ${
-          section.is_visible ? 'text-gray-900' : 'text-gray-400'
+          section.is_visible ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
         }`}>
           {meta.label}
         </span>
@@ -463,7 +465,7 @@ function SectionCard({
           {!meta.required && (
             <button
               onClick={onVisibilityToggle}
-              className="p-1.5 rounded-md hover:bg-gray-100 transition-colors bg-transparent border-none cursor-pointer"
+              className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer"
               title={section.is_visible ? 'Hide section' : 'Show section'}
             >
               {section.is_visible ? (
@@ -474,12 +476,12 @@ function SectionCard({
             </button>
           )}
           {!isFirst && (
-            <button onClick={onMoveUp} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors bg-transparent border-none cursor-pointer" title="Move up">
+            <button onClick={onMoveUp} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer" title="Move up">
               <ArrowUp className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             </button>
           )}
           {!isLast && (
-            <button onClick={onMoveDown} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors bg-transparent border-none cursor-pointer" title="Move down">
+            <button onClick={onMoveDown} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer" title="Move down">
               <ArrowDown className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             </button>
           )}
@@ -494,7 +496,7 @@ function SectionCard({
 
       {/* Body */}
       {isOpen && (
-        <div className="px-3.5 pb-4 border-t border-gray-50 pt-3">
+        <div className="px-3.5 pb-4 border-t border-gray-50 dark:border-gray-800 pt-3">
           <SectionEditor
             sectionType={section.section_type}
             content={section.content || {}}
@@ -591,7 +593,7 @@ function SummaryEditor({ content, onChange }) {
         placeholder="A brief professional summary highlighting your key qualifications and career goals..."
         maxLength={maxLen}
       />
-      <p className="text-xs text-gray-400 text-right mt-1">{text.length}/{maxLen}</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500 text-right mt-1">{text.length}/{maxLen}</p>
     </div>
   );
 }
@@ -628,7 +630,7 @@ function ExperienceEditor({ content, onChange }) {
   return (
     <div className="space-y-4">
       {positions.map((pos, idx) => (
-        <div key={idx} className="bg-gray-50 rounded-lg p-3 space-y-2.5 relative">
+        <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2.5 relative">
           <button onClick={() => removePos(idx)} className="absolute top-2 right-2 p-1 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
@@ -639,7 +641,7 @@ function ExperienceEditor({ content, onChange }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input className={inputCls} value={pos.start_date || ''} onChange={(e) => updatePos(idx, 'start_date', e.target.value)} placeholder="Start (e.g. Jan 2023)" />
             <input className={inputCls} value={pos.end_date || ''} onChange={(e) => updatePos(idx, 'end_date', e.target.value)} placeholder="End (e.g. Dec 2024)" disabled={pos.current} />
-            <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <input type="checkbox" checked={pos.current || false} onChange={(e) => updatePos(idx, 'current', e.target.checked)} className="rounded" />
               Currently working here
             </label>
@@ -690,7 +692,7 @@ function EducationEditor({ content, onChange }) {
   return (
     <div className="space-y-4">
       {degrees.map((deg, idx) => (
-        <div key={idx} className="bg-gray-50 rounded-lg p-3 space-y-2.5 relative">
+        <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2.5 relative">
           <button onClick={() => removeDeg(idx)} className="absolute top-2 right-2 p-1 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
@@ -737,7 +739,7 @@ function SkillsEditor({ content, onChange }) {
   return (
     <div className="space-y-3">
       {categories.map((cat, idx) => (
-        <div key={idx} className="bg-gray-50 rounded-lg p-3 space-y-2 relative">
+        <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2 relative">
           <button onClick={() => removeCat(idx)} className="absolute top-2 right-2 p-1 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
@@ -789,7 +791,7 @@ function ProjectsEditor({ content, onChange }) {
   return (
     <div className="space-y-4">
       {projects.map((proj, idx) => (
-        <div key={idx} className="bg-gray-50 rounded-lg p-3 space-y-2.5 relative">
+        <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2.5 relative">
           <button onClick={() => removeProj(idx)} className="absolute top-2 right-2 p-1 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
@@ -846,7 +848,7 @@ function CertificationsEditor({ content, onChange }) {
   return (
     <div className="space-y-4">
       {certs.map((cert, idx) => (
-        <div key={idx} className="bg-gray-50 rounded-lg p-3 space-y-2.5 relative">
+        <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2.5 relative">
           <button onClick={() => removeCert(idx)} className="absolute top-2 right-2 p-1 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
@@ -933,7 +935,7 @@ function AwardsEditor({ content, onChange }) {
   return (
     <div className="space-y-4">
       {awards.map((aw, idx) => (
-        <div key={idx} className="bg-gray-50 rounded-lg p-3 space-y-2.5 relative">
+        <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2.5 relative">
           <button onClick={() => removeAward(idx)} className="absolute top-2 right-2 p-1 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
@@ -960,9 +962,9 @@ function PreviewPanel({ sections, template }) {
   const visible = sections.filter((s) => s.is_visible !== false);
 
   return (
-    <div className="bg-gray-100 rounded-2xl p-4">
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4">
       <div
-        className="bg-white shadow-lg mx-auto"
+        className="bg-white shadow-lg mx-auto border border-gray-200 dark:border-gray-700"
         style={{
           width: '100%',
           maxWidth: 595, // A4-ish
@@ -1210,20 +1212,20 @@ function DownloadModal({ cv, onDownload, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
-        <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 bg-transparent border-none cursor-pointer">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl max-w-md w-full mx-4 p-6">
+        <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 bg-transparent border-none cursor-pointer">
           <X className="w-5 h-5 text-gray-400 dark:text-gray-500" />
         </button>
 
         <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mx-auto mb-4">
           <Download className="w-6 h-6 text-primary-600" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 text-center mb-1">Download CV</h3>
-        <p className="text-sm text-gray-500 text-center mb-6">{cv.title}</p>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-center mb-1">Download CV</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">{cv.title}</p>
 
         <div className="space-y-3 mb-6">
           <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-            format === 'pdf' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
+            format === 'pdf' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700'
           }`}>
             <input type="radio" name="format" value="pdf" checked={format === 'pdf'} onChange={() => setFormat('pdf')} className="sr-only" />
             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
@@ -1231,12 +1233,12 @@ function DownloadModal({ cv, onDownload, onClose }) {
             </div>
             <div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">PDF Format</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Best for sharing and printing</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Best for sharing and printing</div>
             </div>
           </label>
 
           <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-            format === 'docx' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
+            format === 'docx' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700'
           }`}>
             <input type="radio" name="format" value="docx" checked={format === 'docx'} onChange={() => setFormat('docx')} className="sr-only" />
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -1244,7 +1246,7 @@ function DownloadModal({ cv, onDownload, onClose }) {
             </div>
             <div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">Word Document</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Editable in Microsoft Word</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Editable in Microsoft Word</div>
             </div>
           </label>
         </div>

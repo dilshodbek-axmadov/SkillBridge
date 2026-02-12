@@ -338,6 +338,27 @@ Generate exactly {count} project ideas. Return ONLY the JSON array:"""
 
         return saved_projects
 
+    def get_all_projects(
+        self,
+        difficulty_level: Optional[str] = None,
+        search: str = '',
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Get all project ideas with optional filters."""
+
+        queryset = ProjectIdea.objects.all().prefetch_related('project_skills__skill')
+
+        if difficulty_level:
+            queryset = queryset.filter(difficulty_level=difficulty_level)
+
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | Q(description__icontains=search)
+            )
+
+        queryset = queryset.order_by('-created_at')
+        return self._serialize_projects(queryset[:limit])
+
     def get_projects_for_role(
         self,
         role_name: str,
@@ -353,22 +374,24 @@ Generate exactly {count} project ideas. Return ONLY the JSON array:"""
         if difficulty_level:
             queryset = queryset.filter(difficulty_level=difficulty_level)
 
-        projects = []
-        for project in queryset[:limit]:
+        return self._serialize_projects(queryset[:limit])
+
+    def _serialize_projects(self, projects) -> List[Dict[str, Any]]:
+        """Serialize a queryset/list of ProjectIdea instances."""
+
+        # Prefetch user project statuses in one query
+        user_project_map = {}
+        if self.user:
+            project_ids = [p.project_id for p in projects]
+            for up in UserProject.objects.filter(user=self.user, project_id__in=project_ids):
+                user_project_map[up.project_id] = up.status
+
+        result = []
+        for project in projects:
             core = [ps.skill.name_en for ps in project.project_skills.filter(importance='core')]
             secondary = [ps.skill.name_en for ps in project.project_skills.filter(importance='secondary')]
 
-            # Check if user has started this project
-            user_status = None
-            if self.user:
-                user_project = UserProject.objects.filter(
-                    user=self.user,
-                    project=project
-                ).first()
-                if user_project:
-                    user_status = user_project.status
-
-            projects.append({
+            result.append({
                 'project_id': project.project_id,
                 'title': project.title,
                 'description': project.description,
@@ -377,11 +400,11 @@ Generate exactly {count} project ideas. Return ONLY the JSON array:"""
                 'estimated_hours': project.estimated_hours,
                 'core_skills': core,
                 'secondary_skills': secondary,
-                'user_status': user_status,
+                'user_status': user_project_map.get(project.project_id),
                 'created_at': project.created_at.isoformat(),
             })
 
-        return projects
+        return result
 
     def get_project_skills(self, project_id: int) -> Optional[Dict[str, Any]]:
         """Get skills for a specific project."""

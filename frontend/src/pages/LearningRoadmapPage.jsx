@@ -14,16 +14,16 @@ import api from '../services/api';
 /* ──────────────────────────── helpers ──────────────────────────── */
 
 const PRIORITY_STYLES = {
-  high:   { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200',   dot: 'bg-red-500' },
-  medium: { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200', dot: 'bg-amber-500' },
-  low:    { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',  dot: 'bg-blue-500' },
+  high:   { bg: 'bg-red-50 dark:bg-red-900/20',    text: 'text-red-700 dark:text-red-300',    border: 'border-red-200 dark:border-red-800',   dot: 'bg-red-500' },
+  medium: { bg: 'bg-amber-50 dark:bg-amber-900/20',  text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-200 dark:border-amber-800', dot: 'bg-amber-500' },
+  low:    { bg: 'bg-blue-50 dark:bg-blue-900/20',   text: 'text-blue-700 dark:text-blue-300',   border: 'border-blue-200 dark:border-blue-800',  dot: 'bg-blue-500' },
 };
 
 const STATUS_CONFIG = {
-  completed:   { label: 'Completed',   color: 'text-emerald-600', bg: 'bg-emerald-50',  border: 'border-emerald-200', icon: CheckCircle2 },
-  in_progress: { label: 'In Progress', color: 'text-primary-600', bg: 'bg-primary-50',  border: 'border-primary-200', icon: Play },
-  pending:     { label: 'Pending',     color: 'text-gray-500',    bg: 'bg-gray-50',     border: 'border-gray-200',    icon: Circle },
-  skipped:     { label: 'Skipped',     color: 'text-gray-400',    bg: 'bg-gray-50',     border: 'border-gray-200',    icon: Circle },
+  completed:   { label: 'Completed',   color: 'text-emerald-600 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-900/20',  border: 'border-emerald-200 dark:border-emerald-800', icon: CheckCircle2 },
+  in_progress: { label: 'In Progress', color: 'text-primary-600 dark:text-primary-300', bg: 'bg-primary-50 dark:bg-primary-900/20',  border: 'border-primary-200 dark:border-primary-800', icon: Play },
+  pending:     { label: 'Pending',     color: 'text-gray-500 dark:text-gray-300',    bg: 'bg-gray-50 dark:bg-gray-800',     border: 'border-gray-200 dark:border-gray-700',    icon: Circle },
+  skipped:     { label: 'Skipped',     color: 'text-gray-400 dark:text-gray-300',    bg: 'bg-gray-50 dark:bg-gray-800',     border: 'border-gray-200 dark:border-gray-700',    icon: Circle },
 };
 
 const RESOURCE_ICONS = {
@@ -37,10 +37,10 @@ const RESOURCE_ICONS = {
 };
 
 const DIFFICULTY_COLORS = {
-  beginner:     { bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200' },
-  intermediate: { bg: 'bg-blue-50',     text: 'text-blue-700',    border: 'border-blue-200' },
-  advanced:     { bg: 'bg-purple-50',   text: 'text-purple-700',  border: 'border-purple-200' },
-  expert:       { bg: 'bg-red-50',      text: 'text-red-700',     border: 'border-red-200' },
+  beginner:     { bg: 'bg-emerald-50 dark:bg-emerald-900/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800' },
+  intermediate: { bg: 'bg-blue-50 dark:bg-blue-900/20',     text: 'text-blue-700 dark:text-blue-300',    border: 'border-blue-200 dark:border-blue-800' },
+  advanced:     { bg: 'bg-purple-50 dark:bg-purple-900/20',   text: 'text-purple-700 dark:text-purple-300',  border: 'border-purple-200 dark:border-purple-800' },
+  expert:       { bg: 'bg-red-50 dark:bg-red-900/20',      text: 'text-red-700 dark:text-red-300',     border: 'border-red-200 dark:border-red-800' },
 };
 
 function formatHours(h) {
@@ -65,7 +65,7 @@ function StatCard({ icon: Icon, label, value, sub, color = 'primary' }) {
       </div>
       <div className="min-w-0">
         <p className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">{value}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
         {sub && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
       </div>
     </div>
@@ -109,7 +109,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
             ? 'bg-emerald-500 border-emerald-500'
             : isInProgress
               ? 'bg-primary-500 border-primary-500 ring-4 ring-primary-100'
-              : 'bg-white border-gray-300'
+              : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700'
         }`}>
           {isCompleted ? (
             <CheckCircle2 className="w-5 h-5 text-white" />
@@ -130,8 +130,8 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
         isCompleted
           ? 'bg-emerald-50/50 border-emerald-200'
           : isInProgress
-            ? 'bg-white border-primary-200 shadow-sm shadow-primary-100'
-            : 'bg-white border-gray-200'
+            ? 'bg-white dark:bg-gray-900 border-primary-200 dark:border-primary-800 shadow-sm shadow-primary-100'
+            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
       }`}>
         <div className="p-4 sm:p-5">
           {/* top badges */}
@@ -143,11 +143,11 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${priority.bg} ${priority.text} ${priority.border} border`}>
               {item.priority}
             </span>
-            <span className="text-[11px] text-gray-400 ml-auto">#{index + 1}</span>
+            <span className="text-[11px] text-gray-400 dark:text-gray-500 ml-auto">#{index + 1}</span>
           </div>
 
           {/* skill name */}
-          <h3 className={`text-base font-bold mb-1.5 ${isCompleted ? 'text-emerald-800' : 'text-gray-900'}`}>
+          <h3 className={`text-base font-bold mb-1.5 ${isCompleted ? 'text-emerald-800 dark:text-emerald-300' : 'text-gray-900 dark:text-gray-100'}`}>
             {item.skill_name}
           </h3>
 
@@ -164,7 +164,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
 
           {/* notes / reason */}
           {item.notes && (
-            <p className={`text-xs leading-relaxed mb-3 ${isCompleted ? 'text-emerald-700/70' : 'text-gray-500'}`}>
+            <p className={`text-xs leading-relaxed mb-3 ${isCompleted ? 'text-emerald-700/70 dark:text-emerald-300/80' : 'text-gray-500 dark:text-gray-400'}`}>
               {item.notes}
             </p>
           )}
@@ -189,7 +189,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
                 <button
                   onClick={() => onStatusChange(item.item_id, 'pending')}
                   disabled={isUpdating === item.item_id}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg border-none cursor-pointer hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg border-none cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
                   <RotateCcw className="w-3 h-3" /> Undo
                 </button>
@@ -223,7 +223,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
                 </button>
                 <button
                   onClick={() => onViewResources(item)}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <BookOpen className="w-3.5 h-3.5" /> Preview Resources
                 </button>
@@ -303,19 +303,19 @@ function ResourcePanel({ item, onClose }) {
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
 
       {/* panel */}
-      <div className="fixed inset-y-0 right-0 w-full sm:w-[520px] bg-white shadow-2xl z-50 flex flex-col overflow-hidden">
+      <div className="fixed inset-y-0 right-0 w-full sm:w-[520px] bg-white dark:bg-gray-900 shadow-2xl z-50 flex flex-col overflow-hidden">
         {/* header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-purple-50">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20">
           <div className="min-w-0">
             <p className="text-xs text-primary-600 font-medium mb-0.5">Learning Resources</p>
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{item.skill_name}</h2>
             {item.category && (
-              <p className="text-xs text-gray-500 capitalize mt-0.5">{item.category.replace(/_/g, ' ')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize mt-0.5">{item.category.replace(/_/g, ' ')}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 bg-white rounded-lg border border-gray-200 cursor-pointer transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -329,30 +329,30 @@ function ResourcePanel({ item, onClose }) {
                 <Brain className="w-10 h-10 text-primary-400 animate-pulse" />
                 <Sparkles className="w-4 h-4 text-purple-500 absolute -top-1 -right-1 animate-bounce" />
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">AI is finding resources for {item.skill_name}...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">AI is finding resources for {item.skill_name}...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
               <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{error}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>
             </div>
           ) : resources.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">No resources available yet for this skill.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">No resources available yet for this skill.</p>
             </div>
           ) : (
             <>
               {/* estimated time card */}
-              <div className="bg-gradient-to-r from-purple-50 to-primary-50 rounded-xl p-4 border border-purple-100">
+              <div className="bg-gradient-to-r from-purple-50 to-primary-50 dark:from-purple-900/20 dark:to-primary-900/20 rounded-xl p-4 border border-purple-100 dark:border-purple-800">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-4 h-4 text-purple-600" />
-                  <h3 className="text-sm font-semibold text-purple-900">Learning Path for {item.skill_name}</h3>
+                  <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200">Learning Path for {item.skill_name}</h3>
                 </div>
-                <p className="text-xs text-purple-700/80">
+                <p className="text-xs text-purple-700/80 dark:text-purple-300/90">
                   Estimated {formatHours(item.estimated_duration_hours)} of learning. Complete the resources below to master this skill.
                 </p>
-                <div className="flex items-center gap-4 mt-3 text-xs text-purple-600">
+                <div className="flex items-center gap-4 mt-3 text-xs text-purple-600 dark:text-purple-300">
                   <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {resources.length} resources</span>
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatHours(item.estimated_duration_hours)}</span>
                 </div>
@@ -361,7 +361,7 @@ function ResourcePanel({ item, onClose }) {
               {/* grouped resources */}
               {typeOrder.filter(t => grouped[t]).map(type => (
                 <div key={type}>
-                  <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                     {(() => { const I = RESOURCE_ICONS[type] || FileText; return <I className="w-4 h-4 text-gray-400 dark:text-gray-500" />; })()}
                     {typeLabels[type] || type}
                     <span className="text-xs font-normal text-gray-400 dark:text-gray-500">({grouped[type].length})</span>
@@ -373,7 +373,7 @@ function ResourcePanel({ item, onClose }) {
                       const isStarted = prog && prog.status !== 'completed';
                       const diff = DIFFICULTY_COLORS[res.difficulty_level] || DIFFICULTY_COLORS.beginner;
                       return (
-                        <div key={res.resource_id} className={`rounded-xl border p-3.5 transition-all ${isCompleted ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'}`}>
+                        <div key={res.resource_id} className={`rounded-xl border p-3.5 transition-all ${isCompleted ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'}`}>
                           <div className="flex items-start gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -396,7 +396,7 @@ function ResourcePanel({ item, onClose }) {
                                   </span>
                                 )}
                               </div>
-                              <h4 className={`text-sm font-medium leading-snug ${isCompleted ? 'text-emerald-800 line-through' : 'text-gray-900'}`}>
+                              <h4 className={`text-sm font-medium leading-snug ${isCompleted ? 'text-emerald-800 dark:text-emerald-300 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
                                 {res.title}
                               </h4>
                               {(res.author || res.platform) && (
@@ -405,12 +405,12 @@ function ResourcePanel({ item, onClose }) {
                                 </p>
                               )}
                               {res.description && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1 line-clamp-2">{res.description}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{res.description}</p>
                               )}
                               {res.rating > 0 && (
                                 <div className="flex items-center gap-1 mt-1">
                                   <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                  <span className="text-[11px] text-gray-500 dark:text-gray-400 dark:text-gray-500">{res.rating.toFixed(1)}</span>
+                                  <span className="text-[11px] text-gray-500 dark:text-gray-400">{res.rating.toFixed(1)}</span>
                                 </div>
                               )}
                             </div>
@@ -440,7 +440,7 @@ function ResourcePanel({ item, onClose }) {
                               ) : (
                                 <button
                                   onClick={() => handleStartResource(res.resource_id)}
-                                  className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                                  className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                 >
                                   <Play className="w-3 h-3" /> Start
                                 </button>
@@ -499,7 +499,7 @@ function GeneratingPhase() {
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Icon className="w-5 h-5 text-primary-600" />
-          <p className="text-sm font-medium text-gray-700">{current.text}</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{current.text}</p>
         </div>
         <div className="flex gap-1.5 justify-center mt-4">
           {PROGRESS_STEPS.map((_, i) => (
@@ -659,13 +659,13 @@ export default function LearningRoadmapPage() {
       {/* page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Map className="w-6 h-6 text-primary-600" />
             Learning Roadmap
           </h1>
           {roadmap && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
-              Target: <span className="font-medium text-gray-700">{roadmap.target_role}</span>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Target: <span className="font-medium text-gray-700 dark:text-gray-300">{roadmap.target_role}</span>
             </p>
           )}
         </div>
@@ -673,7 +673,7 @@ export default function LearningRoadmapPage() {
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-primary-700 bg-primary-50 rounded-xl border border-primary-200 cursor-pointer hover:bg-primary-100 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800 cursor-pointer hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors disabled:opacity-50"
           >
             {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
             Regenerate
@@ -691,7 +691,7 @@ export default function LearningRoadmapPage() {
         <div className="text-center py-16">
           <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
           <p className="text-sm text-red-600">{error}</p>
-          <button onClick={loadRoadmap} className="mt-4 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg border border-primary-200 cursor-pointer hover:bg-primary-100 transition-colors">
+          <button onClick={loadRoadmap} className="mt-4 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800 cursor-pointer hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors">
             Try Again
           </button>
         </div>
@@ -704,13 +704,13 @@ export default function LearningRoadmapPage() {
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
               <div className="relative flex-shrink-0">
                 <CircularProgress percentage={completionPct} size={48} />
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-purple-700">
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-purple-700 dark:text-purple-300">
                   {completionPct}%
                 </span>
               </div>
               <div>
                 <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{completionPct}%</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Complete</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Complete</p>
               </div>
             </div>
             <StatCard icon={CheckCircle2} label="Skills Learned" value={`${stats.completed}/${stats.total}`} color="emerald" />
@@ -738,8 +738,8 @@ export default function LearningRoadmapPage() {
                 onClick={() => setFilter(f.key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
                   filter === f.key
-                    ? 'bg-primary-50 text-primary-700 border-primary-200'
-                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
+                    : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
                 {f.label} ({f.count})
@@ -749,19 +749,19 @@ export default function LearningRoadmapPage() {
 
           {/* description */}
           {roadmap.description && (
-            <div className="bg-gradient-to-r from-purple-50 to-primary-50 rounded-2xl p-4 mb-6 border border-purple-100">
+            <div className="bg-gradient-to-r from-purple-50 to-primary-50 dark:from-purple-900/20 dark:to-primary-900/20 rounded-2xl p-4 mb-6 border border-purple-100 dark:border-purple-800">
               <div className="flex items-center gap-2 mb-1.5">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <h3 className="text-sm font-semibold text-purple-900">AI Roadmap Summary</h3>
+                <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200">AI Roadmap Summary</h3>
               </div>
-              <p className="text-xs text-purple-800/80 leading-relaxed">{roadmap.description}</p>
+              <p className="text-xs text-purple-800/80 dark:text-purple-300/90 leading-relaxed">{roadmap.description}</p>
             </div>
           )}
 
           {/* timeline */}
           <div className="max-w-2xl">
             {filteredItems.length === 0 ? (
-              <div className="text-center py-12 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
+              <div className="text-center py-12 text-sm text-gray-500 dark:text-gray-400">
                 No skills match the selected filter.
               </div>
             ) : (

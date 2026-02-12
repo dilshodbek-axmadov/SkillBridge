@@ -123,7 +123,7 @@ function QuickStats({ skills, careerStatus, recommendations }) {
             {c.icon}
           </div>
           <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
-          <p className="text-sm font-medium text-gray-700 mt-0.5">{c.label}</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-0.5">{c.label}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{c.sub}</p>
         </div>
       ))}
@@ -242,11 +242,11 @@ function LearningRoadmap({ careerStatus }) {
                   )}
                   {item.status === 'next' && (
                     <>
-                      <p className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <Lock className="w-3 h-3" /> Unlocks after {item.unlocksAfter}
-                        <span className="ml-3 flex items-center gap-1"><Clock className="w-3 h-3" /> Est. {item.estHours} hours</span>
-                      </p>
-                      <button className="w-full py-2 border border-gray-300 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors bg-white cursor-pointer">
+                    <p className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      <Lock className="w-3 h-3" /> Unlocks after {item.unlocksAfter}
+                      <span className="ml-3 flex items-center gap-1"><Clock className="w-3 h-3" /> Est. {item.estHours} hours</span>
+                    </p>
+                      <button className="w-full py-2 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-gray-900 cursor-pointer">
                         Preview
                       </button>
                     </>
@@ -328,7 +328,7 @@ function RecentActivity() {
             <div className={`w-8 h-8 ${a.bg} rounded-full flex items-center justify-center flex-shrink-0`}>
               {a.icon}
             </div>
-            <p className="text-sm text-gray-700 flex-1">{a.text}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 flex-1">{a.text}</p>
             <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{a.time}</span>
           </div>
         ))}
@@ -362,10 +362,10 @@ function RecommendedJobs() {
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{j.title}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{j.company}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{j.company}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-2">
+              <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" />{j.salary}</span>
                 <span>{j.have}/{j.total} skills</span>
               </div>
@@ -400,16 +400,16 @@ function RecommendedJobs() {
 
 function BottomCTA() {
   return (
-    <div className="bg-gradient-to-r from-primary-50 via-purple-50 to-primary-50 rounded-2xl p-8 text-center">
+    <div className="bg-gradient-to-r from-primary-50 via-purple-50 to-primary-50 dark:from-primary-900/20 dark:via-purple-900/20 dark:to-primary-900/20 rounded-2xl p-8 text-center">
       <Sparkles className="w-8 h-8 text-purple-500 mx-auto mb-3" />
       <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Ready to accelerate your learning?</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 max-w-md mx-auto">
         Get personalized recommendations from our AI chatbot
       </p>
-      <button className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-colors border-none cursor-pointer shadow-lg shadow-primary-600/20">
+      <Link to="/chat" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-colors border-none cursor-pointer shadow-lg shadow-primary-600/20 no-underline">
         <MessageSquare className="w-4 h-4" />
         Chat Now
-      </button>
+      </Link>
     </div>
   );
 }
@@ -500,7 +500,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     );
@@ -508,10 +508,10 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-          <p className="text-gray-600">{error}</p>
+          <p className="text-gray-600 dark:text-gray-300">{error}</p>
           <button onClick={() => window.location.reload()} className="mt-3 text-primary-600 text-sm font-medium underline bg-transparent border-none cursor-pointer">
             Retry
           </button>

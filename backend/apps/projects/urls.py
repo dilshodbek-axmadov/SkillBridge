@@ -25,6 +25,9 @@ urlpatterns = [
     # User's projects
     path('my/', views.UserProjectsView.as_view(), name='user_projects'),
 
+    # All projects (browse)
+    path('all/', views.AllProjectsView.as_view(), name='all_projects'),
+
     # Role-based projects
     path('role/<str:role_name>/', views.RoleProjectsView.as_view(), name='role_projects'),
 

@@ -7,7 +7,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
-
 urlpatterns = [
     path('admin/', admin.site.urls),
 

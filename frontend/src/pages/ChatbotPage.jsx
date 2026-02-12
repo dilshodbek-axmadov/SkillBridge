@@ -307,12 +307,12 @@ export default function ChatbotPage() {
         {/* Main chat area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 bg-transparent border-none cursor-pointer"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 bg-transparent border-none cursor-pointer"
             >
-              <Menu className="w-5 h-5 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+              <Menu className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
 
             <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -323,7 +323,7 @@ export default function ChatbotPage() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border-none cursor-pointer transition-all ${
                     contextType === ct.key
                       ? `${ct.activeBg} text-white`
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
                   <span>{ct.emoji}</span>
@@ -368,7 +368,7 @@ export default function ChatbotPage() {
           </div>
 
           {/* Input area */}
-          <div className="px-4 py-3 border-t border-gray-100">
+          <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
             <div className="flex items-end gap-2 max-w-3xl mx-auto">
               <textarea
                 ref={inputRef}
@@ -377,7 +377,7 @@ export default function ChatbotPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
                 rows={1}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm resize-none focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all max-h-32"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 resize-none focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all max-h-32"
                 style={{ minHeight: 42 }}
                 disabled={sending}
               />
@@ -418,25 +418,25 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
         fixed lg:relative z-50 lg:z-auto
-        w-72 h-full bg-gray-50 border-r border-gray-100
+        w-72 h-full bg-gray-50 dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800
         flex flex-col transition-transform duration-200
       `}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-800">Conversations</h3>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Conversations</h3>
           <div className="flex items-center gap-1">
             <button
               onClick={onNew}
-              className="p-1.5 rounded-lg hover:bg-gray-200 bg-transparent border-none cursor-pointer"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent border-none cursor-pointer"
               title="New conversation"
             >
-              <Plus className="w-4 h-4 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+              <Plus className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-gray-200 bg-transparent border-none cursor-pointer lg:hidden"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent border-none cursor-pointer lg:hidden"
             >
-              <X className="w-4 h-4 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+              <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
         </div>
@@ -467,8 +467,8 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
                         onClick={() => onSelect(conv.conversation_id)}
                         className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left border-none cursor-pointer transition-colors ${
                           activeConvId === conv.conversation_id
-                            ? 'bg-primary-50 text-primary-700'
-                            : 'bg-transparent text-gray-700 hover:bg-gray-100'
+                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                            : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >
                         <span className="text-base flex-shrink-0">{ct.emoji}</span>
@@ -515,7 +515,7 @@ function WelcomeScreen({ contextType, suggestions, onSuggestion }) {
           <button
             key={s}
             onClick={() => onSuggestion(s)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-primary-50 hover:border-primary-200 hover:text-primary-700 cursor-pointer transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer transition-all"
           >
             {s}
             <ArrowRight className="w-3.5 h-3.5 opacity-50" />
@@ -563,8 +563,8 @@ function ChatMessage({ message, showInfo, onToggleInfo }) {
             isUser
               ? 'bg-primary-600 text-white rounded-tr-md'
               : message.context?.response_type === 'error'
-                ? 'bg-amber-50 text-amber-800 border border-amber-200 rounded-tl-md'
-                : 'bg-gray-100 text-gray-800 rounded-tl-md'
+                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800 rounded-tl-md'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-tl-md'
           }`}
         >
           {message.text}
@@ -584,18 +584,18 @@ function ChatMessage({ message, showInfo, onToggleInfo }) {
             <div className="relative">
               <button
                 onClick={onToggleInfo}
-                className="p-0.5 rounded hover:bg-gray-100 bg-transparent border-none cursor-pointer"
+                className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 bg-transparent border-none cursor-pointer"
               >
-                <Info className="w-3 h-3 text-gray-300 hover:text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+                <Info className="w-3 h-3 text-gray-300 hover:text-gray-500 dark:text-gray-400" />
               </button>
               {showInfo && (
-                <div className="absolute bottom-6 left-0 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-30 text-xs">
+                <div className="absolute bottom-6 left-0 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 z-30 text-xs">
                   <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Response Info</div>
                   <div className="space-y-1 text-gray-500 dark:text-gray-400 dark:text-gray-500">
-                    <div>Intent: <span className="text-gray-700">{message.context.intent}</span></div>
-                    <div>Type: <span className="text-gray-700">{message.context.response_type}</span></div>
+                    <div>Intent: <span className="text-gray-700 dark:text-gray-200">{message.context.intent}</span></div>
+                    <div>Type: <span className="text-gray-700 dark:text-gray-200">{message.context.response_type}</span></div>
                     {message.context.context_used && (
-                      <div>Context: <span className="text-gray-700">{message.context.context_used.join(', ')}</span></div>
+                      <div>Context: <span className="text-gray-700 dark:text-gray-200">{message.context.context_used.join(', ')}</span></div>
                     )}
                   </div>
                 </div>
@@ -646,8 +646,8 @@ function RichDataCards({ context }) {
 
 function SkillMarketCard({ skills }) {
   return (
-    <div className="mt-2 bg-white border border-gray-200 rounded-xl p-4 w-full max-w-sm">
-      <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+    <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
+      <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <TrendingUp className="w-3.5 h-3.5 text-blue-500" />
         Top In-Demand Skills
       </h4>
@@ -655,7 +655,7 @@ function SkillMarketCard({ skills }) {
         {skills.slice(0, 5).map((s, i) => (
           <div key={i}>
             <div className="flex items-center justify-between text-xs mb-0.5">
-              <span className="font-medium text-gray-800">{s.name}</span>
+              <span className="font-medium text-gray-800 dark:text-gray-100">{s.name}</span>
               <span className="text-gray-400 dark:text-gray-500">{s.job_count} jobs</span>
             </div>
             <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -681,15 +681,15 @@ function SkillMarketCard({ skills }) {
 
 function SalaryCard({ salaries }) {
   return (
-    <div className="mt-2 bg-white border border-gray-200 rounded-xl p-4 w-full max-w-sm">
-      <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+    <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
+      <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
         Salary Insights
       </h4>
       <div className="space-y-2">
         {salaries.slice(0, 5).map((s, i) => (
-          <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-gray-50 last:border-0">
-            <span className="font-medium text-gray-800 truncate flex-1 mr-2">{s.job_title}</span>
+          <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
+            <span className="font-medium text-gray-800 dark:text-gray-100 truncate flex-1 mr-2">{s.job_title}</span>
             <span className="text-emerald-600 font-semibold whitespace-nowrap">
               {s.salary_avg ? formatSalary(s.salary_avg) : 'N/A'}
             </span>
@@ -702,8 +702,8 @@ function SalaryCard({ salaries }) {
 
 function JobMarketCard({ data }) {
   return (
-    <div className="mt-2 bg-white border border-gray-200 rounded-xl p-4 w-full max-w-sm">
-      <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+    <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
+      <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <Briefcase className="w-3.5 h-3.5 text-purple-500" />
         Current Job Market
       </h4>
@@ -715,8 +715,8 @@ function JobMarketCard({ data }) {
         <div className="space-y-1.5 mb-3">
           {data.top_categories.slice(0, 4).map((c, i) => (
             <div key={i} className="flex items-center justify-between text-xs">
-              <span className="text-gray-600">{c.category}</span>
-              <span className="font-medium text-gray-800">{c.count}</span>
+              <span className="text-gray-600 dark:text-gray-300">{c.category}</span>
+              <span className="font-medium text-gray-800 dark:text-gray-100">{c.count}</span>
             </div>
           ))}
         </div>
@@ -737,8 +737,8 @@ function ResourcesCard({ resources }) {
   const typeIcons = { video: '🎬', book: '📖', tutorial: '📝', course: '🎓', documentation: '📄' };
 
   return (
-    <div className="mt-2 bg-white border border-gray-200 rounded-xl p-4 w-full max-w-sm">
-      <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+    <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
+      <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <BookOpen className="w-3.5 h-3.5 text-orange-500" />
         Recommended Resources
       </h4>
@@ -747,14 +747,14 @@ function ResourcesCard({ resources }) {
           <div key={i} className="flex items-start gap-2">
             <span className="text-sm mt-0.5">{typeIcons[r.type] || '📄'}</span>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-medium text-gray-800 truncate">{r.title}</div>
+              <div className="text-xs font-medium text-gray-800 dark:text-gray-100 truncate">{r.title}</div>
               <div className="flex items-center gap-1.5 mt-0.5">
-                {r.platform && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{r.platform}</span>}
+                {r.platform && <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 px-1.5 py-0.5 rounded">{r.platform}</span>}
                 <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{r.skill}</span>
               </div>
             </div>
             {r.url && (
-              <a href={r.url} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-gray-100 rounded flex-shrink-0">
+              <a href={r.url} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0">
                 <ExternalLink className="w-3 h-3 text-gray-400 dark:text-gray-500" />
               </a>
             )}
@@ -767,8 +767,8 @@ function ResourcesCard({ resources }) {
 
 function RoadmapCard({ roadmap }) {
   return (
-    <div className="mt-2 bg-white border border-gray-200 rounded-xl p-4 w-full max-w-sm">
-      <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+    <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
+      <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-1.5">
         <Map className="w-3.5 h-3.5 text-teal-500" />
         Your Learning Roadmap
       </h4>
@@ -787,12 +787,12 @@ function RoadmapCard({ roadmap }) {
             strokeLinecap="round"
             transform="rotate(-90 20 20)"
           />
-          <text x="20" y="24" textAnchor="middle" className="text-[9px] font-bold fill-gray-700">
+          <text x="20" y="24" textAnchor="middle" className="text-[9px] font-bold fill-gray-700 dark:fill-gray-200">
             {Math.round(roadmap.percentage || 0)}%
           </text>
         </svg>
         <div>
-          <div className="text-sm font-semibold text-gray-800">{roadmap.completion}</div>
+          <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">{roadmap.completion}</div>
           <div className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500">skills completed</div>
         </div>
       </div>
@@ -801,7 +801,7 @@ function RoadmapCard({ roadmap }) {
           <div className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Next skills:</div>
           <div className="flex flex-wrap gap-1">
             {roadmap.next_skills.map((s, i) => (
-              <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{s}</span>
+              <span key={i} className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2 py-0.5 rounded-full">{s}</span>
             ))}
           </div>
         </div>
@@ -825,7 +825,7 @@ function TypingIndicator({ contextType, lastIntent }) {
       <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
         <Bot className="w-4 h-4 text-purple-600" />
       </div>
-      <div className="bg-gray-100 rounded-2xl rounded-tl-md px-4 py-3">
+      <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-md px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="flex gap-1">
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -852,7 +852,7 @@ function SmartSuggestions({ contextType, onSuggestion }) {
         <button
           key={s}
           onClick={() => onSuggestion(s)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:bg-primary-50 hover:border-primary-200 hover:text-primary-700 cursor-pointer transition-all"
+          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-xs text-gray-600 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer transition-all"
         >
           {s}
           <ChevronRight className="w-3 h-3 opacity-40" />

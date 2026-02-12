@@ -464,14 +464,20 @@ function PreferencesTab({ user, onUserUpdate }) {
   const { i18n } = useTranslation();
   const [lang, setLang] = useState(i18n.language || user?.preferred_language || 'en');
   const { theme, setTheme } = useThemeStore();
+  const [selectedTheme, setSelectedTheme] = useState(theme);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSelectedTheme(theme);
+  }, [theme]);
 
   const save = async () => {
     setSaving(true);
     try {
       await api.patch('/users/auth/update/', { preferred_language: lang });
       i18n.changeLanguage(lang);
+      setTheme(selectedTheme);
       onUserUpdate();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -528,22 +534,22 @@ function PreferencesTab({ user, onUserUpdate }) {
             return (
               <button
                 key={t.value}
-                onClick={() => setTheme(t.value)}
+                onClick={() => setSelectedTheme(t.value)}
                 className={`relative flex flex-col items-center gap-3 px-4 py-5 rounded-xl border-2 cursor-pointer transition-all ${
-                  theme === t.value
+                  selectedTheme === t.value
                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-sm shadow-primary-500/10'
                     : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-sm'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  theme === t.value ? 'bg-primary-100 dark:bg-primary-900/50' : 'bg-gray-100 dark:bg-gray-700'
+                  selectedTheme === t.value ? 'bg-primary-100 dark:bg-primary-900/50' : 'bg-gray-100 dark:bg-gray-700'
                 }`}>
-                  <Icon className={`w-6 h-6 ${theme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+                  <Icon className={`w-6 h-6 ${selectedTheme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
                 </div>
-                <span className={`text-sm font-semibold ${theme === t.value ? 'text-primary-700 dark:text-primary-400' : 'text-gray-600 dark:text-gray-300'}`}>
+                <span className={`text-sm font-semibold ${selectedTheme === t.value ? 'text-primary-700 dark:text-primary-400' : 'text-gray-600 dark:text-gray-300'}`}>
                   {t.label}
                 </span>
-                {theme === t.value && (
+                {selectedTheme === t.value && (
                   <div className="absolute top-2 right-2 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
                   </div>

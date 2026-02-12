@@ -151,7 +151,9 @@ class SwitchTemplateRequestSerializer(serializers.Serializer):
 class ExportCVRequestSerializer(serializers.Serializer):
     """Query params serializer for CV export."""
 
-    format = serializers.ChoiceField(
+    # NOTE: Do NOT use 'format' as field name — DRF reserves it for
+    # content-negotiation (?format=json). Using 'export_format' instead.
+    export_format = serializers.ChoiceField(
         choices=['pdf', 'docx'],
         default='pdf',
         help_text="Export format: pdf or docx.",

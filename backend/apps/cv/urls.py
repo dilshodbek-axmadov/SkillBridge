@@ -23,7 +23,6 @@ urlpatterns = [
     # CV CRUD
     path('', CVListView.as_view(), name='cv-list'),
     path('create/', CreateCVView.as_view(), name='cv-create'),
-    path('<int:cv_id>/', CVDetailView.as_view(), name='cv-detail'),
 
     # Sections
     path('<int:cv_id>/sections/', UpdateSectionsView.as_view(), name='cv-sections'),
@@ -36,6 +35,12 @@ urlpatterns = [
     path('templates/', TemplateListView.as_view(), name='cv-templates'),
     path('<int:cv_id>/template/', SwitchTemplateView.as_view(), name='cv-switch-template'),
 
-    # Export
+    # Export (primary + aliases for compatibility)
     path('<int:cv_id>/export/', ExportCVView.as_view(), name='cv-export'),
+    path('<int:cv_id>/export', ExportCVView.as_view(), name='cv-export-no-slash'),
+    path('export/<int:cv_id>/', ExportCVView.as_view(), name='cv-export-alt'),
+    path('<int:cv_id>/download/', ExportCVView.as_view(), name='cv-download'),
+
+    # CV detail (keep generic route last)
+    path('<int:cv_id>/', CVDetailView.as_view(), name='cv-detail'),
 ]
