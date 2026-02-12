@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Zap, TrendingUp, BarChart3, Target } from 'lucide-react';
 import useAuthStore from '../store/authStore';
@@ -84,26 +84,26 @@ export default function LoginPage() {
       </div>
 
       {/* Right - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-gray-50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-gray-50 dark:bg-gray-950">
         <div className="w-full max-w-md">
           {/* Logo (mobile only, desktop shows on left) */}
           <div className="flex items-center gap-2 mb-8 lg:mb-10 justify-center lg:justify-start">
             <div className="w-9 h-9 bg-gradient-to-br from-primary-600 to-purple-500 rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
               Skill<span className="text-primary-600">Bridge</span>
             </span>
           </div>
 
           {/* Form card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>
-            <p className="text-gray-500 text-sm mb-8">Sign in to continue your career journey</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-8">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Welcome back</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">Sign in to continue your career journey</p>
 
             {/* Error message */}
             {error && (
-              <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center justify-between">
+              <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg text-sm text-red-600 flex items-center justify-between">
                 <span>{error}</span>
                 <button
                   onClick={clearError}
@@ -117,11 +117,11 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Email address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     id="email"
                     type="email"
@@ -129,18 +129,18 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                    className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white dark:bg-gray-800"
                   />
                 </div>
               </div>
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -148,7 +148,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                    className="w-full pl-11 pr-12 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white dark:bg-gray-800"
                   />
                   <button
                     type="button"
@@ -186,15 +186,15 @@ export default function LoginPage() {
 
             {/* Divider */}
             <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-sm text-gray-400">or</span>
-              <div className="flex-1 h-px bg-gray-200" />
+              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+              <span className="text-sm text-gray-400 dark:text-gray-500">or</span>
+              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
             </div>
 
             {/* Google button */}
             <button
               type="button"
-              className="w-full h-[44px] bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-3"
+              className="w-full h-[44px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -219,7 +219,7 @@ export default function LoginPage() {
           </div>
 
           {/* Sign up link */}
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-6">
             Don&apos;t have an account?{' '}
             <Link to={`/register${redirectTo !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
               Sign up

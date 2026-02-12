@@ -17,13 +17,13 @@ export default function StatsBar() {
         {statKeys.map((stat) => (
           <div
             key={stat.labelKey}
-            className="bg-white rounded-2xl p-6 shadow-lg shadow-gray-200/50 border border-gray-100 text-center hover:shadow-xl transition-shadow"
+            className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-800 text-center hover:shadow-xl transition-shadow"
           >
             <div className={`inline-flex items-center justify-center w-12 h-12 ${stat.bg} rounded-xl mb-3`}>
               <stat.icon className={`w-6 h-6 ${stat.color}`} />
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-            <div className="text-sm text-gray-500 font-medium">{t(stat.labelKey)}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{stat.value}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t(stat.labelKey)}</div>
           </div>
         ))}
       </div>

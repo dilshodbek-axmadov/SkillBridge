@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BarChart3, Sparkles, AlertTriangle, Target, BookOpen,
@@ -200,7 +200,7 @@ export default function SkillGapPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Loading...</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -306,15 +306,15 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
         <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/20">
           <BarChart3 className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Skill Gap Analysis</h1>
-        <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Skill Gap Analysis</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-2 max-w-md mx-auto">
           Our AI will analyze your current skills against market demand and identify gaps
           to help you grow your career.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl p-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
@@ -322,8 +322,8 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
 
       {/* profile summary */}
       {profile && (profile.desired_role || profile.experience_level) && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Profile</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Your Profile</h3>
           <div className="flex flex-wrap gap-3">
             {profile.desired_role && (
               <div className="flex items-center gap-2 bg-primary-50 text-primary-700 px-3 py-1.5 rounded-lg text-sm font-medium">
@@ -342,9 +342,9 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
       )}
 
       {/* current skills */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Your Current Skills ({skills.length})
           </h3>
           <Link
@@ -358,7 +358,7 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
         {skills.length === 0 ? (
           <div className="text-center py-8">
             <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No skills found. Add your skills first for a better analysis.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">No skills found. Add your skills first for a better analysis.</p>
             <Link
               to="/manage-skills"
               className="inline-block mt-3 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold no-underline hover:bg-primary-700 transition-colors"
@@ -442,8 +442,8 @@ function AnalyzingPhase({ step }) {
         </div>
 
         <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Analyzing your skills</h2>
-          <p className="text-sm text-gray-500">This may take a moment...</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Analyzing your skills</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">This may take a moment...</p>
         </div>
 
         {/* progress steps */}
@@ -520,8 +520,8 @@ function ResultsPhase({
       {/* header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Skill Gap Analysis</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Skill Gap Analysis</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">
             {totalGaps} skill{totalGaps !== 1 ? 's' : ''} identified to boost your career
           </p>
         </div>
@@ -539,12 +539,12 @@ function ResultsPhase({
         {stats.map((s, i) => {
           const Icon = s.icon;
           return (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+            <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition-shadow">
               <div className={`w-10 h-10 ${s.iconBg} rounded-lg flex items-center justify-center mb-3`}>
                 <Icon className={`w-5 h-5 ${s.iconColor}`} />
               </div>
               <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-sm font-medium text-gray-500 mt-0.5">{s.label}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">{s.label}</p>
             </div>
           );
         })}
@@ -576,9 +576,9 @@ function ResultsPhase({
       )}
 
       {/* filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Filter className="w-4 h-4 text-gray-400" />
+          <Filter className="w-4 h-4 text-gray-400 dark:text-gray-500" />
           <span className="text-sm font-semibold text-gray-700">Filters</span>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -619,9 +619,9 @@ function ResultsPhase({
 
       {/* gap list */}
       {gaps.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
           <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">No skill gaps match the current filters.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">No skill gaps match the current filters.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -667,12 +667,12 @@ function GapCard({ gap, onUpdateStatus }) {
   };
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 border-l-4 ${pri.border} p-5 hover:shadow-md transition-shadow`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 border-l-4 ${pri.border} p-5 hover:shadow-md transition-shadow`}>
       <div className="flex flex-col sm:flex-row sm:items-start gap-4">
         {/* content */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <h3 className="text-base font-bold text-gray-900">{gap.skill_name || gap.skill?.name_en || 'Unknown Skill'}</h3>
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{gap.skill_name || gap.skill?.name_en || 'Unknown Skill'}</h3>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${pri.badge}`}>
               {gap.priority}
             </span>
@@ -687,7 +687,7 @@ function GapCard({ gap, onUpdateStatus }) {
           )}
 
           {/* current status */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
             <StIcon className="w-3.5 h-3.5" />
             <span className="font-medium">{statusLabel[gap.status] || gap.status}</span>
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import {
   Briefcase, Search, MapPin, Clock, ExternalLink, Filter,
   ChevronDown, Wifi, DollarSign, Star, X, Loader2,
@@ -68,7 +68,7 @@ function JobCard({ job, showMatch }) {
   const missing = job.missing_skills || [];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-gray-200 transition-all group">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-md hover:border-gray-200 transition-all group">
       <div className="flex gap-4">
         {/* Match ring */}
         {showMatch && job.match_percentage != null && (
@@ -80,8 +80,8 @@ function JobCard({ job, showMatch }) {
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="text-base font-bold text-gray-900 truncate">{job.job_title}</h3>
-              <p className="text-sm text-gray-500 mt-0.5">{job.company_name || 'Company'}</p>
+              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{job.job_title}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">{job.company_name || 'Company'}</p>
             </div>
             <a
               href={job.job_url}
@@ -118,7 +118,7 @@ function JobCard({ job, showMatch }) {
               </span>
             )}
             {job.posted_date && (
-              <span className="flex items-center gap-1 text-xs text-gray-400">
+              <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                 <Clock className="w-3 h-3" />{timeAgo(job.posted_date)}
               </span>
             )}
@@ -134,7 +134,7 @@ function JobCard({ job, showMatch }) {
                 <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-500 font-medium">{s}</span>
               ))}
               {missing.length > 3 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">+{missing.length - 3} more</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 dark:text-gray-500">+{missing.length - 3} more</span>
               )}
             </div>
           ) : skills.length > 0 ? (
@@ -145,7 +145,7 @@ function JobCard({ job, showMatch }) {
                 }`}>{s.name}</span>
               ))}
               {skills.length > 6 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">+{skills.length - 6}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 dark:text-gray-500">+{skills.length - 6}</span>
               )}
             </div>
           ) : null}
@@ -161,10 +161,10 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
   const hasFilters = filters.q || filters.category || filters.experience || filters.location || filters.is_remote;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-400" /> Filters
+          <Filter className="w-4 h-4 text-gray-400 dark:text-gray-500" /> Filters
         </h3>
         {hasFilters && (
           <button onClick={onClear} className="text-xs text-primary-600 hover:text-primary-700 bg-transparent border-none cursor-pointer font-medium">
@@ -175,7 +175,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           value={filters.q}
@@ -188,7 +188,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
 
       {/* Category */}
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1.5">Category</label>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Category</label>
         <select
           value={filters.category}
           onChange={(e) => onChange('category', e.target.value)}
@@ -204,7 +204,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
 
       {/* Experience */}
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1.5">Experience</label>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Experience</label>
         <select
           value={filters.experience}
           onChange={(e) => onChange('experience', e.target.value)}
@@ -220,7 +220,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
 
       {/* Location */}
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1.5">Location</label>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Location</label>
         <select
           value={filters.location}
           onChange={(e) => onChange('location', e.target.value)}
@@ -253,7 +253,7 @@ function FiltersPanel({ filters, filterOptions, onChange, onClear }) {
 
       {/* Sort */}
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1.5">Sort by</label>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Sort by</label>
         <select
           value={filters.sort}
           onChange={(e) => onChange('sort', e.target.value)}
@@ -382,8 +382,8 @@ export default function JobsPage() {
             <Briefcase className="w-5 h-5 text-primary-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
-            <p className="text-sm text-gray-400">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Jobs</h1>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
               {total > 0 ? `${total} jobs found` : 'Discover jobs matching your skills'}
             </p>
           </div>
@@ -392,7 +392,7 @@ export default function JobsPage() {
 
       {/* Tab toggle */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 inline-flex gap-1">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-1.5 inline-flex gap-1">
           <button
             onClick={() => setTab('recommended')}
             className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
@@ -437,9 +437,9 @@ export default function JobsPage() {
               <Loader2 className="w-7 h-7 text-primary-500 animate-spin" />
             </div>
           ) : jobs.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
               <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                 {tab === 'recommended'
                   ? 'No matching jobs found. Add more skills to your profile for better recommendations.'
                   : 'No jobs found matching your filters. Try adjusting your search criteria.'}

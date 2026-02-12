@@ -6,7 +6,7 @@ export default function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer className="bg-gray-900 text-gray-400">
+    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -45,7 +45,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-8 border-t border-gray-800 text-center">
+        <div className="mt-10 pt-8 border-t border-gray-800 dark:border-gray-800 text-center">
           <p className="text-sm text-gray-500">
             &copy; {new Date().getFullYear()} SkillBridge. {t('footer.rights')}
           </p>

@@ -40,7 +40,7 @@ class ChatbotService:
     5. Store message and response
     """
 
-    MODEL = "qwen2.5:7b"
+    MODEL = "phi3:mini"
     MAX_CONTEXT_MESSAGES = 10  # Max conversation history to include
 
     def __init__(self, user: User):
@@ -306,7 +306,7 @@ class ChatbotService:
             context['user_profile'] = {
                 'current_role': self.user_profile.current_job_position,
                 'desired_role': self.user_profile.desired_role,
-                'experience_years': self.user_profile.experience_years,
+                'experience_level': self.user_profile.experience_level,
             }
 
         # User skills

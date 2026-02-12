@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Loader2, Zap, Trophy, TrendingUp, Briefcase, Star,
@@ -101,7 +101,7 @@ export default function RecommendationsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Loading your career recommendations...</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Loading your career recommendations...</p>
         </div>
       </div>
     );
@@ -111,12 +111,12 @@ export default function RecommendationsPage() {
   if (error && recommendations.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 max-w-md text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-10 max-w-md text-center">
           <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <Sparkles className="w-8 h-8 text-primary-500" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">No Results Yet</h2>
-          <p className="text-gray-500 text-sm mb-6">{error}</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">No Results Yet</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">{error}</p>
           <Link
             to="/assessment"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors no-underline"
@@ -138,9 +138,9 @@ export default function RecommendationsPage() {
             <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-purple-500 rounded-lg flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="text-sm font-semibold text-gray-500">SkillBridge</span>
+            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500">SkillBridge</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Your Career Matches
           </h1>
           <p className="text-gray-500 text-lg">
@@ -153,7 +153,7 @@ export default function RecommendationsPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Error inline */}
         {error && recommendations.length > 0 && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 text-center">
+          <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg text-sm text-red-600 text-center">
             {error}
           </div>
         )}
@@ -192,7 +192,7 @@ export default function RecommendationsPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <p className="text-xs text-gray-400 leading-none mb-1">Match</p>
-                        <p className="text-2xl font-bold text-gray-900 leading-none">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-none">
                           {Math.round(rec.match_score)}%
                         </p>
                       </div>
@@ -224,10 +224,10 @@ export default function RecommendationsPage() {
                   </div>
 
                   {/* Role name + description */}
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                     {role.name}
                   </h2>
-                  <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-4">
                     {role.description}
                   </p>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search, Loader2, AlertCircle, Check, ChevronDown, X,
@@ -220,7 +220,7 @@ export default function ManageSkillsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Loading your skills...</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Loading your skills...</p>
         </div>
       </div>
     );
@@ -249,7 +249,7 @@ export default function ManageSkillsPage() {
               <Link to="/dashboard" className="text-gray-400 hover:text-gray-600 transition-colors no-underline">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <h1 className="text-xl font-bold text-gray-900">My Skills</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">My Skills</h1>
             </div>
             <p className="text-sm text-gray-500 ml-7">
               {mySkills.length} skill{mySkills.length !== 1 ? 's' : ''} in your profile
@@ -273,15 +273,15 @@ export default function ManageSkillsPage() {
 
         {/* add skills panel */}
         {showAddPanel && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-4 h-4 text-primary-500" />
-              <h3 className="text-sm font-bold text-gray-900">Browse & Add Skills</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Browse & Add Skills</h3>
             </div>
 
             {/* search */}
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 value={searchQuery}
@@ -374,12 +374,12 @@ export default function ManageSkillsPage() {
 
         {/* my skills list */}
         {mySkills.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-            <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-12 text-center">
+            <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-7 h-7 text-gray-300" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-1">No skills yet</h3>
-            <p className="text-sm text-gray-500 mb-4">Click "Add Skills" above to start building your skill profile.</p>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">No skills yet</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Click "Add Skills" above to start building your skill profile.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -390,13 +390,13 @@ export default function ManageSkillsPage() {
               return (
                 <div
                   key={s.user_skill_id}
-                  className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                  className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md transition-shadow"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     {/* skill info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-base font-bold text-gray-900">{skillName}</h3>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{skillName}</h3>
                         {catLabel && (
                           <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-semibold uppercase">
                             {catLabel}
@@ -471,7 +471,7 @@ export default function ManageSkillsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-50 transition-colors bg-white"
+                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold cursor-pointer hover:bg-gray-50 transition-colors bg-white dark:bg-gray-800"
               >
                 Cancel
               </button>

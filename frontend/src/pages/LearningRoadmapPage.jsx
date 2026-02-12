@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Map, Target, Clock, CheckCircle2, Circle, Lock, Play, BookOpen,
@@ -59,14 +59,14 @@ function StatCard({ icon: Icon, label, value, sub, color = 'primary' }) {
     purple:  'from-purple-500 to-purple-600',
   };
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-4">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
       <div className={`w-11 h-11 bg-gradient-to-br ${colors[color]} rounded-xl flex items-center justify-center flex-shrink-0`}>
         <Icon className="w-5 h-5 text-white" />
       </div>
       <div className="min-w-0">
-        <p className="text-lg font-bold text-gray-900 leading-tight">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
-        {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
+        <p className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">{value}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
+        {sub && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -116,7 +116,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
           ) : isInProgress ? (
             <Play className="w-4 h-4 text-white ml-0.5" />
           ) : (
-            <span className="text-xs font-bold text-gray-400">{index + 1}</span>
+            <span className="text-xs font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
           )}
         </div>
         {/* connector line */}
@@ -152,7 +152,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
           </h3>
 
           {/* category + duration */}
-          <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
             {item.category && (
               <span className="capitalize">{item.category.replace(/_/g, ' ')}</span>
             )}
@@ -189,7 +189,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
                 <button
                   onClick={() => onStatusChange(item.item_id, 'pending')}
                   disabled={isUpdating === item.item_id}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg border-none cursor-pointer hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg border-none cursor-pointer hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   <RotateCcw className="w-3 h-3" /> Undo
                 </button>
@@ -223,7 +223,7 @@ function TimelineNode({ item, index, total, onStatusChange, onViewResources, isU
                 </button>
                 <button
                   onClick={() => onViewResources(item)}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
                 >
                   <BookOpen className="w-3.5 h-3.5" /> Preview Resources
                 </button>
@@ -308,7 +308,7 @@ function ResourcePanel({ item, onClose }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-purple-50">
           <div className="min-w-0">
             <p className="text-xs text-primary-600 font-medium mb-0.5">Learning Resources</p>
-            <h2 className="text-lg font-bold text-gray-900 truncate">{item.skill_name}</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{item.skill_name}</h2>
             {item.category && (
               <p className="text-xs text-gray-500 capitalize mt-0.5">{item.category.replace(/_/g, ' ')}</p>
             )}
@@ -329,17 +329,17 @@ function ResourcePanel({ item, onClose }) {
                 <Brain className="w-10 h-10 text-primary-400 animate-pulse" />
                 <Sparkles className="w-4 h-4 text-purple-500 absolute -top-1 -right-1 animate-bounce" />
               </div>
-              <p className="text-sm text-gray-500">AI is finding resources for {item.skill_name}...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">AI is finding resources for {item.skill_name}...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
               <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">{error}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{error}</p>
             </div>
           ) : resources.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No resources available yet for this skill.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">No resources available yet for this skill.</p>
             </div>
           ) : (
             <>
@@ -362,9 +362,9 @@ function ResourcePanel({ item, onClose }) {
               {typeOrder.filter(t => grouped[t]).map(type => (
                 <div key={type}>
                   <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    {(() => { const I = RESOURCE_ICONS[type] || FileText; return <I className="w-4 h-4 text-gray-400" />; })()}
+                    {(() => { const I = RESOURCE_ICONS[type] || FileText; return <I className="w-4 h-4 text-gray-400 dark:text-gray-500" />; })()}
                     {typeLabels[type] || type}
-                    <span className="text-xs font-normal text-gray-400">({grouped[type].length})</span>
+                    <span className="text-xs font-normal text-gray-400 dark:text-gray-500">({grouped[type].length})</span>
                   </h3>
                   <div className="space-y-2.5">
                     {grouped[type].map(res => {
@@ -400,17 +400,17 @@ function ResourcePanel({ item, onClose }) {
                                 {res.title}
                               </h4>
                               {(res.author || res.platform) && (
-                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
                                   {res.author}{res.author && res.platform && ' · '}{res.platform}
                                 </p>
                               )}
                               {res.description && (
-                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{res.description}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1 line-clamp-2">{res.description}</p>
                               )}
                               {res.rating > 0 && (
                                 <div className="flex items-center gap-1 mt-1">
                                   <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                  <span className="text-[11px] text-gray-500">{res.rating.toFixed(1)}</span>
+                                  <span className="text-[11px] text-gray-500 dark:text-gray-400 dark:text-gray-500">{res.rating.toFixed(1)}</span>
                                 </div>
                               )}
                             </div>
@@ -440,7 +440,7 @@ function ResourcePanel({ item, onClose }) {
                               ) : (
                                 <button
                                   onClick={() => handleStartResource(res.resource_id)}
-                                  className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-gray-600 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                                  className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
                                 >
                                   <Play className="w-3 h-3" /> Start
                                 </button>
@@ -520,8 +520,8 @@ function EmptyState({ hasGaps, onGenerate, generating }) {
         <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <AlertTriangle className="w-8 h-8 text-amber-400" />
         </div>
-        <h2 className="text-lg font-bold text-gray-900 mb-2">No Skill Gaps Found</h2>
-        <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">No Skill Gaps Found</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
           Run a skill gap analysis first to identify what skills you need to learn. The roadmap will be generated based on your skill gaps.
         </p>
         <Link
@@ -539,8 +539,8 @@ function EmptyState({ hasGaps, onGenerate, generating }) {
       <div className="w-16 h-16 bg-gradient-to-br from-primary-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
         <Map className="w-8 h-8 text-primary-600" />
       </div>
-      <h2 className="text-lg font-bold text-gray-900 mb-2">Generate Your Learning Roadmap</h2>
-      <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Generate Your Learning Roadmap</h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
         AI will create a personalized learning path based on your skill gaps, ordered by priority and dependencies.
       </p>
       <button
@@ -664,7 +664,7 @@ export default function LearningRoadmapPage() {
             Learning Roadmap
           </h1>
           {roadmap && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
               Target: <span className="font-medium text-gray-700">{roadmap.target_role}</span>
             </p>
           )}
@@ -701,7 +701,7 @@ export default function LearningRoadmapPage() {
         <>
           {/* stats bar */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-4">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
               <div className="relative flex-shrink-0">
                 <CircularProgress percentage={completionPct} size={48} />
                 <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-purple-700">
@@ -709,8 +709,8 @@ export default function LearningRoadmapPage() {
                 </span>
               </div>
               <div>
-                <p className="text-lg font-bold text-gray-900">{completionPct}%</p>
-                <p className="text-xs text-gray-500">Complete</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{completionPct}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Complete</p>
               </div>
             </div>
             <StatCard icon={CheckCircle2} label="Skills Learned" value={`${stats.completed}/${stats.total}`} color="emerald" />
@@ -720,7 +720,7 @@ export default function LearningRoadmapPage() {
 
           {/* error banner */}
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl text-sm text-red-700">
               {error}
             </div>
           )}
@@ -761,7 +761,7 @@ export default function LearningRoadmapPage() {
           {/* timeline */}
           <div className="max-w-2xl">
             {filteredItems.length === 0 ? (
-              <div className="text-center py-12 text-sm text-gray-500">
+              <div className="text-center py-12 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                 No skills match the selected filter.
               </div>
             ) : (

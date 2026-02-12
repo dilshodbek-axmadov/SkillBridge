@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Zap, Upload, FileText, X, Loader2, CheckCircle2, AlertCircle,
@@ -60,16 +60,16 @@ function UploadPhase({ onFileSelected, error }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           Upload Your CV
         </h2>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
           Our AI will extract your skills and experience automatically.
         </p>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-red-600">{error}</p>
         </div>
@@ -95,15 +95,15 @@ function UploadPhase({ onFileSelected, error }) {
           <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Upload className="w-8 h-8 text-primary-600" />
           </div>
-          <p className="text-lg font-semibold text-gray-700 mb-1">
+          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">
             Drag & drop your CV here
           </p>
           <p className="text-sm text-gray-400 mb-4">
             or click to browse files
           </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full">
-            <FileText className="w-4 h-4 text-gray-500" />
-            <span className="text-xs text-gray-500 font-medium">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full">
+            <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
               PDF, DOC, DOCX — Max 5MB
             </span>
           </div>
@@ -116,10 +116,10 @@ function UploadPhase({ onFileSelected, error }) {
               <FileText className="w-6 h-6 text-primary-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {selectedFile.name}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
                 {formatSize(selectedFile.size)}
               </p>
             </div>
@@ -177,10 +177,10 @@ function ProcessingPhase({ progress }) {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           Analyzing your CV with AI...
         </h2>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
           {steps[currentStep]}
         </p>
       </div>
@@ -195,7 +195,7 @@ function ProcessingPhase({ progress }) {
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-sm font-semibold text-primary-600">{progress}%</span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
             ~{Math.max(5, Math.round((100 - progress) * 0.3))}s remaining
           </span>
         </div>
@@ -317,7 +317,7 @@ function ReviewPhase({ profileData, onConfirm, onEditManually, confirming }) {
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-gray-900">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
         We found the following information
       </h2>
 
@@ -388,7 +388,7 @@ function ReviewPhase({ profileData, onConfirm, onEditManually, confirming }) {
         {/* Add skill search */}
         {showSkillSearch && (
           <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={skillSearch}
@@ -612,13 +612,13 @@ export default function CVUploadPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
+      <header className="bg-white border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 lg:px-8 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-purple-500 rounded-lg flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Skill<span className="text-primary-600">Bridge</span>
             </span>
           </div>
@@ -637,7 +637,7 @@ export default function CVUploadPage() {
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-2xl">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 sm:p-8">
             {phase === 'upload' && (
               <>
                 <UploadPhase

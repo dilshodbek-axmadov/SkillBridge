@@ -6,7 +6,7 @@ export default function AssessmentCTA() {
   const { t } = useTranslation();
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
       <div className="max-w-6xl mx-auto">
         <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-purple-600 rounded-3xl overflow-hidden">
           {/* Decorative blurs */}

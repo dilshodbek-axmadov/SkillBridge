@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+﻿import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Zap, ArrowLeft, ArrowRight, Check, Loader2, Search,
@@ -100,7 +100,7 @@ function RoleInput({ label, value, onChange, placeholder, required }) {
       </label>
       <div className="relative" ref={wrapperRef}>
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             value={query}
@@ -147,10 +147,10 @@ function StepCareerGoals({ currentRole, desiredRole, onCurrentChange, onDesiredC
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           Tell us about your career goals
         </h2>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
           This helps us create a personalized learning roadmap and skill gap analysis.
         </p>
       </div>
@@ -202,10 +202,10 @@ function StepExperience({ value, onChange }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           What's your experience level?
         </h2>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
           This helps us tailor recommendations to your career stage.
         </p>
       </div>
@@ -236,7 +236,7 @@ function StepExperience({ value, onChange }) {
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{level.description}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">{level.description}</p>
                 </div>
               </div>
             </button>
@@ -331,10 +331,10 @@ function StepSkills({ selected, onAdd, onRemove, onUpdateProficiency }) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           What skills do you have?
         </h2>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
           Search or browse skills and set your proficiency level for each.
         </p>
       </div>
@@ -378,7 +378,7 @@ function StepSkills({ selected, onAdd, onRemove, onUpdateProficiency }) {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           value={searchQuery}
@@ -514,10 +514,10 @@ function StepInterests({ selected, onToggle }) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           What are your interests?
         </h2>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
           Optional — helps us suggest career paths that match your passions.
         </p>
       </div>
@@ -580,7 +580,7 @@ function StepInterests({ selected, onToggle }) {
                     </div>
                   )}
                 </div>
-                <span className="text-xs text-gray-400 mt-1 block capitalize">
+                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 block capitalize">
                   {interest.category}
                 </span>
               </button>
@@ -710,18 +710,18 @@ export default function ManualProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+      <header className="bg-white border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-purple-500 rounded-lg flex items-center justify-center">
                 <Zap className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Skill<span className="text-primary-600">Bridge</span>
               </span>
             </div>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
               Step {step} of {STEPS.length}
             </span>
           </div>
@@ -776,14 +776,14 @@ export default function ManualProfilePage() {
         <div className="w-full max-w-2xl">
           {/* Error banner */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           {/* Step content */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 sm:p-8">
             {step === 1 && (
               <StepCareerGoals
                 currentRole={jobPosition}

@@ -14,13 +14,13 @@ export default function HowItWorks() {
   const { t } = useTranslation();
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             {t('howItWorks.title')}
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
             {t('howItWorks.subtitle')}
           </p>
         </div>
@@ -28,9 +28,9 @@ export default function HowItWorks() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {stepKeys.map((step, index) => (
             <div key={step.titleKey} className="relative group">
-              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-lg transition-all hover:-translate-y-1 h-full">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all hover:-translate-y-1 h-full">
                 {/* Step number */}
-                <div className="absolute -top-3 -left-1 w-8 h-8 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center text-sm font-bold text-gray-500 shadow-sm">
+                <div className="absolute -top-3 -left-1 w-8 h-8 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 shadow-sm">
                   {index + 1}
                 </div>
 
@@ -38,10 +38,10 @@ export default function HowItWorks() {
                   <step.icon className="w-6 h-6 text-white" />
                 </div>
 
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   {t(step.titleKey)}
                 </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                   {t(step.descKey)}
                 </p>
               </div>

@@ -36,13 +36,13 @@ export default function Features() {
   const { t } = useTranslation();
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             {t('features.title')}
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
             {t('features.subtitle')}
           </p>
         </div>
@@ -51,15 +51,15 @@ export default function Features() {
           {featureKeys.map((feature) => (
             <div
               key={feature.titleKey}
-              className="bg-white rounded-2xl p-8 border border-gray-100 hover:shadow-lg transition-all hover:-translate-y-1 group"
+              className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-all hover:-translate-y-1 group"
             >
               <div className={`inline-flex items-center justify-center w-14 h-14 ${feature.iconBg} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
                 <feature.icon className={`w-7 h-7 ${feature.iconColor}`} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 {t(feature.titleKey)}
               </h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                 {t(feature.descKey)}
               </p>
             </div>

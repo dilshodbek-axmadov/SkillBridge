@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader2, Zap, Send } from 'lucide-react';
 import api from '../services/api';
@@ -160,7 +160,7 @@ export default function AssessmentPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Loading your career assessment...</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Loading your career assessment...</p>
         </div>
       </div>
     );
@@ -170,7 +170,7 @@ export default function AssessmentPage() {
   if (error && questions.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 max-w-md text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-8 max-w-md text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -186,7 +186,7 @@ export default function AssessmentPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
+      <header className="bg-white border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 lg:px-8 py-4">
         <div className="max-w-3xl mx-auto">
           {/* Top row */}
           <div className="flex items-center justify-between mb-4">
@@ -194,9 +194,9 @@ export default function AssessmentPage() {
               <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-purple-500 rounded-lg flex items-center justify-center">
                 <Zap className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm font-semibold text-gray-900">Career Assessment</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Career Assessment</span>
             </div>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
               Question {currentIndex + 1} of {totalQuestions}
             </span>
           </div>
@@ -226,7 +226,7 @@ export default function AssessmentPage() {
             <p className="text-xs font-semibold uppercase tracking-wide text-primary-600 mb-3">
               {currentQuestion.category}
             </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 leading-snug">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-snug">
               {currentQuestion.question_text}
             </h2>
 
@@ -277,7 +277,7 @@ export default function AssessmentPage() {
 
           {/* Error */}
           {error && (
-            <div className="mt-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 text-center">
+            <div className="mt-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg text-sm text-red-600 text-center">
               {error}
             </div>
           )}
@@ -285,7 +285,7 @@ export default function AssessmentPage() {
       </main>
 
       {/* Navigation */}
-      <footer className="bg-white border-t border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
+      <footer className="bg-white border-t border-gray-200 dark:border-gray-800 px-4 sm:px-6 lg:px-8 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button
             onClick={goBack}

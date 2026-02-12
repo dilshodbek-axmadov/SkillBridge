@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Zap, TrendingUp, Target, Briefcase, BarChart3, Code2,
@@ -118,13 +118,13 @@ function QuickStats({ skills, careerStatus, recommendations }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((c, i) => (
-        <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition-shadow">
           <div className={`w-10 h-10 ${c.iconBg} rounded-lg flex items-center justify-center mb-3`}>
             {c.icon}
           </div>
           <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
           <p className="text-sm font-medium text-gray-700 mt-0.5">{c.label}</p>
-          <p className="text-xs text-gray-400 mt-1">{c.sub}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{c.sub}</p>
         </div>
       ))}
     </div>
@@ -137,7 +137,7 @@ function YourSkills({ skills }) {
   if (!skills || skills.length === 0) {
     return (
       <Section title="Your Skills" actionLabel="Add Skills" actionTo="/manage-skills">
-        <div className="text-center py-10 text-gray-400">
+        <div className="text-center py-10 text-gray-400 dark:text-gray-500">
           <Code2 className="w-10 h-10 mx-auto mb-3 opacity-50" />
           <p className="text-sm">No skills added yet.</p>
           <Link to="/manage-skills" className="text-primary-600 text-sm font-medium no-underline hover:underline mt-1 inline-block">
@@ -166,7 +166,7 @@ function YourSkills({ skills }) {
           );
         })}
       </div>
-      <div className="flex gap-3 mt-3 text-xs text-gray-400">
+      <div className="flex gap-3 mt-3 text-xs text-gray-400 dark:text-gray-500">
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Expert</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Advanced</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Intermediate</span>
@@ -182,7 +182,7 @@ function LearningRoadmap({ careerStatus }) {
   if (!careerStatus?.completed) {
     return (
       <Section title="Your Learning Roadmap">
-        <div className="text-center py-10 text-gray-400">
+        <div className="text-center py-10 text-gray-400 dark:text-gray-500">
           <Target className="w-10 h-10 mx-auto mb-3 opacity-50" />
           <p className="text-sm mb-2">Complete the career assessment to get your personalized roadmap.</p>
           <Link
@@ -218,20 +218,20 @@ function LearningRoadmap({ careerStatus }) {
             return (
               <div key={i} className="relative flex gap-4">
                 <div className={`relative z-10 w-6 h-6 rounded-full ${cfg.dot} border-4 border-white shadow-sm flex-shrink-0 mt-1`} />
-                <div className={`flex-1 bg-white rounded-xl border border-gray-200 p-5 ${item.status === 'pending' ? 'opacity-60' : ''}`}>
+                <div className={`flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 ${item.status === 'pending' ? 'opacity-60' : ''}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${cfg.badge}`}>{cfg.label}</span>
-                    <span className="text-base font-bold text-gray-900">{item.skill}</span>
+                    <span className="text-base font-bold text-gray-900 dark:text-gray-100">{item.skill}</span>
                     {item.priority && (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">{item.priority}</span>
                     )}
                   </div>
                   {item.status === 'learning' && (
                     <>
-                      <div className="w-full h-2 bg-gray-100 rounded-full mb-2">
+                      <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full mb-2">
                         <div className="h-2 bg-emerald-500 rounded-full" style={{ width: `${item.progress}%` }} />
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3">
                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{item.timeLeft}</span>
                         <span className="flex items-center gap-1"><Book className="w-3 h-3" />{item.tutorials} tutorials completed</span>
                       </div>
@@ -242,7 +242,7 @@ function LearningRoadmap({ careerStatus }) {
                   )}
                   {item.status === 'next' && (
                     <>
-                      <p className="flex items-center gap-1 text-xs text-gray-500 mb-3">
+                      <p className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
                         <Lock className="w-3 h-3" /> Unlocks after {item.unlocksAfter}
                         <span className="ml-3 flex items-center gap-1"><Clock className="w-3 h-3" /> Est. {item.estHours} hours</span>
                       </p>
@@ -252,7 +252,7 @@ function LearningRoadmap({ careerStatus }) {
                     </>
                   )}
                   {item.status === 'pending' && (
-                    <p className="flex items-center gap-1 text-xs text-gray-400">
+                    <p className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                       <Clock className="w-3 h-3" /> Est. {item.estHours} hours
                     </p>
                   )}
@@ -282,16 +282,16 @@ function SkillsGapAnalysis({ profile, recommendations }) {
         {gaps.map((gap, i) => {
           const s = PRIORITY_STYLES[gap.priority];
           return (
-            <div key={i} className={`bg-white rounded-xl border border-gray-200 border-l-4 ${s.border} p-5`}>
+            <div key={i} className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 border-l-4 ${s.border} p-5`}>
               <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${s.badge} mb-2`}>
                 {gap.priority} PRIORITY
               </span>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">{gap.skill}</h3>
-              <p className="flex items-start gap-1.5 text-sm text-gray-500 mb-3">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{gap.skill}</h3>
+              <p className="flex items-start gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-3">
                 <Sparkles className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
                 {gap.reason}
               </p>
-              <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+              <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
                 <span className="flex items-center gap-1"><Zap className="w-3 h-3" />{gap.jobs} jobs</span>
                 {gap.salaryBoost && <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" />{gap.salaryBoost}</span>}
               </div>
@@ -329,7 +329,7 @@ function RecentActivity() {
               {a.icon}
             </div>
             <p className="text-sm text-gray-700 flex-1">{a.text}</p>
-            <span className="text-xs text-gray-400 whitespace-nowrap">{a.time}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{a.time}</span>
           </div>
         ))}
       </div>
@@ -353,19 +353,19 @@ function RecommendedJobs() {
     <Section title={`Jobs Matching Your Profile (${jobs.length})`} actionLabel="View All Jobs" actionTo="/jobs">
       <div className="space-y-3">
         {jobs.map((j, i) => (
-          <div key={i} className="rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow flex items-start gap-3">
+          <div key={i} className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md transition-shadow flex items-start gap-3">
             {/* Left: info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Briefcase className="w-4 h-4 text-gray-400" />
+                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Briefcase className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-gray-900 truncate">{j.title}</h3>
-                  <p className="text-xs text-gray-500">{j.company}</p>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{j.title}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{j.company}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-xs text-gray-500 mt-2">
+              <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-2">
                 <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" />{j.salary}</span>
                 <span>{j.have}/{j.total} skills</span>
               </div>
@@ -375,7 +375,7 @@ function RecommendedJobs() {
                     <span key={m} className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-medium">Missing: {m}</span>
                   ))}
                   {j.missing.length > 2 && (
-                    <span className="text-[10px] text-gray-400">+{j.missing.length - 2} more</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">+{j.missing.length - 2} more</span>
                   )}
                 </div>
               )}
@@ -402,8 +402,8 @@ function BottomCTA() {
   return (
     <div className="bg-gradient-to-r from-primary-50 via-purple-50 to-primary-50 rounded-2xl p-8 text-center">
       <Sparkles className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Ready to accelerate your learning?</h2>
-      <p className="text-sm text-gray-500 mb-5 max-w-md mx-auto">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Ready to accelerate your learning?</h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 max-w-md mx-auto">
         Get personalized recommendations from our AI chatbot
       </p>
       <button className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-colors border-none cursor-pointer shadow-lg shadow-primary-600/20">
@@ -418,11 +418,11 @@ function BottomCTA() {
 
 function Section({ title, subtitle, actionLabel, actionTo, children }) {
   return (
-    <section className="bg-white rounded-2xl border border-gray-200 p-6">
+    <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-          {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+          {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>}
         </div>
         {actionLabel && actionTo && (
           <Link to={actionTo} className="text-sm text-primary-600 font-medium no-underline hover:underline">

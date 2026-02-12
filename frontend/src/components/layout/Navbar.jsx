@@ -71,7 +71,7 @@ function LanguageSwitcher({ compact = false }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer transition-colors"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors"
       >
         <current.Flag />
         <span>{compact ? current.shortLabel : current.label}</span>
@@ -79,15 +79,15 @@ function LanguageSwitcher({ compact = false }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl border border-gray-100 shadow-lg py-1 z-50">
+        <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-lg py-1 z-50">
           {LANGUAGES.map((lang) => (
             <button
               key={lang.code}
               onClick={() => handleChange(lang.code)}
               className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left cursor-pointer border-none transition-colors ${
                 lang.code === current.code
-                  ? 'bg-primary-50 text-primary-700 font-semibold'
-                  : 'bg-transparent text-gray-700 hover:bg-gray-50'
+                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold'
+                  : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               <lang.Flag />
@@ -111,8 +111,8 @@ function MobileLanguageSwitcher() {
           onClick={() => i18n.changeLanguage(lang.code)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
             i18n.language === lang.code
-              ? 'border-primary-500 bg-primary-50 text-primary-700'
-              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+              : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
           }`}
         >
           <lang.Flag />
@@ -130,7 +130,7 @@ export default function Navbar() {
   const { t } = useTranslation();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -138,23 +138,23 @@ export default function Navbar() {
             <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-purple-500 rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">
-              Skill<span className="text-primary-600">Bridge</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              Skill<span className="text-primary-600 dark:text-primary-400">Bridge</span>
             </span>
           </Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
+            <Link to="/" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
               {t('nav.home')}
             </Link>
-            <Link to="/dashboard" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
+            <Link to="/dashboard" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
               {t('nav.dashboard')}
             </Link>
-            <Link to="/roadmap" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
+            <Link to="/roadmap" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
               {t('nav.roadmap')}
             </Link>
-            <Link to="/projects" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
+            <Link to="/projects" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
               {t('nav.projects')}
             </Link>
           </div>
@@ -167,13 +167,13 @@ export default function Navbar() {
               <>
                 <Link
                   to="/profile"
-                  className="text-sm font-medium text-gray-700 hover:text-primary-600 no-underline transition-colors"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors"
                 >
                   {t('nav.profile')}
                 </Link>
                 <button
                   onClick={logout}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer border-none"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer border-none"
                 >
                   {t('nav.logout')}
                 </button>
@@ -182,7 +182,7 @@ export default function Navbar() {
               <>
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 no-underline transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors"
                 >
                   {t('nav.login')}
                 </Link>
@@ -198,7 +198,7 @@ export default function Navbar() {
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden p-2 text-gray-600 hover:text-gray-900 bg-transparent border-none cursor-pointer"
+            className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-transparent border-none cursor-pointer"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -208,22 +208,22 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 px-4 py-4 space-y-3">
+        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-4 space-y-3">
           <MobileLanguageSwitcher />
-          <hr className="border-gray-200" />
-          <Link to="/" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.home')}</Link>
-          <Link to="/dashboard" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.dashboard')}</Link>
-          <Link to="/roadmap" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.roadmap')}</Link>
-          <Link to="/projects" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.projects')}</Link>
-          <hr className="border-gray-200" />
+          <hr className="border-gray-200 dark:border-gray-800" />
+          <Link to="/" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.home')}</Link>
+          <Link to="/dashboard" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.dashboard')}</Link>
+          <Link to="/roadmap" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.roadmap')}</Link>
+          <Link to="/projects" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.projects')}</Link>
+          <hr className="border-gray-200 dark:border-gray-800" />
           {isAuthenticated ? (
             <>
-              <Link to="/profile" className="block text-sm font-medium text-gray-700 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.profile')}</Link>
-              <button onClick={() => { logout(); setMobileOpen(false); }} className="w-full text-left text-sm font-medium text-gray-700 bg-gray-100 rounded-lg px-4 py-2 border-none cursor-pointer">{t('nav.logout')}</button>
+              <Link to="/profile" className="block text-sm font-medium text-gray-700 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.profile')}</Link>
+              <button onClick={() => { logout(); setMobileOpen(false); }} className="w-full text-left text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2 border-none cursor-pointer">{t('nav.logout')}</button>
             </>
           ) : (
             <>
-              <Link to="/login" className="block text-sm font-medium text-gray-700 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.login')}</Link>
+              <Link to="/login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.login')}</Link>
               <Link to="/register" className="block text-center text-sm font-medium text-white bg-primary-600 rounded-lg px-4 py-2 no-underline" onClick={() => setMobileOpen(false)}>{t('nav.signup')}</Link>
             </>
           )}

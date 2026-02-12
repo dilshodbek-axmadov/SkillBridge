@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import useAuthStore from '../store/authStore';
@@ -340,7 +340,7 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
       <div className="w-20 h-20 bg-primary-50 rounded-2xl flex items-center justify-center mb-6">
         <FileText className="w-10 h-10 text-primary-500" />
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Build Your Professional CV</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Build Your Professional CV</h1>
       <p className="text-gray-500 text-center max-w-md mb-8">
         Create an ATS-friendly CV in minutes using your profile data, skills, and projects.
       </p>
@@ -375,7 +375,7 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
           <><Sparkles className="w-5 h-5" />Auto-Fill from Profile</>
         )}
       </button>
-      <p className="text-xs text-gray-400 mt-3">
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
         Or <button onClick={() => {}} className="text-primary-600 underline bg-transparent border-none cursor-pointer text-xs">start from scratch</button>
       </p>
     </div>
@@ -388,14 +388,14 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
 
 function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onDownload }) {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white rounded-2xl border border-gray-100 p-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
           <FileText className="w-5 h-5 text-primary-600" />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-gray-900">{cv.title || 'My CV'}</h1>
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{cv.title || 'My CV'}</h1>
+          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             {saving ? (
               <><Loader2 className="w-3 h-3 animate-spin" />Saving...</>
             ) : lastSaved ? (
@@ -467,7 +467,7 @@ function SectionCard({
               title={section.is_visible ? 'Hide section' : 'Show section'}
             >
               {section.is_visible ? (
-                <Eye className="w-3.5 h-3.5 text-gray-400" />
+                <Eye className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
               ) : (
                 <EyeOff className="w-3.5 h-3.5 text-gray-300" />
               )}
@@ -475,20 +475,20 @@ function SectionCard({
           )}
           {!isFirst && (
             <button onClick={onMoveUp} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors bg-transparent border-none cursor-pointer" title="Move up">
-              <ArrowUp className="w-3.5 h-3.5 text-gray-400" />
+              <ArrowUp className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             </button>
           )}
           {!isLast && (
             <button onClick={onMoveDown} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors bg-transparent border-none cursor-pointer" title="Move down">
-              <ArrowDown className="w-3.5 h-3.5 text-gray-400" />
+              <ArrowDown className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             </button>
           )}
         </div>
 
         {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-gray-400" />
+          <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-500" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-400" />
+          <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
         )}
       </div>
 
@@ -521,7 +521,7 @@ function SectionEditor({ sectionType, content, onChange }) {
     case 'certifications':return <CertificationsEditor content={content} onChange={onChange} />;
     case 'languages':     return <LanguagesEditor content={content} onChange={onChange} />;
     case 'awards':        return <AwardsEditor content={content} onChange={onChange} />;
-    default:              return <p className="text-sm text-gray-400">Unknown section type.</p>;
+    default:              return <p className="text-sm text-gray-400 dark:text-gray-500">Unknown section type.</p>;
   }
 }
 
@@ -535,38 +535,38 @@ function PersonalInfoEditor({ content, onChange }) {
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Full Name</label>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Full Name</label>
         <input className={inputCls} value={content.full_name || ''} onChange={(e) => update('full_name', e.target.value)} placeholder="John Doe" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Current Position</label>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Current Position</label>
         <input className={inputCls} value={content.current_position || ''} onChange={(e) => update('current_position', e.target.value)} placeholder="Frontend Developer" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Email</label>
           <input className={inputCls} type="email" value={content.email || ''} onChange={(e) => update('email', e.target.value)} placeholder="email@example.com" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Phone</label>
           <input className={inputCls} value={content.phone || ''} onChange={(e) => update('phone', e.target.value)} placeholder="+998 90 123 45 67" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Location</label>
           <input className={inputCls} value={content.location || ''} onChange={(e) => update('location', e.target.value)} placeholder="Tashkent, Uzbekistan" />
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">LinkedIn</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">LinkedIn</label>
           <input className={inputCls} value={content.linkedin_url || ''} onChange={(e) => update('linkedin_url', e.target.value)} placeholder="linkedin.com/in/..." />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">GitHub</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">GitHub</label>
           <input className={inputCls} value={content.github_url || ''} onChange={(e) => update('github_url', e.target.value)} placeholder="github.com/..." />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Portfolio</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Portfolio</label>
           <input className={inputCls} value={content.portfolio_url || ''} onChange={(e) => update('portfolio_url', e.target.value)} placeholder="yoursite.com" />
         </div>
       </div>
@@ -639,14 +639,14 @@ function ExperienceEditor({ content, onChange }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input className={inputCls} value={pos.start_date || ''} onChange={(e) => updatePos(idx, 'start_date', e.target.value)} placeholder="Start (e.g. Jan 2023)" />
             <input className={inputCls} value={pos.end_date || ''} onChange={(e) => updatePos(idx, 'end_date', e.target.value)} placeholder="End (e.g. Dec 2024)" disabled={pos.current} />
-            <label className="flex items-center gap-2 text-xs text-gray-500">
+            <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
               <input type="checkbox" checked={pos.current || false} onChange={(e) => updatePos(idx, 'current', e.target.checked)} className="rounded" />
               Currently working here
             </label>
           </div>
           <input className={inputCls} value={pos.location || ''} onChange={(e) => updatePos(idx, 'location', e.target.value)} placeholder="Location" />
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Responsibilities (one per line)</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Responsibilities (one per line)</label>
             <textarea
               className={inputCls + ' resize-none h-20'}
               value={(pos.responsibilities || []).join('\n')}
@@ -1212,7 +1212,7 @@ function DownloadModal({ cv, onDownload, onClose }) {
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
         <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 bg-transparent border-none cursor-pointer">
-          <X className="w-5 h-5 text-gray-400" />
+          <X className="w-5 h-5 text-gray-400 dark:text-gray-500" />
         </button>
 
         <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -1230,8 +1230,8 @@ function DownloadModal({ cv, onDownload, onClose }) {
               <span className="text-xs font-bold text-red-600">PDF</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-900">PDF Format</div>
-              <div className="text-xs text-gray-500">Best for sharing and printing</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">PDF Format</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Best for sharing and printing</div>
             </div>
           </label>
 
@@ -1243,8 +1243,8 @@ function DownloadModal({ cv, onDownload, onClose }) {
               <span className="text-xs font-bold text-blue-600">DOCX</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-900">Word Document</div>
-              <div className="text-xs text-gray-500">Editable in Microsoft Word</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">Word Document</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Editable in Microsoft Word</div>
             </div>
           </label>
         </div>

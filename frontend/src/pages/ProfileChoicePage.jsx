@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+﻿import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Zap, FileText, Upload, Clock, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function ProfileChoicePage() {
@@ -11,12 +11,12 @@ export default function ProfileChoicePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
+      <header className="bg-white border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 lg:px-8 py-4">
         <div className="max-w-4xl mx-auto flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-purple-500 rounded-lg flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Skill<span className="text-primary-600">Bridge</span>
           </span>
         </div>
@@ -27,7 +27,7 @@ export default function ProfileChoicePage() {
         <div className="w-full max-w-3xl">
           {/* Heading */}
           <div className="text-center mb-10">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
               How would you like to create your profile?
             </h1>
             <p className="text-gray-500 text-lg max-w-xl mx-auto">
@@ -43,8 +43,8 @@ export default function ProfileChoicePage() {
                 <FileText className="w-7 h-7 text-primary-600" />
               </div>
 
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Fill Step-by-Step Form</h2>
-              <p className="text-gray-500 text-sm leading-relaxed mb-4 flex-1">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Fill Step-by-Step Form</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-4 flex-1">
                 Answer a few questions about your current skills, experience level, and career goals.
               </p>
 
@@ -68,8 +68,8 @@ export default function ProfileChoicePage() {
                 <Sparkles className="w-7 h-7 text-purple-600" />
               </div>
 
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Upload Your CV</h2>
-              <p className="text-gray-500 text-sm leading-relaxed mb-4 flex-1">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Upload Your CV</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-4 flex-1">
                 Let our AI extract your skills and experience automatically from your resume.
               </p>
 

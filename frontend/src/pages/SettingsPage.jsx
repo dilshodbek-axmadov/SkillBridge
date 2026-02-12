@@ -8,6 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import useAuthStore from '../store/authStore';
+import useThemeStore from '../store/themeStore';
 import api from '../services/api';
 
 /* ── Constants ─────────────────────────────────────────────────── */
@@ -36,7 +37,7 @@ const EXP_LEVELS = [
 
 function Card({ children, className = '', danger = false }) {
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ${danger ? 'border-l-4 !border-l-red-400' : ''} ${className}`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 ${danger ? 'border-l-4 !border-l-red-400' : ''} ${className}`}>
       {children}
     </div>
   );
@@ -45,14 +46,14 @@ function Card({ children, className = '', danger = false }) {
 function SectionTitle({ children, sub }) {
   return (
     <div className="mb-5">
-      <h3 className="text-[17px] font-bold text-gray-800">{children}</h3>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      <h3 className="text-[17px] font-bold text-gray-800 dark:text-gray-100">{children}</h3>
+      {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
     </div>
   );
 }
 
 function Label({ children, htmlFor }) {
-  return <label htmlFor={htmlFor} className="block text-sm font-medium text-gray-500 mb-1.5">{children}</label>;
+  return <label htmlFor={htmlFor} className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">{children}</label>;
 }
 
 function Input({ id, type = 'text', value, onChange, placeholder, disabled, maxLength, className = '' }) {
@@ -65,9 +66,9 @@ function Input({ id, type = 'text', value, onChange, placeholder, disabled, maxL
       placeholder={placeholder}
       disabled={disabled}
       maxLength={maxLength}
-      className={`w-full h-11 px-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 outline-none transition-all
+      className={`w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none transition-all
         focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:shadow-sm
-        disabled:bg-gray-50 disabled:text-gray-400 ${className}`}
+        disabled:bg-gray-50 dark:disabled:bg-gray-800/50 disabled:text-gray-400 ${className}`}
     />
   );
 }
@@ -75,7 +76,7 @@ function Input({ id, type = 'text', value, onChange, placeholder, disabled, maxL
 function Toggle({ checked, onChange, label }) {
   return (
     <div className="flex items-center justify-between py-2">
-      <span className="text-sm text-gray-700">{label}</span>
+      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
       <button
         type="button"
         onClick={() => onChange(!checked)}
@@ -158,7 +159,7 @@ function ProfileTab({ user, profile, onUserUpdate }) {
         <SectionTitle sub="Manage your personal information">Personal Details</SectionTitle>
 
         {/* Avatar */}
-        <div className="flex items-center gap-5 mb-7 p-4 bg-gradient-to-r from-primary-50 to-purple-50 rounded-2xl">
+        <div className="flex items-center gap-5 mb-7 p-4 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-2xl">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold relative group cursor-pointer shadow-lg shadow-primary-500/20">
             {initial}
             <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -166,8 +167,8 @@ function ProfileTab({ user, profile, onUserUpdate }) {
             </div>
           </div>
           <div>
-            <p className="text-base font-semibold text-gray-800">{user?.full_name || user?.email}</p>
-            <p className="text-xs text-gray-400 mt-0.5">Click avatar to change photo</p>
+            <p className="text-base font-semibold text-gray-800 dark:text-gray-100">{user?.full_name || user?.email}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Click avatar to change photo</p>
           </div>
         </div>
 
@@ -199,7 +200,7 @@ function ProfileTab({ user, profile, onUserUpdate }) {
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full h-11 px-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 outline-none bg-white
+              className="w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 outline-none bg-white dark:bg-gray-800
                 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             >
               <option value="">Select city</option>
@@ -215,7 +216,7 @@ function ProfileTab({ user, profile, onUserUpdate }) {
               maxLength={200}
               rows={3}
               placeholder="Tell us about yourself..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 outline-none resize-none
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none resize-none
                 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
             <p className="text-xs text-gray-400 text-right mt-1">{bio.length}/200</p>
@@ -246,7 +247,7 @@ function ProfileTab({ user, profile, onUserUpdate }) {
                   className={`px-4 py-2.5 rounded-xl text-sm font-medium border cursor-pointer transition-all ${
                     expLevel === lvl.value
                       ? 'bg-primary-600 text-white border-primary-600 shadow-sm shadow-primary-600/20'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:bg-primary-50'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {lvl.label}
@@ -388,14 +389,14 @@ function SecurityTab() {
 
       <Card>
         <SectionTitle sub="Devices currently logged into your account">Active Sessions</SectionTitle>
-        <div className="bg-gradient-to-r from-gray-50 to-emerald-50/30 rounded-xl px-4 py-3.5 flex items-center justify-between border border-gray-100">
+        <div className="bg-gradient-to-r from-gray-50 to-emerald-50/30 dark:from-gray-800 dark:to-emerald-900/10 rounded-xl px-4 py-3.5 flex items-center justify-between border border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100">
-              <Monitor className="w-5 h-5 text-gray-600" />
+            <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-600">
+              <Monitor className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Current Session</p>
-              <p className="text-xs text-gray-400">This device &middot; Active now</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Current Session</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">This device &middot; Active now</p>
             </div>
           </div>
           <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
@@ -407,7 +408,7 @@ function SecurityTab() {
 
       <Card danger>
         <SectionTitle sub="Permanent actions that cannot be undone">Danger Zone</SectionTitle>
-        <p className="text-sm text-gray-500 mb-4">Deleting your account will remove all your data, skills, roadmaps, and progress permanently.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Deleting your account will remove all your data, skills, roadmaps, and progress permanently.</p>
         <button
           onClick={() => setDeleteModal(true)}
           className="h-11 px-6 bg-white text-red-600 border-2 border-red-200 rounded-xl text-sm font-semibold cursor-pointer
@@ -420,24 +421,24 @@ function SecurityTab() {
       {/* Delete confirmation modal */}
       {deleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 bg-red-100 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="w-11 h-11 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Delete Account</h3>
-                <p className="text-xs text-gray-400">This action cannot be undone</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Delete Account</h3>
+                <p className="text-xs text-gray-400 dark:text-gray-500">This action cannot be undone</p>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-4">All your data will be permanently deleted. Enter your password to confirm.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">All your data will be permanently deleted. Enter your password to confirm.</p>
             <Label htmlFor="delete_pwd">Password</Label>
             <Input id="delete_pwd" type="password" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} placeholder="Your password" />
             {deleteError && <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mt-2"><AlertTriangle className="w-4 h-4 flex-shrink-0" />{deleteError}</div>}
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => { setDeleteModal(false); setDeletePwd(''); setDeleteError(''); }}
-                className="h-10 px-5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium border-none cursor-pointer hover:bg-gray-200 transition-colors"
+                className="h-10 px-5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium border-none cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
@@ -462,7 +463,7 @@ function SecurityTab() {
 function PreferencesTab({ user, onUserUpdate }) {
   const { i18n } = useTranslation();
   const [lang, setLang] = useState(i18n.language || user?.preferred_language || 'en');
-  const [theme, setTheme] = useState('light');
+  const { theme, setTheme } = useThemeStore();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -485,9 +486,9 @@ function PreferencesTab({ user, onUserUpdate }) {
   ];
 
   const THEMES = [
-    { value: 'light', label: 'Light', icon: Sun,     disabled: false },
-    { value: 'dark',  label: 'Dark',  icon: Moon,    disabled: true },
-    { value: 'auto',  label: 'System',icon: Monitor, disabled: true },
+    { value: 'light',  label: 'Light',  icon: Sun },
+    { value: 'dark',   label: 'Dark',   icon: Moon },
+    { value: 'system', label: 'System', icon: Monitor },
   ];
 
   return (
@@ -501,13 +502,13 @@ function PreferencesTab({ user, onUserUpdate }) {
               onClick={() => setLang(l.value)}
               className={`flex items-center gap-3 px-4 py-4 rounded-xl border-2 text-left cursor-pointer transition-all ${
                 lang === l.value
-                  ? 'border-primary-500 bg-primary-50 shadow-sm shadow-primary-500/10'
-                  : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-sm shadow-primary-500/10'
+                  : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-sm'
               }`}
             >
               <span className="text-2xl">{l.flag}</span>
               <div>
-                <p className={`text-sm font-semibold ${lang === l.value ? 'text-primary-700' : 'text-gray-800'}`}>{l.label}</p>
+                <p className={`text-sm font-semibold ${lang === l.value ? 'text-primary-700 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>{l.label}</p>
               </div>
               {lang === l.value && (
                 <div className="ml-auto w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
@@ -527,28 +528,25 @@ function PreferencesTab({ user, onUserUpdate }) {
             return (
               <button
                 key={t.value}
-                onClick={() => !t.disabled && setTheme(t.value)}
-                disabled={t.disabled}
+                onClick={() => setTheme(t.value)}
                 className={`relative flex flex-col items-center gap-3 px-4 py-5 rounded-xl border-2 cursor-pointer transition-all ${
                   theme === t.value
-                    ? 'border-primary-500 bg-primary-50 shadow-sm shadow-primary-500/10'
-                    : t.disabled
-                      ? 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-60'
-                      : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-sm shadow-primary-500/10'
+                    : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-sm'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  theme === t.value ? 'bg-primary-100' : 'bg-gray-100'
+                  theme === t.value ? 'bg-primary-100 dark:bg-primary-900/50' : 'bg-gray-100 dark:bg-gray-700'
                 }`}>
-                  <Icon className={`w-6 h-6 ${theme === t.value ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <Icon className={`w-6 h-6 ${theme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
                 </div>
-                <span className={`text-sm font-semibold ${theme === t.value ? 'text-primary-700' : 'text-gray-600'}`}>
+                <span className={`text-sm font-semibold ${theme === t.value ? 'text-primary-700 dark:text-primary-400' : 'text-gray-600 dark:text-gray-300'}`}>
                   {t.label}
                 </span>
-                {t.disabled && (
-                  <span className="absolute top-2 right-2 text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-medium">
-                    Soon
-                  </span>
+                {theme === t.value && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
                 )}
               </button>
             );
@@ -626,18 +624,18 @@ export default function SettingsPage() {
       {/* Page header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
-            <Settings className="w-5 h-5 text-gray-600" />
+          <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl flex items-center justify-center">
+            <Settings className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-            <p className="text-sm text-gray-400">Manage your account and preferences</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Manage your account and preferences</p>
           </div>
         </div>
       </div>
 
       {/* Tab navigation — elegant pill bar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 mb-6 inline-flex gap-1">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-1.5 mb-6 inline-flex gap-1">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.key;
@@ -648,7 +646,7 @@ export default function SettingsPage() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none cursor-pointer transition-all ${
                 active
                   ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
-                  : 'bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
               <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-gray-400'}`} />

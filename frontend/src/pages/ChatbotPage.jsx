@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Send, Loader2, Plus, MessageSquare, X, Menu,
@@ -292,7 +292,7 @@ export default function ChatbotPage() {
   /* ─── Render ────────────────────────── */
   return (
     <DashboardLayout user={user}>
-      <div className="flex h-[calc(100vh-100px)] bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="flex h-[calc(100vh-100px)] bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         {/* Sidebar */}
         <ConversationSidebar
           conversations={conversations}
@@ -312,7 +312,7 @@ export default function ChatbotPage() {
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 bg-transparent border-none cursor-pointer"
             >
-              <Menu className="w-5 h-5 text-gray-500" />
+              <Menu className="w-5 h-5 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
             </button>
 
             <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -430,13 +430,13 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
               className="p-1.5 rounded-lg hover:bg-gray-200 bg-transparent border-none cursor-pointer"
               title="New conversation"
             >
-              <Plus className="w-4 h-4 text-gray-500" />
+              <Plus className="w-4 h-4 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
             </button>
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-gray-200 bg-transparent border-none cursor-pointer lg:hidden"
             >
-              <X className="w-4 h-4 text-gray-500" />
+              <X className="w-4 h-4 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
             </button>
           </div>
         </div>
@@ -450,7 +450,7 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
           ) : conversations.length === 0 ? (
             <div className="text-center py-8 px-4">
               <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-xs text-gray-400">No conversations yet</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">No conversations yet</p>
             </div>
           ) : (
             Object.entries(grouped).map(([group, convs]) =>
@@ -474,7 +474,7 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
                         <span className="text-base flex-shrink-0">{ct.emoji}</span>
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium truncate">{ct.label}</div>
-                          <div className="text-[10px] text-gray-400">
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500">
                             {conv.message_count} messages
                           </div>
                         </div>
@@ -507,8 +507,8 @@ function WelcomeScreen({ contextType, suggestions, onSuggestion }) {
       <div className={`w-16 h-16 ${ct.bg} rounded-2xl flex items-center justify-center mb-5`}>
         <span className="text-3xl">{ct.emoji}</span>
       </div>
-      <h2 className="text-xl font-bold text-gray-900 mb-1">{welcome.title}</h2>
-      <p className="text-sm text-gray-500 mb-8">{welcome.sub}</p>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{welcome.title}</h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">{welcome.sub}</p>
 
       <div className="flex flex-wrap justify-center gap-2">
         {(suggestions || []).map((s) => (
@@ -577,7 +577,7 @@ function ChatMessage({ message, showInfo, onToggleInfo }) {
 
         {/* Timestamp + Info */}
         <div className="flex items-center gap-1.5 mt-1">
-          <span className="text-[10px] text-gray-400">
+          <span className="text-[10px] text-gray-400 dark:text-gray-500">
             {formatTime(message.timestamp)}
           </span>
           {!isUser && message.context?.intent && (
@@ -586,12 +586,12 @@ function ChatMessage({ message, showInfo, onToggleInfo }) {
                 onClick={onToggleInfo}
                 className="p-0.5 rounded hover:bg-gray-100 bg-transparent border-none cursor-pointer"
               >
-                <Info className="w-3 h-3 text-gray-300 hover:text-gray-500" />
+                <Info className="w-3 h-3 text-gray-300 hover:text-gray-500 dark:text-gray-400 dark:text-gray-500" />
               </button>
               {showInfo && (
                 <div className="absolute bottom-6 left-0 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-30 text-xs">
-                  <div className="font-semibold text-gray-700 mb-1.5">Response Info</div>
-                  <div className="space-y-1 text-gray-500">
+                  <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Response Info</div>
+                  <div className="space-y-1 text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     <div>Intent: <span className="text-gray-700">{message.context.intent}</span></div>
                     <div>Type: <span className="text-gray-700">{message.context.response_type}</span></div>
                     {message.context.context_used && (
@@ -656,9 +656,9 @@ function SkillMarketCard({ skills }) {
           <div key={i}>
             <div className="flex items-center justify-between text-xs mb-0.5">
               <span className="font-medium text-gray-800">{s.name}</span>
-              <span className="text-gray-400">{s.job_count} jobs</span>
+              <span className="text-gray-400 dark:text-gray-500">{s.job_count} jobs</span>
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
               <div
                 className="h-full bg-blue-500 rounded-full transition-all"
                 style={{ width: `${Math.min(s.demand_score || 0, 100)}%` }}
@@ -707,10 +707,10 @@ function JobMarketCard({ data }) {
         <Briefcase className="w-3.5 h-3.5 text-purple-500" />
         Current Job Market
       </h4>
-      <div className="text-2xl font-bold text-gray-900 mb-1">
+      <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
         {(data.total_active_jobs || 0).toLocaleString()}
       </div>
-      <div className="text-xs text-gray-500 mb-3">active job postings</div>
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">active job postings</div>
       {data.top_categories?.length > 0 && (
         <div className="space-y-1.5 mb-3">
           {data.top_categories.slice(0, 4).map((c, i) => (
@@ -755,7 +755,7 @@ function ResourcesCard({ resources }) {
             </div>
             {r.url && (
               <a href={r.url} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-gray-100 rounded flex-shrink-0">
-                <ExternalLink className="w-3 h-3 text-gray-400" />
+                <ExternalLink className="w-3 h-3 text-gray-400 dark:text-gray-500" />
               </a>
             )}
           </div>
@@ -793,12 +793,12 @@ function RoadmapCard({ roadmap }) {
         </svg>
         <div>
           <div className="text-sm font-semibold text-gray-800">{roadmap.completion}</div>
-          <div className="text-[10px] text-gray-500">skills completed</div>
+          <div className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500">skills completed</div>
         </div>
       </div>
       {roadmap.next_skills?.length > 0 && (
         <div>
-          <div className="text-[10px] font-semibold text-gray-500 mb-1">Next skills:</div>
+          <div className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Next skills:</div>
           <div className="flex flex-wrap gap-1">
             {roadmap.next_skills.map((s, i) => (
               <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{s}</span>
@@ -832,7 +832,7 @@ function TypingIndicator({ contextType, lastIntent }) {
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-          <span className="text-xs text-gray-400">{loadingMsg}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{loadingMsg}</span>
         </div>
       </div>
     </div>

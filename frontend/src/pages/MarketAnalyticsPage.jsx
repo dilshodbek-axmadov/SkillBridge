@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import {
   TrendingUp, TrendingDown, Briefcase, BarChart3, Code2,
   Clock, Building2, Wifi, DollarSign, Loader2, AlertCircle,
@@ -27,7 +27,7 @@ function formatHoursAgo(hours) {
 }
 
 function TrendBadge({ value }) {
-  if (value === null || value === undefined) return <span className="text-xs text-gray-400">—</span>;
+  if (value === null || value === undefined) return <span className="text-xs text-gray-400 dark:text-gray-500">—</span>;
   const isUp = value > 0;
   const isDown = value < 0;
   return (
@@ -43,7 +43,7 @@ function TrendBadge({ value }) {
 function MiniBar({ value, max, color = 'bg-primary-500' }) {
   const pct = max > 0 ? (value / max) * 100 : 0;
   return (
-    <div className="w-full h-2 bg-gray-100 rounded-full">
+    <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full">
       <div className={`h-2 rounded-full ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
     </div>
   );
@@ -61,14 +61,14 @@ function PageHeader({ overview }) {
         <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-purple-500 rounded-xl flex items-center justify-center">
           <BarChart3 className="w-5 h-5 text-white" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
           Market Analytics Dashboard
         </h1>
       </div>
-      <p className="text-gray-500 text-sm sm:text-base">
+      <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
         Real-time insights from <span className="font-semibold text-gray-700">{totalJobs.toLocaleString()}</span> active job postings across Uzbekistan IT market
       </p>
-      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
         <Clock className="w-3 h-3" />
         Last updated: {formatHoursAgo(hoursAgo)}
       </p>
@@ -129,13 +129,13 @@ function OverviewStats({ overview }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
       {cards.map((c, i) => (
-        <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition-shadow">
           <div className={`w-10 h-10 ${c.iconBg} rounded-lg flex items-center justify-center mb-3`}>
             {c.icon}
           </div>
-          <p className="text-2xl font-bold text-gray-900">{c.value}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{c.value}</p>
           <p className="text-sm font-medium text-gray-600 mt-0.5">{c.label}</p>
-          <p className="text-xs text-gray-400 mt-1">{c.sub}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{c.sub}</p>
         </div>
       ))}
     </div>
@@ -193,27 +193,27 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
           </div>
 
           {skills.map((s, i) => (
-            <div key={s.skill_id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">
+            <div key={s.skill_id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">
               <div className="col-span-1">
                 <span className={`text-xs font-bold ${i < 3 ? 'text-primary-600' : 'text-gray-400'}`}>
                   {s.rank}
                 </span>
               </div>
               <div className="col-span-4">
-                <p className="text-sm font-semibold text-gray-900 truncate">{s.skill_name}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{s.skill_name}</p>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${CATEGORY_COLORS[s.category] || 'bg-gray-100 text-gray-600'}`}>
                   {(s.category || 'other').replace(/_/g, ' ')}
                 </span>
               </div>
               <div className="col-span-3">
-                <p className="text-sm font-medium text-gray-700 mb-1">{s.job_count}</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{s.job_count}</p>
                 <MiniBar value={s.job_count} max={maxJobCount} />
               </div>
               <div className="col-span-2 text-right">
                 <p className="text-sm font-medium text-gray-700">
                   {s.avg_salary ? `${formatSalary(s.avg_salary)}` : '—'}
                 </p>
-                {s.avg_salary && <p className="text-[10px] text-gray-400">UZS</p>}
+                {s.avg_salary && <p className="text-[10px] text-gray-400 dark:text-gray-500">UZS</p>}
               </div>
               <div className="col-span-2 text-right">
                 <TrendBadge value={s.demand_change_30d ?? s.demand_change_7d} />
@@ -248,7 +248,7 @@ function JobCategories({ categories }) {
           {categories.map((cat, i) => (
             <div key={cat.category} className="flex items-center gap-3">
               <div className="w-28 sm:w-36 flex-shrink-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{cat.category}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{cat.category}</p>
               </div>
               <div className="flex-1">
                 <MiniBar value={cat.job_count} max={maxCount} color={COLORS[i % COLORS.length]} />
@@ -258,11 +258,11 @@ function JobCategories({ categories }) {
               </div>
               <div className="w-24 text-right flex-shrink-0 hidden sm:block">
                 {cat.avg_salary_min ? (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     {formatSalary(cat.avg_salary_min)} – {formatSalary(cat.avg_salary_max)}
                   </span>
                 ) : (
-                  <span className="text-xs text-gray-400">—</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
                 )}
               </div>
               {cat.change_7d != null && (
@@ -322,14 +322,14 @@ function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
               <div key={i} className="bg-gray-50 rounded-lg px-4 py-3 hover:bg-gray-100 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{s.job_title}</p>
-                    <p className="text-xs text-gray-400">{s.job_count} posting{s.job_count !== 1 ? 's' : ''}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{s.job_title}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{s.job_count} posting{s.job_count !== 1 ? 's' : ''}</p>
                   </div>
                   <div className="text-right flex-shrink-0 ml-3">
-                    <p className="text-sm font-bold text-gray-900">
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                       {formatSalary(avgMin)} – {formatSalary(avgMax)}
                     </p>
-                    <p className="text-[10px] text-gray-400">{s.currency || 'UZS'}</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">{s.currency || 'UZS'}</p>
                   </div>
                 </div>
 
@@ -405,7 +405,7 @@ function ExperienceDistribution({ distribution }) {
             <div className={`w-3 h-3 rounded-sm ${e.color} flex-shrink-0`} />
             <div>
               <p className="text-xs font-medium text-gray-700">{e.label}</p>
-              <p className="text-xs text-gray-400">{e.count.toLocaleString()} ({e.pct.toFixed(1)}%)</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{e.count.toLocaleString()} ({e.pct.toFixed(1)}%)</p>
             </div>
           </div>
         ))}
@@ -426,7 +426,7 @@ function TopSkillsByCategory({ categories }) {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {withSkills.map((cat) => (
           <div key={cat.category} className="bg-gray-50 rounded-xl p-4">
-            <h4 className="text-sm font-bold text-gray-900 mb-3">{cat.category}</h4>
+            <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-3">{cat.category}</h4>
             <div className="space-y-2">
               {cat.top_skills.slice(0, 5).map((skill, i) => (
                 <div key={skill.skill_id || i} className="flex items-center justify-between">
@@ -480,21 +480,21 @@ function TopJobTitles({ titles, period, onPeriodChange }) {
       ) : (
         <div className="space-y-2.5">
           {titles.map((t, i) => (
-            <div key={t.job_title} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">
+            <div key={t.job_title} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                 i < 3 ? RANK_COLORS[i] : 'bg-gray-200 text-gray-500'
               }`}>
                 {i + 1}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{t.job_title}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{t.job_title}</p>
                 <div className="mt-1">
                   <MiniBar value={t.count} max={maxCount} color={i < 3 ? 'bg-primary-500' : 'bg-gray-400'} />
                 </div>
               </div>
               <div className="flex-shrink-0 text-right">
                 <span className="text-sm font-bold text-gray-700">{t.count}</span>
-                <p className="text-[10px] text-gray-400">posts</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">posts</p>
               </div>
             </div>
           ))}
@@ -508,10 +508,10 @@ function TopJobTitles({ titles, period, onPeriodChange }) {
 
 function Section({ title, subtitle, children }) {
   return (
-    <section className="bg-white rounded-2xl border border-gray-200 p-6">
+    <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
       <div className="mb-5">
-        <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+        {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </section>
