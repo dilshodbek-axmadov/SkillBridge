@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '../services/api';
+import i18n from '../i18n';
 
 const useAuthStore = create((set) => ({
   user: null,
@@ -13,6 +14,9 @@ const useAuthStore = create((set) => ({
       const { data } = await api.post('/users/auth/login/', { email, password });
       localStorage.setItem('access_token', data.tokens.access);
       localStorage.setItem('refresh_token', data.tokens.refresh);
+      if (data.user?.preferred_language) {
+        i18n.changeLanguage(data.user.preferred_language);
+      }
       set({ user: data.user, isAuthenticated: true, loading: false });
       return data;
     } catch (error) {

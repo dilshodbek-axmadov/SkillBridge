@@ -5,6 +5,7 @@ import {
   Camera, Check, Eye, EyeOff,
   AlertTriangle, Monitor, Moon, Sun, Settings,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
@@ -459,7 +460,8 @@ function SecurityTab() {
 /* ── Tab 3: Preferences ────────────────────────────────────────── */
 
 function PreferencesTab({ user, onUserUpdate }) {
-  const [lang, setLang] = useState(user?.preferred_language || 'en');
+  const { i18n } = useTranslation();
+  const [lang, setLang] = useState(i18n.language || user?.preferred_language || 'en');
   const [theme, setTheme] = useState('light');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -468,6 +470,7 @@ function PreferencesTab({ user, onUserUpdate }) {
     setSaving(true);
     try {
       await api.patch('/users/auth/update/', { preferred_language: lang });
+      i18n.changeLanguage(lang);
       onUserUpdate();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -477,8 +480,8 @@ function PreferencesTab({ user, onUserUpdate }) {
 
   const LANGUAGES = [
     { value: 'en', label: 'English',  flag: '🇬🇧' },
-    { value: 'ru', label: 'Russian', flag: '🇷🇺' },
-    { value: 'uz', label: 'Uzbek',   flag: '🇺🇿' },
+    { value: 'ru', label: 'Русский', flag: '🇷🇺' },
+    { value: 'uz', label: "O'zbekcha",   flag: '🇺🇿' },
   ];
 
   const THEMES = [

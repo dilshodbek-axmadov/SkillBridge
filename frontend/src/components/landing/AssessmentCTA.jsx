@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Compass, Clock, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function AssessmentCTA() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-6xl mx-auto">
@@ -16,17 +19,15 @@ export default function AssessmentCTA() {
               <div>
                 <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white text-sm font-medium px-4 py-2 rounded-full mb-6 border border-white/20">
                   <Compass className="w-4 h-4" />
-                  Free Career Assessment
+                  {t('cta.badge')}
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
-                  Not sure which IT field is right for you?
+                  {t('cta.title')}
                 </h2>
 
                 <p className="text-white/80 text-lg leading-relaxed mb-8">
-                  You don&apos;t need to figure it out alone. Our AI-powered quiz analyzes your interests,
-                  strengths, and goals to recommend the best career path for you — whether it&apos;s
-                  frontend, backend, data science, or something else entirely.
+                  {t('cta.subtitle')}
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -34,12 +35,12 @@ export default function AssessmentCTA() {
                     to="/assessment"
                     className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold text-primary-700 bg-white rounded-xl hover:bg-primary-50 no-underline transition-all shadow-lg shadow-primary-900/20 hover:shadow-xl"
                   >
-                    Take the Quiz
+                    {t('cta.button')}
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                   <div className="flex items-center gap-2 text-white/70 text-sm">
                     <Clock className="w-4 h-4" />
-                    Takes only 5 minutes
+                    {t('cta.duration')}
                   </div>
                 </div>
               </div>
@@ -52,9 +53,9 @@ export default function AssessmentCTA() {
                       <span className="text-lg">🎯</span>
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold mb-1">Personalized Recommendations</h3>
+                      <h3 className="text-white font-semibold mb-1">{t('cta.benefit1.title')}</h3>
                       <p className="text-white/70 text-sm leading-relaxed">
-                        Get role suggestions matched to your unique interests and aptitudes, not generic advice.
+                        {t('cta.benefit1.desc')}
                       </p>
                     </div>
                   </div>
@@ -66,9 +67,9 @@ export default function AssessmentCTA() {
                       <span className="text-lg">📚</span>
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold mb-1">Course & Learning Path</h3>
+                      <h3 className="text-white font-semibold mb-1">{t('cta.benefit2.title')}</h3>
                       <p className="text-white/70 text-sm leading-relaxed">
-                        After the quiz, get a step-by-step learning roadmap with free resources to start right away.
+                        {t('cta.benefit2.desc')}
                       </p>
                     </div>
                   </div>
@@ -80,9 +81,9 @@ export default function AssessmentCTA() {
                       <Sparkles className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold mb-1">Powered by AI</h3>
+                      <h3 className="text-white font-semibold mb-1">{t('cta.benefit3.title')}</h3>
                       <p className="text-white/70 text-sm leading-relaxed">
-                        Our AI analyzes real market data from Uzbekistan to give you relevant, up-to-date career advice.
+                        {t('cta.benefit3.desc')}
                       </p>
                     </div>
                   </div>

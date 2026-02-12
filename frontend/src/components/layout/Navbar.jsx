@@ -1,11 +1,133 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Zap } from 'lucide-react';
+import { Menu, X, Zap, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import useAuthStore from '../../store/authStore';
 
+/* ── Flag SVGs (crisp at any size) ── */
+const FlagGB = () => (
+  <svg viewBox="0 0 60 30" className="w-5 h-3.5 rounded-sm flex-shrink-0">
+    <clipPath id="gb"><rect width="60" height="30" rx="2"/></clipPath>
+    <g clipPath="url(#gb)">
+      <rect width="60" height="30" fill="#012169"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" clipPath="url(#gb)"/>
+      <path d="M30,0V30M0,15H60" stroke="#fff" strokeWidth="10"/>
+      <path d="M30,0V30M0,15H60" stroke="#C8102E" strokeWidth="6"/>
+    </g>
+  </svg>
+);
+
+const FlagRU = () => (
+  <svg viewBox="0 0 60 30" className="w-5 h-3.5 rounded-sm flex-shrink-0">
+    <rect width="60" height="10" fill="#fff"/>
+    <rect y="10" width="60" height="10" fill="#0039A6"/>
+    <rect y="20" width="60" height="10" fill="#D52B1E"/>
+  </svg>
+);
+
+const FlagUZ = () => (
+  <svg viewBox="0 0 60 30" className="w-5 h-3.5 rounded-sm flex-shrink-0">
+    <rect width="60" height="10" fill="#1EB53A"/>
+    <rect y="10" width="60" height="1" fill="#CE1126"/>
+    <rect y="0" width="60" height="10" fill="#0099B5"/>
+    <rect y="11" width="60" height="1" fill="#CE1126"/>
+    <rect y="12" width="60" height="18" fill="#1EB53A"/>
+    <rect y="9" width="60" height="1" fill="#CE1126"/>
+    <rect y="10" width="60" height="2" fill="#fff"/>
+    <rect y="20" width="60" height="1" fill="#CE1126"/>
+    <rect y="21" width="60" height="9" fill="#fff"/>
+    <circle cx="10" cy="4.5" r="3.5" fill="#fff"/>
+    <circle cx="11.5" cy="4.5" r="3.5" fill="#0099B5"/>
+  </svg>
+);
+
+const LANGUAGES = [
+  { code: 'en', label: 'English', shortLabel: 'EN', Flag: FlagGB },
+  { code: 'ru', label: 'Русский', shortLabel: 'RU', Flag: FlagRU },
+  { code: 'uz', label: "O'zbekcha", shortLabel: 'UZ', Flag: FlagUZ },
+];
+
+/* ── Language Switcher ── */
+function LanguageSwitcher({ compact = false }) {
+  const { i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const current = LANGUAGES.find((l) => l.code === i18n.language) || LANGUAGES[0];
+
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const handleChange = (code) => {
+    i18n.changeLanguage(code);
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer transition-colors"
+      >
+        <current.Flag />
+        <span>{compact ? current.shortLabel : current.label}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl border border-gray-100 shadow-lg py-1 z-50">
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => handleChange(lang.code)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left cursor-pointer border-none transition-colors ${
+                lang.code === current.code
+                  ? 'bg-primary-50 text-primary-700 font-semibold'
+                  : 'bg-transparent text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <lang.Flag />
+              {lang.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Mobile Language Buttons ── */
+function MobileLanguageSwitcher() {
+  const { i18n } = useTranslation();
+  return (
+    <div className="flex gap-2">
+      {LANGUAGES.map((lang) => (
+        <button
+          key={lang.code}
+          onClick={() => i18n.changeLanguage(lang.code)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
+            i18n.language === lang.code
+              ? 'border-primary-500 bg-primary-50 text-primary-700'
+              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+          }`}
+        >
+          <lang.Flag />
+          {lang.shortLabel}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ── Main Navbar ── */
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated, logout } = useAuthStore();
+  const { t } = useTranslation();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -24,34 +146,36 @@ export default function Navbar() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
             <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
-              Home
+              {t('nav.home')}
             </Link>
             <Link to="/dashboard" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
-              Dashboard
+              {t('nav.dashboard')}
             </Link>
             <Link to="/roadmap" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
-              Roadmap
+              {t('nav.roadmap')}
             </Link>
             <Link to="/projects" className="text-sm font-medium text-gray-600 hover:text-primary-600 no-underline transition-colors">
-              Projects
+              {t('nav.projects')}
             </Link>
           </div>
 
-          {/* Auth buttons */}
+          {/* Language + Auth buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <LanguageSwitcher />
+
             {isAuthenticated ? (
               <>
                 <Link
                   to="/profile"
                   className="text-sm font-medium text-gray-700 hover:text-primary-600 no-underline transition-colors"
                 >
-                  Profile
+                  {t('nav.profile')}
                 </Link>
                 <button
                   onClick={logout}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer border-none"
                 >
-                  Log out
+                  {t('nav.logout')}
                 </button>
               </>
             ) : (
@@ -60,13 +184,13 @@ export default function Navbar() {
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 no-underline transition-colors"
                 >
-                  Log in
+                  {t('nav.login')}
                 </Link>
                 <Link
                   to="/register"
                   className="px-5 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 no-underline transition-colors"
                 >
-                  Sign up
+                  {t('nav.signup')}
                 </Link>
               </>
             )}
@@ -85,20 +209,22 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-gray-200 px-4 py-4 space-y-3">
-          <Link to="/" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>Home</Link>
-          <Link to="/dashboard" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>Dashboard</Link>
-          <Link to="/roadmap" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>Roadmap</Link>
-          <Link to="/projects" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>Projects</Link>
+          <MobileLanguageSwitcher />
+          <hr className="border-gray-200" />
+          <Link to="/" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.home')}</Link>
+          <Link to="/dashboard" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.dashboard')}</Link>
+          <Link to="/roadmap" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.roadmap')}</Link>
+          <Link to="/projects" className="block text-sm font-medium text-gray-600 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.projects')}</Link>
           <hr className="border-gray-200" />
           {isAuthenticated ? (
             <>
-              <Link to="/profile" className="block text-sm font-medium text-gray-700 no-underline py-2" onClick={() => setMobileOpen(false)}>Profile</Link>
-              <button onClick={() => { logout(); setMobileOpen(false); }} className="w-full text-left text-sm font-medium text-gray-700 bg-gray-100 rounded-lg px-4 py-2 border-none cursor-pointer">Log out</button>
+              <Link to="/profile" className="block text-sm font-medium text-gray-700 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.profile')}</Link>
+              <button onClick={() => { logout(); setMobileOpen(false); }} className="w-full text-left text-sm font-medium text-gray-700 bg-gray-100 rounded-lg px-4 py-2 border-none cursor-pointer">{t('nav.logout')}</button>
             </>
           ) : (
             <>
-              <Link to="/login" className="block text-sm font-medium text-gray-700 no-underline py-2" onClick={() => setMobileOpen(false)}>Log in</Link>
-              <Link to="/register" className="block text-center text-sm font-medium text-white bg-primary-600 rounded-lg px-4 py-2 no-underline" onClick={() => setMobileOpen(false)}>Sign up</Link>
+              <Link to="/login" className="block text-sm font-medium text-gray-700 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.login')}</Link>
+              <Link to="/register" className="block text-center text-sm font-medium text-white bg-primary-600 rounded-lg px-4 py-2 no-underline" onClick={() => setMobileOpen(false)}>{t('nav.signup')}</Link>
             </>
           )}
         </div>
