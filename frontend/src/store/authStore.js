@@ -80,6 +80,9 @@ const useAuthStore = create((set) => ({
     set({ loading: true });
     try {
       const { data } = await api.get('/users/auth/me/');
+      if (data.user?.preferred_language) {
+        i18n.changeLanguage(data.user.preferred_language);
+      }
       set({ user: data.user, isAuthenticated: true, loading: false });
     } catch {
       set({ loading: false });

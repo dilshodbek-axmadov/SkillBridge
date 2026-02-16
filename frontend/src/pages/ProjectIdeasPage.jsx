@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Lightbulb, Search, Clock, Target, Filter, X, Loader2,
   ChevronDown, FolderOpen, Sparkles, Github, ExternalLink,
@@ -18,44 +19,51 @@ const DIFFICULTY_COLORS = {
 };
 
 const STATUS_CONFIG = {
-  planned:     { label: 'Planned',     icon: '📋', bg: 'bg-gray-100 dark:bg-gray-800',       text: 'text-gray-600 dark:text-gray-400',     progress: 0 },
-  in_progress: { label: 'In Progress', icon: '⚙️', bg: 'bg-blue-100 dark:bg-blue-900/30',    text: 'text-blue-700 dark:text-blue-300',     progress: 50 },
-  completed:   { label: 'Completed',   icon: '✅', bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', progress: 100 },
+  planned:     { labelKey: 'projectIdeas.status.planned',     icon: '📋', bg: 'bg-gray-100 dark:bg-gray-800',       text: 'text-gray-600 dark:text-gray-400',     progress: 0 },
+  in_progress: { labelKey: 'projectIdeas.status.in_progress', icon: '⚙️', bg: 'bg-blue-100 dark:bg-blue-900/30',    text: 'text-blue-700 dark:text-blue-300',     progress: 50 },
+  completed:   { labelKey: 'projectIdeas.status.completed',   icon: '✅', bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', progress: 100 },
 };
 
 const TIME_RANGES = [
-  { label: 'All', value: '' },
-  { label: '< 10 hours', value: '0-10' },
-  { label: '10–30 hours', value: '10-30' },
-  { label: '30–50 hours', value: '30-50' },
-  { label: '50+ hours', value: '50-999' },
+  { labelKey: 'projectIdeas.timeRange.all', value: '' },
+  { labelKey: 'projectIdeas.timeRange.lt10', value: '0-10' },
+  { labelKey: 'projectIdeas.timeRange.10to30', value: '10-30' },
+  { labelKey: 'projectIdeas.timeRange.30to50', value: '30-50' },
+  { labelKey: 'projectIdeas.timeRange.gt50', value: '50-999' },
 ];
 
 const ROLES = [
-  'Backend Developer', 'Frontend Developer', 'Full Stack Developer',
-  'Data Scientist', 'DevOps Engineer', 'Mobile Developer',
-  'UI/UX Designer', 'QA Engineer',
+  { value: 'Backend Developer', labelKey: 'projectIdeas.roles.backend' },
+  { value: 'Frontend Developer', labelKey: 'projectIdeas.roles.frontend' },
+  { value: 'Full Stack Developer', labelKey: 'projectIdeas.roles.fullstack' },
+  { value: 'Data Scientist', labelKey: 'projectIdeas.roles.datascientist' },
+  { value: 'DevOps Engineer', labelKey: 'projectIdeas.roles.devops' },
+  { value: 'Mobile Developer', labelKey: 'projectIdeas.roles.mobile' },
+  { value: 'UI/UX Designer', labelKey: 'projectIdeas.roles.uiux' },
+  { value: 'QA Engineer', labelKey: 'projectIdeas.roles.qa' },
 ];
 
 /* ── Helpers ───────────────────────────────────────────────────── */
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr, t) {
   if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return t('projectIdeas.time.minutesAgo', { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return t('projectIdeas.time.hoursAgo', { count: hrs });
   const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  return `${Math.floor(days / 30)}mo ago`;
+  if (days < 30) return t('projectIdeas.time.daysAgo', { count: days });
+  return t('projectIdeas.time.monthsAgo', { count: Math.floor(days / 30) });
 }
 
 function DifficultyBadge({ level }) {
+  const { t } = useTranslation();
   const c = DIFFICULTY_COLORS[level] || DIFFICULTY_COLORS.beginner;
+  const label = t(`projectIdeas.difficulty.${level}`);
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${c.bg} ${c.text}`}>
-      {level.charAt(0).toUpperCase() + level.slice(1)}
+      {label}
     </span>
   );
 }
@@ -63,6 +71,7 @@ function DifficultyBadge({ level }) {
 /* ── Browse Project Card ──────────────────────────────────────── */
 
 function ProjectCard({ project, userProjectIds, onViewDetails, onAddProject }) {
+  const { t } = useTranslation();
   const isAdded = userProjectIds.has(project.project_id);
   const coreSkills = project.core_skills || [];
   const secondarySkills = project.secondary_skills || [];
@@ -109,7 +118,7 @@ function ProjectCard({ project, userProjectIds, onViewDetails, onAddProject }) {
             ))}
             {allSkills.length > 5 && (
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
-                +{allSkills.length - 5} more
+                +{allSkills.length - 5} {t('projectIdeas.more')}
               </span>
             )}
           </div>
@@ -123,7 +132,7 @@ function ProjectCard({ project, userProjectIds, onViewDetails, onAddProject }) {
           className="flex-1 h-9 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-600 dark:text-gray-300
             bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
         >
-          View Details
+          {t('projectIdeas.actions.viewDetails')}
         </button>
         <button
           onClick={() => !isAdded && onAddProject(project.project_id)}
@@ -134,7 +143,7 @@ function ProjectCard({ project, userProjectIds, onViewDetails, onAddProject }) {
               : 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm shadow-purple-600/20'
           }`}
         >
-          {isAdded ? 'Added ✓' : 'Add to My Projects'}
+          {isAdded ? t('projectIdeas.actions.added') : t('projectIdeas.actions.addToMyProjects')}
         </button>
       </div>
     </div>
@@ -144,6 +153,7 @@ function ProjectCard({ project, userProjectIds, onViewDetails, onAddProject }) {
 /* ── Project Detail Modal ─────────────────────────────────────── */
 
 function ProjectDetailModal({ project, userProjectIds, onClose, onAddProject, onStartProject }) {
+  const { t } = useTranslation();
   if (!project) return null;
   const isAdded = userProjectIds.has(project.project_id);
   const coreSkills = project.core_skills || [];
@@ -173,14 +183,14 @@ function ProjectDetailModal({ project, userProjectIds, onClose, onAddProject, on
         <div className="px-6 py-5 space-y-5">
           {/* Description */}
           <div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">Overview</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">{t('projectIdeas.modal.overview')}</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">{project.description}</p>
           </div>
 
           {/* Skills */}
           {coreSkills.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">Core Skills Required</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">{t('projectIdeas.modal.coreSkills')}</h3>
               <div className="flex flex-wrap gap-2">
                 {coreSkills.map((s) => (
                   <span key={s} className="text-xs px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium border border-primary-200 dark:border-primary-800">
@@ -193,7 +203,7 @@ function ProjectDetailModal({ project, userProjectIds, onClose, onAddProject, on
 
           {secondarySkills.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">Optional Skills</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">{t('projectIdeas.modal.optionalSkills')}</h3>
               <div className="flex flex-wrap gap-2">
                 {secondarySkills.map((s) => (
                   <span key={s} className="text-xs px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
@@ -207,17 +217,17 @@ function ProjectDetailModal({ project, userProjectIds, onClose, onAddProject, on
           {/* Project details */}
           <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Estimated Time</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t('projectIdeas.modal.estimatedTime')}</span>
               <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                <Clock className="w-4 h-4" />{project.estimated_hours} hours
+                <Clock className="w-4 h-4" />{project.estimated_hours} {t('projectIdeas.units.hours')}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Difficulty</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t('projectIdeas.modal.difficulty')}</span>
               <DifficultyBadge level={project.difficulty_level} />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Suggested For</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t('projectIdeas.modal.suggestedFor')}</span>
               <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{project.target_role}</span>
             </div>
           </div>
@@ -226,21 +236,21 @@ function ProjectDetailModal({ project, userProjectIds, onClose, onAddProject, on
         {/* Footer */}
         <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 px-6 py-4 flex gap-3">
           <button onClick={onClose} className="flex-1 h-11 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-            Cancel
+            {t('projectIdeas.actions.cancel')}
           </button>
           {isAdded ? (
             <button
               onClick={() => { onStartProject(project.project_id); onClose(); }}
               className="flex-1 h-11 rounded-xl bg-primary-600 text-white text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors shadow-sm shadow-primary-600/20"
             >
-              Start Project
+              {t('projectIdeas.actions.startProject')}
             </button>
           ) : (
             <button
               onClick={() => { onAddProject(project.project_id); onClose(); }}
               className="flex-1 h-11 rounded-xl bg-purple-600 text-white text-sm font-semibold border-none cursor-pointer hover:bg-purple-700 transition-colors shadow-sm shadow-purple-600/20"
             >
-              Add to My Projects
+              {t('projectIdeas.actions.addToMyProjects')}
             </button>
           )}
         </div>
@@ -252,6 +262,7 @@ function ProjectDetailModal({ project, userProjectIds, onClose, onAddProject, on
 /* ── Edit User Project Modal ──────────────────────────────────── */
 
 function EditProjectModal({ userProject, onClose, onSave, onDelete }) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState(userProject?.status || 'planned');
   const [githubUrl, setGithubUrl] = useState(userProject?.github_url || '');
   const [liveDemoUrl, setLiveDemoUrl] = useState(userProject?.live_demo_url || '');
@@ -272,7 +283,7 @@ function EditProjectModal({ userProject, onClose, onSave, onDelete }) {
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl w-full max-w-md z-10">
         <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Edit Project</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('projectIdeas.edit.title')}</h2>
           <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-transparent border-none cursor-pointer">
             <X className="w-5 h-5" />
           </button>
@@ -280,20 +291,20 @@ function EditProjectModal({ userProject, onClose, onSave, onDelete }) {
 
         <div className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('projectIdeas.edit.status')}</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
             >
-              <option value="planned">Planned</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
+              <option value="planned">{t('projectIdeas.status.planned')}</option>
+              <option value="in_progress">{t('projectIdeas.status.in_progress')}</option>
+              <option value="completed">{t('projectIdeas.status.completed')}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">GitHub URL</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('projectIdeas.edit.github')}</label>
             <input
               type="url"
               value={githubUrl}
@@ -304,7 +315,7 @@ function EditProjectModal({ userProject, onClose, onSave, onDelete }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Live Demo URL</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('projectIdeas.edit.demo')}</label>
             <input
               type="url"
               value={liveDemoUrl}
@@ -315,12 +326,12 @@ function EditProjectModal({ userProject, onClose, onSave, onDelete }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Notes</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('projectIdeas.edit.notes')}</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Learnings, challenges, ideas..."
+              placeholder={t('projectIdeas.edit.notesPlaceholder')}
               className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 resize-none"
             />
           </div>
@@ -331,18 +342,18 @@ function EditProjectModal({ userProject, onClose, onSave, onDelete }) {
             onClick={() => { onDelete(userProject.project_id); onClose(); }}
             className="text-sm text-red-500 hover:text-red-600 font-medium bg-transparent border-none cursor-pointer flex items-center gap-1"
           >
-            <Trash2 className="w-3.5 h-3.5" /> Delete
+            <Trash2 className="w-3.5 h-3.5" /> {t('projectIdeas.actions.delete')}
           </button>
           <div className="flex gap-2">
             <button onClick={onClose} className="h-10 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-              Cancel
+              {t('projectIdeas.actions.cancel')}
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
               className="h-10 px-5 rounded-xl bg-primary-600 text-white text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors disabled:opacity-60"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? t('projectIdeas.actions.saving') : t('projectIdeas.actions.saveChanges')}
             </button>
           </div>
         </div>
@@ -354,6 +365,7 @@ function EditProjectModal({ userProject, onClose, onSave, onDelete }) {
 /* ── User Project Card (My Projects Tab) ──────────────────────── */
 
 function UserProjectCard({ up, onEdit, onStart, onComplete }) {
+  const { t } = useTranslation();
   const cfg = STATUS_CONFIG[up.status] || STATUS_CONFIG.planned;
   const coreSkills = up.core_skills || [];
 
@@ -371,7 +383,7 @@ function UserProjectCard({ up, onEdit, onStart, onComplete }) {
       {/* Status badge */}
       <div className="flex items-center gap-2 mb-3">
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cfg.bg} ${cfg.text}`}>
-          {cfg.icon} {cfg.label}
+          {cfg.icon} {t(cfg.labelKey)}
         </span>
         <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
           <Clock className="w-3 h-3" />{up.estimated_hours}h
@@ -390,9 +402,9 @@ function UserProjectCard({ up, onEdit, onStart, onComplete }) {
 
       {/* Date info */}
       <div className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-        {up.status === 'planned' && up.started_at === null && 'Added to your projects'}
-        {up.status === 'in_progress' && up.started_at && `Started ${timeAgo(up.started_at)}`}
-        {up.status === 'completed' && up.completed_at && `Completed ${timeAgo(up.completed_at)}`}
+        {up.status === 'planned' && up.started_at === null && t('projectIdeas.my.addedToProjects')}
+        {up.status === 'in_progress' && up.started_at && `${t('projectIdeas.my.started')} ${timeAgo(up.started_at, t)}`}
+        {up.status === 'completed' && up.completed_at && `${t('projectIdeas.my.completed')} ${timeAgo(up.completed_at, t)}`}
       </div>
 
       {/* Links */}
@@ -400,12 +412,12 @@ function UserProjectCard({ up, onEdit, onStart, onComplete }) {
         <div className="flex gap-2 mb-3">
           {up.github_url && (
             <a href={up.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 no-underline">
-              <Github className="w-3.5 h-3.5" /> GitHub
+              <Github className="w-3.5 h-3.5" /> {t('projectIdeas.edit.github')}
             </a>
           )}
           {up.live_demo_url && (
             <a href={up.live_demo_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 no-underline">
-              <ExternalLink className="w-3.5 h-3.5" /> Demo
+              <ExternalLink className="w-3.5 h-3.5" /> {t('projectIdeas.edit.demo')}
             </a>
           )}
         </div>
@@ -435,7 +447,7 @@ function UserProjectCard({ up, onEdit, onStart, onComplete }) {
         {up.status === 'planned' && (
           <>
             <button onClick={() => onStart(up.project_id)} className="flex-1 h-9 rounded-xl bg-primary-600 text-white text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors flex items-center justify-center gap-1.5">
-              <Play className="w-3.5 h-3.5" /> Start Project
+              <Play className="w-3.5 h-3.5" /> {t('projectIdeas.actions.startProject')}
             </button>
             <button onClick={() => onEdit(up)} className="h-9 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
               <Edit3 className="w-4 h-4" />
@@ -445,7 +457,7 @@ function UserProjectCard({ up, onEdit, onStart, onComplete }) {
         {up.status === 'in_progress' && (
           <>
             <button onClick={() => onComplete(up.project_id)} className="flex-1 h-9 rounded-xl bg-emerald-600 text-white text-sm font-semibold border-none cursor-pointer hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Mark Complete
+              <CheckCircle2 className="w-3.5 h-3.5" /> {t('projectIdeas.actions.markComplete')}
             </button>
             <button onClick={() => onEdit(up)} className="h-9 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
               <Edit3 className="w-4 h-4" />
@@ -455,7 +467,7 @@ function UserProjectCard({ up, onEdit, onStart, onComplete }) {
         {up.status === 'completed' && (
           <>
             <button onClick={() => onEdit(up)} className="flex-1 h-9 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5">
-              <Edit3 className="w-3.5 h-3.5" /> View Details
+              <Edit3 className="w-3.5 h-3.5" /> {t('projectIdeas.actions.viewDetails')}
             </button>
           </>
         )}
@@ -467,16 +479,17 @@ function UserProjectCard({ up, onEdit, onStart, onComplete }) {
 /* ── Stats Row ────────────────────────────────────────────────── */
 
 function StatsRow({ userProjects }) {
+  const { t } = useTranslation();
   const total = userProjects.length;
   const inProgress = userProjects.filter(p => p.status === 'in_progress').length;
   const completed = userProjects.filter(p => p.status === 'completed').length;
   const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   const stats = [
-    { icon: <FolderOpen className="w-5 h-5 text-primary-600" />, bg: 'bg-primary-100 dark:bg-primary-900/30', value: total, label: 'Total Projects' },
-    { icon: <Zap className="w-5 h-5 text-blue-600" />,          bg: 'bg-blue-100 dark:bg-blue-900/30',       value: inProgress, label: 'In Progress' },
-    { icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />, bg: 'bg-emerald-100 dark:bg-emerald-900/30', value: completed, label: 'Completed' },
-    { icon: <BarChart3 className="w-5 h-5 text-purple-600" />,  bg: 'bg-purple-100 dark:bg-purple-900/30',   value: `${rate}%`, label: 'Completion Rate' },
+    { icon: <FolderOpen className="w-5 h-5 text-primary-600" />, bg: 'bg-primary-100 dark:bg-primary-900/30', value: total, label: t('projectIdeas.stats.totalProjects') },
+    { icon: <Zap className="w-5 h-5 text-blue-600" />,          bg: 'bg-blue-100 dark:bg-blue-900/30',       value: inProgress, label: t('projectIdeas.status.in_progress') },
+    { icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />, bg: 'bg-emerald-100 dark:bg-emerald-900/30', value: completed, label: t('projectIdeas.status.completed') },
+    { icon: <BarChart3 className="w-5 h-5 text-purple-600" />,  bg: 'bg-purple-100 dark:bg-purple-900/30',   value: `${rate}%`, label: t('projectIdeas.stats.completionRate') },
   ];
 
   return (
@@ -499,6 +512,7 @@ function StatsRow({ userProjects }) {
 /* ── Filters Bar (Browse Tab) ─────────────────────────────────── */
 
 function FiltersBar({ filters, onChange, onClear, onSearch }) {
+  const { t } = useTranslation();
   const hasFilters = filters.role || filters.difficulty || filters.timeRange || filters.search;
 
   return (
@@ -512,7 +526,7 @@ function FiltersBar({ filters, onChange, onClear, onSearch }) {
               type="text"
               value={filters.search}
               onChange={(e) => onChange('search', e.target.value)}
-              placeholder="Search projects..."
+              placeholder={t('projectIdeas.filters.search')}
               className="w-full h-10 pl-9 pr-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
@@ -525,9 +539,9 @@ function FiltersBar({ filters, onChange, onClear, onSearch }) {
             onChange={(e) => onChange('role', e.target.value)}
             className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
           >
-            <option value="">All Roles</option>
-            {ROLES.map((r) => (
-              <option key={r} value={r}>{r}</option>
+            <option value="">{t('projectIdeas.filters.allRoles')}</option>
+            {ROLES.map((role) => (
+              <option key={role.value} value={role.value}>{t(role.labelKey)}</option>
             ))}
           </select>
         </div>
@@ -539,10 +553,10 @@ function FiltersBar({ filters, onChange, onClear, onSearch }) {
             onChange={(e) => onChange('difficulty', e.target.value)}
             className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
           >
-            <option value="">All Difficulties</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
+            <option value="">{t('projectIdeas.filters.allDifficulties')}</option>
+            <option value="beginner">{t('projectIdeas.difficulty.beginner')}</option>
+            <option value="intermediate">{t('projectIdeas.difficulty.intermediate')}</option>
+            <option value="advanced">{t('projectIdeas.difficulty.advanced')}</option>
           </select>
         </div>
 
@@ -553,8 +567,8 @@ function FiltersBar({ filters, onChange, onClear, onSearch }) {
             onChange={(e) => onChange('timeRange', e.target.value)}
             className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
           >
-            {TIME_RANGES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+            {TIME_RANGES.map((rangeOption) => (
+              <option key={rangeOption.value} value={rangeOption.value}>{t(rangeOption.labelKey)}</option>
             ))}
           </select>
         </div>
@@ -566,16 +580,16 @@ function FiltersBar({ filters, onChange, onClear, onSearch }) {
             onChange={(e) => onChange('sort', e.target.value)}
             className="w-full h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
           >
-            <option value="newest">Newest First</option>
-            <option value="difficulty">Difficulty (Easy → Hard)</option>
-            <option value="time">Time (Shortest)</option>
+            <option value="newest">{t('projectIdeas.filters.newestFirst')}</option>
+            <option value="difficulty">{t('projectIdeas.filters.difficultySort')}</option>
+            <option value="time">{t('projectIdeas.filters.timeSort')}</option>
           </select>
         </div>
 
         {/* Clear */}
         {hasFilters && (
           <button onClick={onClear} className="h-10 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-1">
-            <X className="w-3.5 h-3.5" /> Clear
+            <X className="w-3.5 h-3.5" /> {t('projectIdeas.filters.clear')}
           </button>
         )}
       </div>
@@ -590,7 +604,7 @@ function FiltersBar({ filters, onChange, onClear, onSearch }) {
               : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
           }`}
         >
-          ⚡ Quick Wins (&lt;10h)
+          ⚡ {t('projectIdeas.filters.quickWins')}
         </button>
       </div>
     </div>
@@ -600,6 +614,7 @@ function FiltersBar({ filters, onChange, onClear, onSearch }) {
 /* ── Main Page ────────────────────────────────────────────────── */
 
 export default function ProjectIdeasPage() {
+  const { t, i18n } = useTranslation();
   const { user, fetchUser } = useAuthStore();
   const [tab, setTab] = useState('browse'); // browse | my
   const [loading, setLoading] = useState(true);
@@ -669,7 +684,7 @@ export default function ProjectIdeasPage() {
       const payload = {
         target_role: filters.role || 'Full Stack Developer',
         difficulty_level: filters.difficulty || 'beginner',
-        language: 'en',
+        language: i18n.language || 'en',
         count: 3,
       };
       const { data } = await api.post('/projects/generate/', payload);
@@ -795,8 +810,8 @@ export default function ProjectIdeasPage() {
             <Lightbulb className="w-5 h-5 text-amber-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Project Ideas</h1>
-            <p className="text-sm text-gray-400 dark:text-gray-500">Build your portfolio with AI-generated project ideas</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('projectIdeas.title')}</h1>
+            <p className="text-sm text-gray-400 dark:text-gray-500">{t('projectIdeas.subtitle')}</p>
           </div>
         </div>
       </div>
@@ -812,7 +827,7 @@ export default function ProjectIdeasPage() {
                 : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
-            Browse Projects
+            {t('projectIdeas.tabs.browse')}
           </button>
           <button
             onClick={() => setTab('my')}
@@ -822,7 +837,7 @@ export default function ProjectIdeasPage() {
                 : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
-            My Projects
+            {t('projectIdeas.tabs.my')}
             {userProjects.length > 0 && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                 tab === 'my' ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
@@ -847,7 +862,7 @@ export default function ProjectIdeasPage() {
           {/* Results count + Generate button */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Showing {filteredBrowse.length} project{filteredBrowse.length !== 1 ? 's' : ''}
+              {t('projectIdeas.showing', { count: filteredBrowse.length })}
             </p>
             <button
               onClick={generateProjects}
@@ -859,7 +874,7 @@ export default function ProjectIdeasPage() {
               ) : (
                 <Sparkles className="w-4 h-4" />
               )}
-              {generating ? 'Generating...' : 'Generate More'}
+              {generating ? t('projectIdeas.actions.generating') : t('projectIdeas.actions.generateMore')}
             </button>
           </div>
 
@@ -867,14 +882,14 @@ export default function ProjectIdeasPage() {
           {filteredBrowse.length === 0 ? (
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-12 text-center">
               <Search className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">No projects match your filters</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Try adjusting your criteria or generate new project ideas</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{t('projectIdeas.empty.filteredTitle')}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{t('projectIdeas.empty.filteredSub')}</p>
               <div className="flex gap-2 justify-center">
                 <button onClick={clearFilters} className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                  Clear Filters
+                  {t('projectIdeas.filters.clear')}
                 </button>
                 <button onClick={generateProjects} disabled={generating} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold border-none cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-60">
-                  Generate Projects
+                  {t('projectIdeas.actions.generateProjects')}
                 </button>
               </div>
             </div>
@@ -900,7 +915,12 @@ export default function ProjectIdeasPage() {
           {/* Status sub-tabs */}
           <div className="flex gap-2 mb-6 overflow-x-auto">
             {(['all', 'planned', 'in_progress', 'completed']).map((s) => {
-              const labels = { all: 'All', planned: 'Planned', in_progress: 'In Progress', completed: 'Completed' };
+              const labels = {
+                all: t('projectIdeas.status.all'),
+                planned: t('projectIdeas.status.planned'),
+                in_progress: t('projectIdeas.status.in_progress'),
+                completed: t('projectIdeas.status.completed')
+              };
               return (
                 <button
                   key={s}
@@ -926,10 +946,10 @@ export default function ProjectIdeasPage() {
           {filteredMyProjects.length === 0 ? (
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-12 text-center">
               <FolderOpen className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">No projects yet</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Browse project ideas to start building your portfolio</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{t('projectIdeas.empty.noProjectsTitle')}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{t('projectIdeas.empty.noProjectsSub')}</p>
               <button onClick={() => setTab('browse')} className="px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors">
-                Browse Projects
+                {t('projectIdeas.tabs.browse')}
               </button>
             </div>
           ) : (

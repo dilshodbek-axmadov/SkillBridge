@@ -81,6 +81,12 @@ class StartConversationRequestSerializer(serializers.Serializer):
         max_length=2000,
         help_text="Optional initial message to send."
     )
+    language = serializers.ChoiceField(
+        choices=['en', 'ru', 'uz'],
+        default='en',
+        required=False,
+        help_text="Greeting language."
+    )
 
 
 class SendMessageRequestSerializer(serializers.Serializer):

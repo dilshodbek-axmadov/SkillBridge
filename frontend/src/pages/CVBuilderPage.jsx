@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
@@ -16,21 +17,21 @@ import {
    ═══════════════════════════════════════════ */
 
 const SECTION_META = {
-  personal_info: { label: 'Personal Information', icon: User, required: true },
-  summary:       { label: 'Professional Summary', icon: AlignLeft },
-  experience:    { label: 'Work Experience', icon: Briefcase },
-  education:     { label: 'Education', icon: GraduationCap },
-  skills:        { label: 'Skills', icon: Code2 },
-  projects:      { label: 'Projects', icon: FolderOpen },
-  certifications:{ label: 'Certifications', icon: Award },
-  languages:     { label: 'Languages', icon: Languages },
-  awards:        { label: 'Awards & Achievements', icon: Trophy },
+  personal_info: { labelKey: 'cvBuilder.sections.personal_info', icon: User, required: true },
+  summary:       { labelKey: 'cvBuilder.sections.summary', icon: AlignLeft },
+  experience:    { labelKey: 'cvBuilder.sections.experience', icon: Briefcase },
+  education:     { labelKey: 'cvBuilder.sections.education', icon: GraduationCap },
+  skills:        { labelKey: 'cvBuilder.sections.skills', icon: Code2 },
+  projects:      { labelKey: 'cvBuilder.sections.projects', icon: FolderOpen },
+  certifications:{ labelKey: 'cvBuilder.sections.certifications', icon: Award },
+  languages:     { labelKey: 'cvBuilder.sections.languages', icon: Languages },
+  awards:        { labelKey: 'cvBuilder.sections.awards', icon: Trophy },
 };
 
 const TEMPLATES = {
-  modern:   { name: 'Modern',   desc: 'Clean layout with skills highlighted first' },
-  classic:  { name: 'Classic',  desc: 'Traditional format with experience first' },
-  creative: { name: 'Creative', desc: 'Portfolio-focused with projects highlighted' },
+  modern:   { nameKey: 'cvBuilder.templates.modern.name', descKey: 'cvBuilder.templates.modern.desc' },
+  classic:  { nameKey: 'cvBuilder.templates.classic.name', descKey: 'cvBuilder.templates.classic.desc' },
+  creative: { nameKey: 'cvBuilder.templates.creative.name', descKey: 'cvBuilder.templates.creative.desc' },
 };
 
 const TEMPLATE_ORDERS = {
@@ -39,7 +40,7 @@ const TEMPLATE_ORDERS = {
   creative: ['personal_info','summary','projects','skills','experience','education','certifications','awards','languages'],
 };
 
-const PROFICIENCY_OPTIONS = ['Native', 'Fluent', 'Professional', 'Intermediate', 'Basic'];
+const PROFICIENCY_OPTIONS = ['native', 'fluent', 'professional', 'intermediate', 'basic'];
 
 const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all';
 const btnPrimary = 'inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors disabled:opacity-50';
@@ -51,6 +52,7 @@ const btnOutline = 'inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gr
 
 export default function CVBuilderPage() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [cv, setCv] = useState(null);
@@ -92,7 +94,7 @@ export default function CVBuilderPage() {
           window.location.href = '/login?redirect=/cv-builder';
           return;
         }
-        setError('Failed to load CV data.');
+        setError(t('cvBuilder.errors.load'));
       } finally {
         setLoading(false);
       }
@@ -170,7 +172,7 @@ export default function CVBuilderPage() {
         setActiveSection(data.sections[0].section_type);
       }
     } catch (err) {
-      setError('Failed to auto-fill CV. Please try again.');
+      setError(t('cvBuilder.errors.autofill'));
     } finally {
       setPopulating(false);
     }
@@ -204,14 +206,14 @@ export default function CVBuilderPage() {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${cv.title || 'CV'}.${format}`);
+      link.setAttribute('download', `${cv.title || t('cvBuilder.cvDefaultTitle')}.${format}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
       setShowDownload(false);
     } catch {
-      setError('Failed to download CV.');
+      setError(t('cvBuilder.errors.download'));
     }
   };
 
@@ -266,7 +268,7 @@ export default function CVBuilderPage() {
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
             }`}
           >
-            <Pen className="w-4 h-4 inline mr-1.5" />Edit
+            <Pen className="w-4 h-4 inline mr-1.5" />{t('cvBuilder.tabs.edit')}
           </button>
           <button
             onClick={() => setActiveTab('preview')}
@@ -276,7 +278,7 @@ export default function CVBuilderPage() {
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
             }`}
           >
-            <Eye className="w-4 h-4 inline mr-1.5" />Preview
+            <Eye className="w-4 h-4 inline mr-1.5" />{t('cvBuilder.tabs.preview')}
           </button>
         </div>
 
@@ -337,19 +339,20 @@ export default function CVBuilderPage() {
    ═══════════════════════════════════════════ */
 
 function EmptyState({ onAutoFill, populating, error, template, onTemplateChange }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4">
       <div className="w-20 h-20 bg-primary-50 rounded-2xl flex items-center justify-center mb-6">
         <FileText className="w-10 h-10 text-primary-500" />
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Build Your Professional CV</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('cvBuilder.empty.title')}</h1>
       <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-8">
-        Create an ATS-friendly CV in minutes using your profile data, skills, and projects.
+        {t('cvBuilder.empty.subtitle')}
       </p>
 
       {/* Template picker */}
       <div className="flex gap-3 mb-6">
-        {Object.entries(TEMPLATES).map(([key, t]) => (
+        {Object.entries(TEMPLATES).map(([key, item]) => (
           <button
             key={key}
             onClick={() => onTemplateChange(key)}
@@ -359,7 +362,7 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
                 : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
-            {t.name}
+            {t(item.nameKey)}
           </button>
         ))}
       </div>
@@ -372,13 +375,14 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
 
       <button onClick={onAutoFill} disabled={populating} className={btnPrimary + ' text-base px-6 py-3'}>
         {populating ? (
-          <><Loader2 className="w-5 h-5 animate-spin" />Building your CV...</>
+          <><Loader2 className="w-5 h-5 animate-spin" />{t('cvBuilder.empty.building')}</>
         ) : (
-          <><Sparkles className="w-5 h-5" />Auto-Fill from Profile</>
+          <><Sparkles className="w-5 h-5" />{t('cvBuilder.empty.autofill')}</>
         )}
       </button>
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
-        Or <button onClick={() => {}} className="text-primary-600 underline bg-transparent border-none cursor-pointer text-xs">start from scratch</button>
+        {t('cvBuilder.empty.or')}{' '}
+        <button onClick={() => {}} className="text-primary-600 underline bg-transparent border-none cursor-pointer text-xs">{t('cvBuilder.empty.startFromScratch')}</button>
       </p>
     </div>
   );
@@ -389,6 +393,7 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
    ═══════════════════════════════════════════ */
 
 function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onDownload }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
       <div className="flex items-center gap-3">
@@ -396,14 +401,14 @@ function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onDownload 
           <FileText className="w-5 h-5 text-primary-600" />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{cv.title || 'My CV'}</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{cv.title || t('cvBuilder.topbar.myCv')}</h1>
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             {saving ? (
-              <><Loader2 className="w-3 h-3 animate-spin" />Saving...</>
+              <><Loader2 className="w-3 h-3 animate-spin" />{t('cvBuilder.topbar.saving')}</>
             ) : lastSaved ? (
-              <><CheckCircle2 className="w-3 h-3 text-emerald-500" />Saved {formatTime(lastSaved)}</>
+              <><CheckCircle2 className="w-3 h-3 text-emerald-500" />{t('cvBuilder.topbar.saved')} {formatTime(lastSaved, t)}</>
             ) : (
-              <span>Auto-save enabled</span>
+              <span>{t('cvBuilder.topbar.autosave')}</span>
             )}
           </div>
         </div>
@@ -416,13 +421,13 @@ function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onDownload 
           onChange={(e) => onTemplateSwitch(e.target.value)}
           className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 cursor-pointer"
         >
-          {Object.entries(TEMPLATES).map(([key, t]) => (
-            <option key={key} value={key}>{t.name} Template</option>
+          {Object.entries(TEMPLATES).map(([key, item]) => (
+            <option key={key} value={key}>{t(item.nameKey)} {t('cvBuilder.topbar.templateSuffix')}</option>
           ))}
         </select>
 
         <button onClick={onDownload} className={btnPrimary}>
-          <Download className="w-4 h-4" />Download
+          <Download className="w-4 h-4" />{t('cvBuilder.topbar.download')}
         </button>
       </div>
     </div>
@@ -437,7 +442,8 @@ function SectionCard({
   section, isOpen, onToggle, onContentChange,
   onVisibilityToggle, onMoveUp, onMoveDown, isFirst, isLast,
 }) {
-  const meta = SECTION_META[section.section_type] || { label: section.section_type, icon: FileText };
+  const { t } = useTranslation();
+  const meta = SECTION_META[section.section_type] || { labelKey: section.section_type, icon: FileText };
   const Icon = meta.icon;
 
   return (
@@ -457,7 +463,7 @@ function SectionCard({
         <span className={`flex-1 text-sm font-semibold ${
           section.is_visible ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
         }`}>
-          {meta.label}
+          {t(meta.labelKey)}
         </span>
 
         {/* Controls */}
@@ -466,7 +472,7 @@ function SectionCard({
             <button
               onClick={onVisibilityToggle}
               className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer"
-              title={section.is_visible ? 'Hide section' : 'Show section'}
+              title={section.is_visible ? t('cvBuilder.section.hide') : t('cvBuilder.section.show')}
             >
               {section.is_visible ? (
                 <Eye className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
@@ -476,12 +482,12 @@ function SectionCard({
             </button>
           )}
           {!isFirst && (
-            <button onClick={onMoveUp} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer" title="Move up">
+            <button onClick={onMoveUp} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer" title={t('cvBuilder.section.moveUp')}>
               <ArrowUp className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             </button>
           )}
           {!isLast && (
-            <button onClick={onMoveDown} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer" title="Move down">
+            <button onClick={onMoveDown} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors bg-transparent border-none cursor-pointer" title={t('cvBuilder.section.moveDown')}>
               <ArrowDown className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             </button>
           )}
@@ -513,6 +519,7 @@ function SectionCard({
    ═══════════════════════════════════════════ */
 
 function SectionEditor({ sectionType, content, onChange }) {
+  const { t } = useTranslation();
   switch (sectionType) {
     case 'personal_info': return <PersonalInfoEditor content={content} onChange={onChange} />;
     case 'summary':       return <SummaryEditor content={content} onChange={onChange} />;
@@ -523,7 +530,7 @@ function SectionEditor({ sectionType, content, onChange }) {
     case 'certifications':return <CertificationsEditor content={content} onChange={onChange} />;
     case 'languages':     return <LanguagesEditor content={content} onChange={onChange} />;
     case 'awards':        return <AwardsEditor content={content} onChange={onChange} />;
-    default:              return <p className="text-sm text-gray-400 dark:text-gray-500">Unknown section type.</p>;
+    default:              return <p className="text-sm text-gray-400 dark:text-gray-500">{t('cvBuilder.section.unknown')}</p>;
   }
 }
 
@@ -532,44 +539,45 @@ function SectionEditor({ sectionType, content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function PersonalInfoEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const update = (field, value) => onChange({ ...content, [field]: value });
 
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Full Name</label>
-        <input className={inputCls} value={content.full_name || ''} onChange={(e) => update('full_name', e.target.value)} placeholder="John Doe" />
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.fullName')}</label>
+        <input className={inputCls} value={content.full_name || ''} onChange={(e) => update('full_name', e.target.value)} placeholder={t('cvBuilder.placeholders.fullName')} />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Current Position</label>
-        <input className={inputCls} value={content.current_position || ''} onChange={(e) => update('current_position', e.target.value)} placeholder="Frontend Developer" />
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.currentPosition')}</label>
+        <input className={inputCls} value={content.current_position || ''} onChange={(e) => update('current_position', e.target.value)} placeholder={t('cvBuilder.placeholders.currentPosition')} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Email</label>
-          <input className={inputCls} type="email" value={content.email || ''} onChange={(e) => update('email', e.target.value)} placeholder="email@example.com" />
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.email')}</label>
+          <input className={inputCls} type="email" value={content.email || ''} onChange={(e) => update('email', e.target.value)} placeholder={t('cvBuilder.placeholders.email')} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Phone</label>
-          <input className={inputCls} value={content.phone || ''} onChange={(e) => update('phone', e.target.value)} placeholder="+998 90 123 45 67" />
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.phone')}</label>
+          <input className={inputCls} value={content.phone || ''} onChange={(e) => update('phone', e.target.value)} placeholder={t('cvBuilder.placeholders.phone')} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Location</label>
-          <input className={inputCls} value={content.location || ''} onChange={(e) => update('location', e.target.value)} placeholder="Tashkent, Uzbekistan" />
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.location')}</label>
+          <input className={inputCls} value={content.location || ''} onChange={(e) => update('location', e.target.value)} placeholder={t('cvBuilder.placeholders.location')} />
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">LinkedIn</label>
-          <input className={inputCls} value={content.linkedin_url || ''} onChange={(e) => update('linkedin_url', e.target.value)} placeholder="linkedin.com/in/..." />
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.linkedin')}</label>
+          <input className={inputCls} value={content.linkedin_url || ''} onChange={(e) => update('linkedin_url', e.target.value)} placeholder={t('cvBuilder.placeholders.linkedin')} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">GitHub</label>
-          <input className={inputCls} value={content.github_url || ''} onChange={(e) => update('github_url', e.target.value)} placeholder="github.com/..." />
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.github')}</label>
+          <input className={inputCls} value={content.github_url || ''} onChange={(e) => update('github_url', e.target.value)} placeholder={t('cvBuilder.placeholders.github')} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Portfolio</label>
-          <input className={inputCls} value={content.portfolio_url || ''} onChange={(e) => update('portfolio_url', e.target.value)} placeholder="yoursite.com" />
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.portfolio')}</label>
+          <input className={inputCls} value={content.portfolio_url || ''} onChange={(e) => update('portfolio_url', e.target.value)} placeholder={t('cvBuilder.placeholders.portfolio')} />
         </div>
       </div>
     </div>
@@ -581,6 +589,7 @@ function PersonalInfoEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function SummaryEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const text = content.text || '';
   const maxLen = 500;
 
@@ -590,7 +599,7 @@ function SummaryEditor({ content, onChange }) {
         className={inputCls + ' resize-none h-28'}
         value={text}
         onChange={(e) => onChange({ ...content, text: e.target.value.slice(0, maxLen) })}
-        placeholder="A brief professional summary highlighting your key qualifications and career goals..."
+        placeholder={t('cvBuilder.placeholders.summary')}
         maxLength={maxLen}
       />
       <p className="text-xs text-gray-400 dark:text-gray-500 text-right mt-1">{text.length}/{maxLen}</p>
@@ -603,6 +612,7 @@ function SummaryEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function ExperienceEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const positions = content.positions || [];
 
   const updatePos = (idx, field, value) => {
@@ -635,31 +645,31 @@ function ExperienceEditor({ content, onChange }) {
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input className={inputCls} value={pos.title || ''} onChange={(e) => updatePos(idx, 'title', e.target.value)} placeholder="Job Title" />
-            <input className={inputCls} value={pos.company || ''} onChange={(e) => updatePos(idx, 'company', e.target.value)} placeholder="Company Name" />
+            <input className={inputCls} value={pos.title || ''} onChange={(e) => updatePos(idx, 'title', e.target.value)} placeholder={t('cvBuilder.placeholders.jobTitle')} />
+            <input className={inputCls} value={pos.company || ''} onChange={(e) => updatePos(idx, 'company', e.target.value)} placeholder={t('cvBuilder.placeholders.companyName')} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <input className={inputCls} value={pos.start_date || ''} onChange={(e) => updatePos(idx, 'start_date', e.target.value)} placeholder="Start (e.g. Jan 2023)" />
-            <input className={inputCls} value={pos.end_date || ''} onChange={(e) => updatePos(idx, 'end_date', e.target.value)} placeholder="End (e.g. Dec 2024)" disabled={pos.current} />
+            <input className={inputCls} value={pos.start_date || ''} onChange={(e) => updatePos(idx, 'start_date', e.target.value)} placeholder={t('cvBuilder.placeholders.startDate')} />
+            <input className={inputCls} value={pos.end_date || ''} onChange={(e) => updatePos(idx, 'end_date', e.target.value)} placeholder={t('cvBuilder.placeholders.endDate')} disabled={pos.current} />
             <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <input type="checkbox" checked={pos.current || false} onChange={(e) => updatePos(idx, 'current', e.target.checked)} className="rounded" />
-              Currently working here
+              {t('cvBuilder.fields.currentlyWorking')}
             </label>
           </div>
-          <input className={inputCls} value={pos.location || ''} onChange={(e) => updatePos(idx, 'location', e.target.value)} placeholder="Location" />
+          <input className={inputCls} value={pos.location || ''} onChange={(e) => updatePos(idx, 'location', e.target.value)} placeholder={t('cvBuilder.placeholders.location')} />
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Responsibilities (one per line)</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('cvBuilder.fields.responsibilities')}</label>
             <textarea
               className={inputCls + ' resize-none h-20'}
               value={(pos.responsibilities || []).join('\n')}
               onChange={(e) => updateList(idx, 'responsibilities', e.target.value)}
-              placeholder="Developed REST APIs using Django..."
+              placeholder={t('cvBuilder.placeholders.responsibilities')}
             />
           </div>
         </div>
       ))}
       <button onClick={addPos} className={btnOutline + ' w-full justify-center'}>
-        <Plus className="w-4 h-4" />Add Experience
+        <Plus className="w-4 h-4" />{t('cvBuilder.actions.addExperience')}
       </button>
     </div>
   );
@@ -670,6 +680,7 @@ function ExperienceEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function EducationEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const degrees = content.degrees || [];
 
   const updateDeg = (idx, field, value) => {
@@ -697,19 +708,19 @@ function EducationEditor({ content, onChange }) {
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input className={inputCls} value={deg.degree || ''} onChange={(e) => updateDeg(idx, 'degree', e.target.value)} placeholder="Degree (e.g. Bachelor's)" />
-            <input className={inputCls} value={deg.field || ''} onChange={(e) => updateDeg(idx, 'field', e.target.value)} placeholder="Field of Study" />
+            <input className={inputCls} value={deg.degree || ''} onChange={(e) => updateDeg(idx, 'degree', e.target.value)} placeholder={t('cvBuilder.placeholders.degree')} />
+            <input className={inputCls} value={deg.field || ''} onChange={(e) => updateDeg(idx, 'field', e.target.value)} placeholder={t('cvBuilder.placeholders.fieldOfStudy')} />
           </div>
-          <input className={inputCls} value={deg.institution || ''} onChange={(e) => updateDeg(idx, 'institution', e.target.value)} placeholder="Institution Name" />
+          <input className={inputCls} value={deg.institution || ''} onChange={(e) => updateDeg(idx, 'institution', e.target.value)} placeholder={t('cvBuilder.placeholders.institution')} />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <input className={inputCls} value={deg.start_date || ''} onChange={(e) => updateDeg(idx, 'start_date', e.target.value)} placeholder="Start Year" />
-            <input className={inputCls} value={deg.end_date || ''} onChange={(e) => updateDeg(idx, 'end_date', e.target.value)} placeholder="End Year" />
-            <input className={inputCls} value={deg.gpa || ''} onChange={(e) => updateDeg(idx, 'gpa', e.target.value)} placeholder="GPA (optional)" />
+            <input className={inputCls} value={deg.start_date || ''} onChange={(e) => updateDeg(idx, 'start_date', e.target.value)} placeholder={t('cvBuilder.placeholders.startYear')} />
+            <input className={inputCls} value={deg.end_date || ''} onChange={(e) => updateDeg(idx, 'end_date', e.target.value)} placeholder={t('cvBuilder.placeholders.endYear')} />
+            <input className={inputCls} value={deg.gpa || ''} onChange={(e) => updateDeg(idx, 'gpa', e.target.value)} placeholder={t('cvBuilder.placeholders.gpa')} />
           </div>
         </div>
       ))}
       <button onClick={addDeg} className={btnOutline + ' w-full justify-center'}>
-        <Plus className="w-4 h-4" />Add Education
+        <Plus className="w-4 h-4" />{t('cvBuilder.actions.addEducation')}
       </button>
     </div>
   );
@@ -720,6 +731,7 @@ function EducationEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function SkillsEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const categories = content.categories || [];
 
   const updateCat = (idx, field, value) => {
@@ -747,18 +759,18 @@ function SkillsEditor({ content, onChange }) {
             className={inputCls}
             value={cat.name || ''}
             onChange={(e) => updateCat(idx, 'name', e.target.value)}
-            placeholder="Category (e.g. Programming Languages)"
+            placeholder={t('cvBuilder.placeholders.skillCategory')}
           />
           <input
             className={inputCls}
             value={(cat.skills || []).join(', ')}
             onChange={(e) => updateCat(idx, 'skills', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
-            placeholder="Skills separated by commas (e.g. Python, JavaScript, Go)"
+            placeholder={t('cvBuilder.placeholders.skillList')}
           />
         </div>
       ))}
       <button onClick={addCat} className={btnOutline + ' w-full justify-center'}>
-        <Plus className="w-4 h-4" />Add Category
+        <Plus className="w-4 h-4" />{t('cvBuilder.actions.addCategory')}
       </button>
     </div>
   );
@@ -769,6 +781,7 @@ function SkillsEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function ProjectsEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const projects = content.projects || [];
 
   const updateProj = (idx, field, value) => {
@@ -795,27 +808,27 @@ function ProjectsEditor({ content, onChange }) {
           <button onClick={() => removeProj(idx)} className="absolute top-2 right-2 p-1 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
-          <input className={inputCls} value={proj.name || ''} onChange={(e) => updateProj(idx, 'name', e.target.value)} placeholder="Project Name" />
+          <input className={inputCls} value={proj.name || ''} onChange={(e) => updateProj(idx, 'name', e.target.value)} placeholder={t('cvBuilder.placeholders.projectName')} />
           <textarea
             className={inputCls + ' resize-none h-16'}
             value={proj.description || ''}
             onChange={(e) => updateProj(idx, 'description', e.target.value)}
-            placeholder="Brief description..."
+            placeholder={t('cvBuilder.placeholders.projectDescription')}
           />
           <input
             className={inputCls}
             value={(proj.technologies || []).join(', ')}
             onChange={(e) => updateProj(idx, 'technologies', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
-            placeholder="Technologies (comma-separated)"
+            placeholder={t('cvBuilder.placeholders.technologies')}
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input className={inputCls} value={proj.github_url || ''} onChange={(e) => updateProj(idx, 'github_url', e.target.value)} placeholder="GitHub URL" />
-            <input className={inputCls} value={proj.live_url || ''} onChange={(e) => updateProj(idx, 'live_url', e.target.value)} placeholder="Live Demo URL" />
+            <input className={inputCls} value={proj.github_url || ''} onChange={(e) => updateProj(idx, 'github_url', e.target.value)} placeholder={t('cvBuilder.placeholders.githubUrl')} />
+            <input className={inputCls} value={proj.live_url || ''} onChange={(e) => updateProj(idx, 'live_url', e.target.value)} placeholder={t('cvBuilder.placeholders.liveDemoUrl')} />
           </div>
         </div>
       ))}
       <button onClick={addProj} className={btnOutline + ' w-full justify-center'}>
-        <Plus className="w-4 h-4" />Add Project
+        <Plus className="w-4 h-4" />{t('cvBuilder.actions.addProject')}
       </button>
     </div>
   );
@@ -826,6 +839,7 @@ function ProjectsEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function CertificationsEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const certs = content.certifications || [];
 
   const updateCert = (idx, field, value) => {
@@ -853,18 +867,18 @@ function CertificationsEditor({ content, onChange }) {
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input className={inputCls} value={cert.name || ''} onChange={(e) => updateCert(idx, 'name', e.target.value)} placeholder="Certificate Name" />
-            <input className={inputCls} value={cert.issuer || ''} onChange={(e) => updateCert(idx, 'issuer', e.target.value)} placeholder="Issuing Organization" />
+            <input className={inputCls} value={cert.name || ''} onChange={(e) => updateCert(idx, 'name', e.target.value)} placeholder={t('cvBuilder.placeholders.certificateName')} />
+            <input className={inputCls} value={cert.issuer || ''} onChange={(e) => updateCert(idx, 'issuer', e.target.value)} placeholder={t('cvBuilder.placeholders.issuingOrganization')} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <input className={inputCls} value={cert.date || ''} onChange={(e) => updateCert(idx, 'date', e.target.value)} placeholder="Date Issued" />
-            <input className={inputCls} value={cert.credential_id || ''} onChange={(e) => updateCert(idx, 'credential_id', e.target.value)} placeholder="Credential ID" />
-            <input className={inputCls} value={cert.url || ''} onChange={(e) => updateCert(idx, 'url', e.target.value)} placeholder="Verification URL" />
+            <input className={inputCls} value={cert.date || ''} onChange={(e) => updateCert(idx, 'date', e.target.value)} placeholder={t('cvBuilder.placeholders.dateIssued')} />
+            <input className={inputCls} value={cert.credential_id || ''} onChange={(e) => updateCert(idx, 'credential_id', e.target.value)} placeholder={t('cvBuilder.placeholders.credentialId')} />
+            <input className={inputCls} value={cert.url || ''} onChange={(e) => updateCert(idx, 'url', e.target.value)} placeholder={t('cvBuilder.placeholders.verificationUrl')} />
           </div>
         </div>
       ))}
       <button onClick={addCert} className={btnOutline + ' w-full justify-center'}>
-        <Plus className="w-4 h-4" />Add Certification
+        <Plus className="w-4 h-4" />{t('cvBuilder.actions.addCertification')}
       </button>
     </div>
   );
@@ -875,6 +889,7 @@ function CertificationsEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function LanguagesEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const languages = content.languages || [];
 
   const updateLang = (idx, field, value) => {
@@ -895,9 +910,9 @@ function LanguagesEditor({ content, onChange }) {
     <div className="space-y-3">
       {languages.map((lang, idx) => (
         <div key={idx} className="flex items-center gap-2">
-          <input className={inputCls + ' flex-1'} value={lang.language || ''} onChange={(e) => updateLang(idx, 'language', e.target.value)} placeholder="Language" />
+          <input className={inputCls + ' flex-1'} value={lang.language || ''} onChange={(e) => updateLang(idx, 'language', e.target.value)} placeholder={t('cvBuilder.placeholders.language')} />
           <select className={inputCls + ' w-40'} value={lang.proficiency || 'Intermediate'} onChange={(e) => updateLang(idx, 'proficiency', e.target.value)}>
-            {PROFICIENCY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+            {PROFICIENCY_OPTIONS.map((p) => <option key={p} value={p}>{t(`cvBuilder.proficiency.${p}`)}</option>)}
           </select>
           <button onClick={() => removeLang(idx)} className="p-1.5 rounded hover:bg-red-50 bg-transparent border-none cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
@@ -905,7 +920,7 @@ function LanguagesEditor({ content, onChange }) {
         </div>
       ))}
       <button onClick={addLang} className={btnOutline + ' w-full justify-center'}>
-        <Plus className="w-4 h-4" />Add Language
+        <Plus className="w-4 h-4" />{t('cvBuilder.actions.addLanguage')}
       </button>
     </div>
   );
@@ -916,6 +931,7 @@ function LanguagesEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function AwardsEditor({ content, onChange }) {
+  const { t } = useTranslation();
   const awards = content.awards || [];
 
   const updateAward = (idx, field, value) => {
@@ -940,15 +956,15 @@ function AwardsEditor({ content, onChange }) {
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input className={inputCls} value={aw.title || ''} onChange={(e) => updateAward(idx, 'title', e.target.value)} placeholder="Award Title" />
-            <input className={inputCls} value={aw.issuer || ''} onChange={(e) => updateAward(idx, 'issuer', e.target.value)} placeholder="Issuing Organization" />
+            <input className={inputCls} value={aw.title || ''} onChange={(e) => updateAward(idx, 'title', e.target.value)} placeholder={t('cvBuilder.placeholders.awardTitle')} />
+            <input className={inputCls} value={aw.issuer || ''} onChange={(e) => updateAward(idx, 'issuer', e.target.value)} placeholder={t('cvBuilder.placeholders.issuingOrganization')} />
           </div>
-          <input className={inputCls} value={aw.date || ''} onChange={(e) => updateAward(idx, 'date', e.target.value)} placeholder="Date" />
-          <textarea className={inputCls + ' resize-none h-14'} value={aw.description || ''} onChange={(e) => updateAward(idx, 'description', e.target.value)} placeholder="Description (optional)" />
+          <input className={inputCls} value={aw.date || ''} onChange={(e) => updateAward(idx, 'date', e.target.value)} placeholder={t('cvBuilder.placeholders.date')} />
+          <textarea className={inputCls + ' resize-none h-14'} value={aw.description || ''} onChange={(e) => updateAward(idx, 'description', e.target.value)} placeholder={t('cvBuilder.placeholders.descriptionOptional')} />
         </div>
       ))}
       <button onClick={addAward} className={btnOutline + ' w-full justify-center'}>
-        <Plus className="w-4 h-4" />Add Award
+        <Plus className="w-4 h-4" />{t('cvBuilder.actions.addAward')}
       </button>
     </div>
   );
@@ -959,6 +975,7 @@ function AwardsEditor({ content, onChange }) {
    ═══════════════════════════════════════════ */
 
 function PreviewPanel({ sections, template }) {
+  const { t } = useTranslation();
   const visible = sections.filter((s) => s.is_visible !== false);
 
   return (
@@ -978,7 +995,7 @@ function PreviewPanel({ sections, template }) {
       >
         {visible.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-gray-300 text-sm">
-            Your CV preview will appear here
+            {t('cvBuilder.preview.empty')}
           </div>
         ) : (
           visible.map((s) => (
@@ -1042,10 +1059,11 @@ function PreviewPersonalInfo({ content }) {
 }
 
 function PreviewSummary({ content }) {
+  const { t } = useTranslation();
   if (!content.text) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Professional Summary</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.summary')}</div>
       <div style={pvDivider} />
       <div style={{ fontSize: 10 }}>{content.text}</div>
     </div>
@@ -1053,11 +1071,12 @@ function PreviewSummary({ content }) {
 }
 
 function PreviewExperience({ content }) {
+  const { t } = useTranslation();
   const positions = content.positions || [];
   if (positions.length === 0) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Work Experience</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.experience')}</div>
       <div style={pvDivider} />
       {positions.map((pos, i) => (
         <div key={i} style={{ marginBottom: 8 }}>
@@ -1065,7 +1084,7 @@ function PreviewExperience({ content }) {
             {pos.title}{pos.company ? ` — ${pos.company}` : ''}
           </div>
           <div style={pvSmall}>
-            {[pos.location, pos.start_date && `${pos.start_date} - ${pos.current ? 'Present' : pos.end_date || ''}`].filter(Boolean).join('  |  ')}
+            {[pos.location, pos.start_date && `${pos.start_date} - ${pos.current ? t('cvBuilder.preview.present') : pos.end_date || ''}`].filter(Boolean).join('  |  ')}
           </div>
           {(pos.responsibilities || []).map((r, j) => (
             <div key={j} style={{ fontSize: 10, paddingLeft: 10 }}>&#8226; {r}</div>
@@ -1077,20 +1096,21 @@ function PreviewExperience({ content }) {
 }
 
 function PreviewEducation({ content }) {
+  const { t } = useTranslation();
   const degrees = content.degrees || [];
   if (degrees.length === 0) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Education</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.education')}</div>
       <div style={pvDivider} />
       {degrees.map((deg, i) => (
         <div key={i} style={{ marginBottom: 6 }}>
           <div style={{ fontWeight: 600, fontSize: 11 }}>
-            {deg.degree}{deg.field ? ` in ${deg.field}` : ''}
+            {deg.degree}{deg.field ? ` ${t('cvBuilder.preview.in')} ${deg.field}` : ''}
           </div>
           <div style={pvSmall}>
             {[deg.institution, deg.start_date && `${deg.start_date} - ${deg.end_date || ''}`].filter(Boolean).join('  |  ')}
-            {deg.gpa ? `  |  GPA: ${deg.gpa}` : ''}
+            {deg.gpa ? `  |  ${t('cvBuilder.preview.gpa')}: ${deg.gpa}` : ''}
           </div>
         </div>
       ))}
@@ -1099,11 +1119,12 @@ function PreviewEducation({ content }) {
 }
 
 function PreviewSkills({ content }) {
+  const { t } = useTranslation();
   const categories = content.categories || [];
   if (categories.length === 0) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Skills</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.skills')}</div>
       <div style={pvDivider} />
       {categories.map((cat, i) => (
         <div key={i} style={{ fontSize: 10, marginBottom: 3 }}>
@@ -1116,11 +1137,12 @@ function PreviewSkills({ content }) {
 }
 
 function PreviewProjects({ content }) {
+  const { t } = useTranslation();
   const projects = content.projects || [];
   if (projects.length === 0) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Projects</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.projects')}</div>
       <div style={pvDivider} />
       {projects.map((proj, i) => (
         <div key={i} style={{ marginBottom: 8 }}>
@@ -1128,7 +1150,7 @@ function PreviewProjects({ content }) {
           {proj.description && <div style={{ fontSize: 10 }}>{proj.description}</div>}
           {(proj.technologies || []).length > 0 && (
             <div style={{ ...pvSmall, fontStyle: 'italic' }}>
-              Technologies: {proj.technologies.join(', ')}
+              {t('cvBuilder.preview.technologies')}: {proj.technologies.join(', ')}
             </div>
           )}
           {(proj.github_url || proj.live_url) && (
@@ -1143,11 +1165,12 @@ function PreviewProjects({ content }) {
 }
 
 function PreviewCertifications({ content }) {
+  const { t } = useTranslation();
   const certs = content.certifications || [];
   if (certs.length === 0) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Certifications</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.certifications')}</div>
       <div style={pvDivider} />
       {certs.map((cert, i) => (
         <div key={i} style={{ fontSize: 10, marginBottom: 3 }}>
@@ -1161,11 +1184,12 @@ function PreviewCertifications({ content }) {
 }
 
 function PreviewLanguages({ content }) {
+  const { t } = useTranslation();
   const languages = content.languages || [];
   if (languages.length === 0) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Languages</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.languages')}</div>
       <div style={pvDivider} />
       {languages.map((lang, i) => (
         <div key={i} style={{ fontSize: 10, marginBottom: 2 }}>
@@ -1177,11 +1201,12 @@ function PreviewLanguages({ content }) {
 }
 
 function PreviewAwards({ content }) {
+  const { t } = useTranslation();
   const awards = content.awards || [];
   if (awards.length === 0) return null;
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={pvHeading}>Awards & Achievements</div>
+      <div style={pvHeading}>{t('cvBuilder.sections.awards')}</div>
       <div style={pvDivider} />
       {awards.map((aw, i) => (
         <div key={i} style={{ fontSize: 10, marginBottom: 3 }}>
@@ -1200,6 +1225,7 @@ function PreviewAwards({ content }) {
    ═══════════════════════════════════════════ */
 
 function DownloadModal({ cv, onDownload, onClose }) {
+  const { t } = useTranslation();
   const [format, setFormat] = useState('pdf');
   const [downloading, setDownloading] = useState(false);
 
@@ -1220,7 +1246,7 @@ function DownloadModal({ cv, onDownload, onClose }) {
         <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mx-auto mb-4">
           <Download className="w-6 h-6 text-primary-600" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-center mb-1">Download CV</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-center mb-1">{t('cvBuilder.download.title')}</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">{cv.title}</p>
 
         <div className="space-y-3 mb-6">
@@ -1232,8 +1258,8 @@ function DownloadModal({ cv, onDownload, onClose }) {
               <span className="text-xs font-bold text-red-600">PDF</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">PDF Format</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Best for sharing and printing</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('cvBuilder.download.pdfTitle')}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('cvBuilder.download.pdfDesc')}</div>
             </div>
           </label>
 
@@ -1245,17 +1271,17 @@ function DownloadModal({ cv, onDownload, onClose }) {
               <span className="text-xs font-bold text-blue-600">DOCX</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">Word Document</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Editable in Microsoft Word</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('cvBuilder.download.docxTitle')}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('cvBuilder.download.docxDesc')}</div>
             </div>
           </label>
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className={btnOutline + ' flex-1 justify-center'}>Cancel</button>
+          <button onClick={onClose} className={btnOutline + ' flex-1 justify-center'}>{t('cvBuilder.download.cancel')}</button>
           <button onClick={handleDownload} disabled={downloading} className={btnPrimary + ' flex-1 justify-center'}>
             {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {downloading ? 'Downloading...' : 'Download'}
+            {downloading ? t('cvBuilder.download.downloading') : t('cvBuilder.download.download')}
           </button>
         </div>
       </div>
@@ -1267,13 +1293,19 @@ function DownloadModal({ cv, onDownload, onClose }) {
    Helpers
    ═══════════════════════════════════════════ */
 
-function formatTime(date) {
+function formatTime(date, t) {
   if (!date) return '';
   const d = new Date(date);
   const now = new Date();
   const diff = Math.floor((now - d) / 1000);
-  if (diff < 10) return 'just now';
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 10) return t('cvBuilder.time.justNow');
+  if (diff < 60) return t('cvBuilder.time.secondsAgo', { count: diff });
+  if (diff < 3600) return t('cvBuilder.time.minutesAgo', { count: Math.floor(diff / 60) });
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+
+
+
+
+
+

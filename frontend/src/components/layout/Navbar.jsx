@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Zap, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import useAuthStore from '../../store/authStore';
 
 /* ── Flag SVGs (crisp at any size) ── */
 const FlagGB = () => (
@@ -126,7 +125,6 @@ function MobileLanguageSwitcher() {
 /* ── Main Navbar ── */
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuthStore();
   const { t } = useTranslation();
 
   return (
@@ -143,57 +141,21 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
-              {t('nav.home')}
-            </Link>
-            <Link to="/dashboard" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
-              {t('nav.dashboard')}
-            </Link>
-            <Link to="/roadmap" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
-              {t('nav.roadmap')}
-            </Link>
-            <Link to="/projects" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors">
-              {t('nav.projects')}
-            </Link>
-          </div>
-
           {/* Language + Auth buttons */}
           <div className="hidden md:flex items-center gap-3">
             <LanguageSwitcher />
-
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to="/profile"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors"
-                >
-                  {t('nav.profile')}
-                </Link>
-                <button
-                  onClick={logout}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer border-none"
-                >
-                  {t('nav.logout')}
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors"
-                >
-                  {t('nav.login')}
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-5 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 no-underline transition-colors"
-                >
-                  {t('nav.signup')}
-                </Link>
-              </>
-            )}
+            <Link
+              to="/login"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 no-underline transition-colors"
+            >
+              {t('nav.login')}
+            </Link>
+            <Link
+              to="/register"
+              className="px-5 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 no-underline transition-colors"
+            >
+              {t('nav.getStartedFree')}
+            </Link>
           </div>
 
           {/* Mobile toggle */}
@@ -211,22 +173,8 @@ export default function Navbar() {
         <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-4 space-y-3">
           <MobileLanguageSwitcher />
           <hr className="border-gray-200 dark:border-gray-800" />
-          <Link to="/" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.home')}</Link>
-          <Link to="/dashboard" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.dashboard')}</Link>
-          <Link to="/roadmap" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.roadmap')}</Link>
-          <Link to="/projects" className="block text-sm font-medium text-gray-600 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.projects')}</Link>
-          <hr className="border-gray-200 dark:border-gray-800" />
-          {isAuthenticated ? (
-            <>
-              <Link to="/profile" className="block text-sm font-medium text-gray-700 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.profile')}</Link>
-              <button onClick={() => { logout(); setMobileOpen(false); }} className="w-full text-left text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2 border-none cursor-pointer">{t('nav.logout')}</button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.login')}</Link>
-              <Link to="/register" className="block text-center text-sm font-medium text-white bg-primary-600 rounded-lg px-4 py-2 no-underline" onClick={() => setMobileOpen(false)}>{t('nav.signup')}</Link>
-            </>
-          )}
+          <Link to="/login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 no-underline py-2" onClick={() => setMobileOpen(false)}>{t('nav.login')}</Link>
+          <Link to="/register" className="block text-center text-sm font-medium text-white bg-primary-600 rounded-lg px-4 py-2 no-underline" onClick={() => setMobileOpen(false)}>{t('nav.getStartedFree')}</Link>
         </div>
       )}
     </nav>

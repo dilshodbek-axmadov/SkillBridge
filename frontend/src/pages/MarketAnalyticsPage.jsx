@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   TrendingUp, TrendingDown, Briefcase, BarChart3, Code2,
   Clock, Building2, Wifi, DollarSign, Loader2, AlertCircle,
@@ -18,12 +19,12 @@ function formatSalary(value) {
   return value.toString();
 }
 
-function formatHoursAgo(hours) {
-  if (hours === null || hours === undefined) return 'Unknown';
-  if (hours < 1) return 'Less than 1 hour ago';
-  if (hours < 24) return `${Math.round(hours)} hour${Math.round(hours) !== 1 ? 's' : ''} ago`;
+function formatHoursAgo(hours, t) {
+  if (hours === null || hours === undefined) return t('marketAnalytics.time.unknown');
+  if (hours < 1) return t('marketAnalytics.time.lessThanHour');
+  if (hours < 24) return t('marketAnalytics.time.hoursAgo', { count: Math.round(hours) });
   const days = Math.round(hours / 24);
-  return `${days} day${days !== 1 ? 's' : ''} ago`;
+  return t('marketAnalytics.time.daysAgo', { count: days });
 }
 
 function TrendBadge({ value }) {
@@ -52,6 +53,7 @@ function MiniBar({ value, max, color = 'bg-primary-500' }) {
 /* ── Header Section ─────────────────────────────────────────────── */
 
 function PageHeader({ overview }) {
+  const { t } = useTranslation();
   const totalJobs = overview?.total_active_jobs ?? 0;
   const hoursAgo = overview?.last_updated_hours_ago;
 
@@ -62,15 +64,15 @@ function PageHeader({ overview }) {
           <BarChart3 className="w-5 h-5 text-white" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Market Analytics Dashboard
+          {t('marketAnalytics.header.title')}
         </h1>
       </div>
       <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-        Real-time insights from <span className="font-semibold text-gray-700 dark:text-gray-300">{totalJobs.toLocaleString()}</span> active job postings across Uzbekistan IT market
+        {t('marketAnalytics.header.subtitleBefore')} <span className="font-semibold text-gray-700 dark:text-gray-300">{totalJobs.toLocaleString()}</span> {t('marketAnalytics.header.subtitleAfter')}
       </p>
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
         <Clock className="w-3 h-3" />
-        Last updated: {formatHoursAgo(hoursAgo)}
+        {t('marketAnalytics.header.lastUpdated')}: {formatHoursAgo(hoursAgo, t)}
       </p>
     </div>
   );
@@ -79,48 +81,49 @@ function PageHeader({ overview }) {
 /* ── Overview Stats Cards ───────────────────────────────────────── */
 
 function OverviewStats({ overview }) {
+  const { t } = useTranslation();
   const cards = [
     {
-      label: 'Active Jobs',
+      label: t('marketAnalytics.overview.activeJobs'),
       value: overview?.total_active_jobs?.toLocaleString() ?? '—',
-      sub: `${overview?.jobs_posted_last_7d ?? 0} new this week`,
+      sub: t('marketAnalytics.overview.newThisWeek', { count: overview?.jobs_posted_last_7d ?? 0 }),
       icon: <Briefcase className="w-5 h-5 text-primary-600" />,
       iconBg: 'bg-primary-100',
     },
     {
-      label: 'Companies Hiring',
+      label: t('marketAnalytics.overview.companiesHiring'),
       value: overview?.total_companies?.toLocaleString() ?? '—',
-      sub: 'Unique employers',
+      sub: t('marketAnalytics.overview.uniqueEmployers'),
       icon: <Building2 className="w-5 h-5 text-emerald-600" />,
       iconBg: 'bg-emerald-100',
     },
     {
-      label: 'Skills in Demand',
+      label: t('marketAnalytics.overview.skillsDemand'),
       value: overview?.skills_in_demand?.toLocaleString() ?? '—',
-      sub: `${overview?.total_skills_tracked ?? 0} total tracked`,
+      sub: t('marketAnalytics.overview.totalTracked', { count: overview?.total_skills_tracked ?? 0 }),
       icon: <Code2 className="w-5 h-5 text-purple-600" />,
       iconBg: 'bg-purple-100',
     },
     {
-      label: 'Avg Salary Range',
+      label: t('marketAnalytics.overview.avgSalaryRange'),
       value: overview?.salary_overview?.avg_min
         ? `${formatSalary(overview.salary_overview.avg_min)} – ${formatSalary(overview.salary_overview.avg_max)}`
         : '—',
-      sub: overview?.salary_overview?.median ? `Median: ${formatSalary(overview.salary_overview.median)}` : 'UZS',
+      sub: overview?.salary_overview?.median ? t('marketAnalytics.overview.median', { value: formatSalary(overview.salary_overview.median) }) : t('marketAnalytics.currency.uzs'),
       icon: <DollarSign className="w-5 h-5 text-amber-600" />,
       iconBg: 'bg-amber-100',
     },
     {
-      label: 'Remote Jobs',
+      label: t('marketAnalytics.overview.remoteJobs'),
       value: overview?.remote_jobs_percentage != null ? `${overview.remote_jobs_percentage}%` : '—',
-      sub: 'Remote-friendly positions',
+      sub: t('marketAnalytics.overview.remoteFriendly'),
       icon: <Wifi className="w-5 h-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
     },
     {
-      label: 'Jobs (30 days)',
+      label: t('marketAnalytics.overview.jobs30d'),
       value: overview?.jobs_posted_last_30d?.toLocaleString() ?? '—',
-      sub: 'Posted in last month',
+      sub: t('marketAnalytics.overview.lastMonth'),
       icon: <Globe className="w-5 h-5 text-orange-600" />,
       iconBg: 'bg-orange-100',
     },
@@ -145,6 +148,7 @@ function OverviewStats({ overview }) {
 /* ── Trending Skills Table ──────────────────────────────────────── */
 
 function TrendingSkills({ skills, period, onPeriodChange }) {
+  const { t } = useTranslation();
   const maxJobCount = useMemo(() => {
     if (!skills?.length) return 1;
     return Math.max(...skills.map((s) => s.job_count));
@@ -161,7 +165,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
   };
 
   return (
-    <Section title="Trending Skills" subtitle="Most in-demand skills by job postings">
+    <Section title={t('marketAnalytics.trending.title')} subtitle={t('marketAnalytics.trending.subtitle')}>
       {/* Period filter */}
       <div className="flex gap-2 mb-5">
         {['7d', '30d', '90d', 'all'].map((p) => (
@@ -174,22 +178,22 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
-            {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : p === '90d' ? '90 Days' : 'All Time'}
+            {p === '7d' ? t('marketAnalytics.period.7d') : p === '30d' ? t('marketAnalytics.period.30d') : p === '90d' ? t('marketAnalytics.period.90d') : t('marketAnalytics.period.all')}
           </button>
         ))}
       </div>
 
       {!skills?.length ? (
-        <p className="text-sm text-gray-400 text-center py-8">No trend data available yet.</p>
+        <p className="text-sm text-gray-400 text-center py-8">{t('marketAnalytics.trending.empty')}</p>
       ) : (
         <div className="space-y-3">
           {/* Header */}
           <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 px-2">
             <div className="col-span-1">#</div>
-            <div className="col-span-4">Skill</div>
-            <div className="col-span-3">Jobs</div>
-            <div className="col-span-2 text-right">Salary</div>
-            <div className="col-span-2 text-right">Trend</div>
+            <div className="col-span-4">{t('marketAnalytics.trending.skill')}</div>
+            <div className="col-span-3">{t('marketAnalytics.trending.jobs')}</div>
+            <div className="col-span-2 text-right">{t('marketAnalytics.trending.salary')}</div>
+            <div className="col-span-2 text-right">{t('marketAnalytics.trending.trend')}</div>
           </div>
 
           {skills.map((s, i) => (
@@ -202,7 +206,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
               <div className="col-span-4">
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{s.skill_name}</p>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${CATEGORY_COLORS[s.category] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200'}`}>
-                  {(s.category || 'other').replace(/_/g, ' ')}
+                  {(s.category || t('marketAnalytics.other')).replace(/_/g, ' ')}
                 </span>
               </div>
               <div className="col-span-3">
@@ -213,7 +217,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {s.avg_salary ? `${formatSalary(s.avg_salary)}` : '—'}
                 </p>
-                {s.avg_salary && <p className="text-[10px] text-gray-400 dark:text-gray-500">UZS</p>}
+                {s.avg_salary && <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('marketAnalytics.currency.uzs')}</p>}
               </div>
               <div className="col-span-2 text-right">
                 <TrendBadge value={s.demand_change_30d ?? s.demand_change_7d} />
@@ -229,6 +233,7 @@ function TrendingSkills({ skills, period, onPeriodChange }) {
 /* ── Job Categories ─────────────────────────────────────────────── */
 
 function JobCategories({ categories }) {
+  const { t } = useTranslation();
   const maxCount = useMemo(() => {
     if (!categories?.length) return 1;
     return Math.max(...categories.map((c) => c.job_count));
@@ -240,9 +245,9 @@ function JobCategories({ categories }) {
   ];
 
   return (
-    <Section title="Jobs by Category" subtitle="Open positions by specialization">
+    <Section title={t('marketAnalytics.categories.title')} subtitle={t('marketAnalytics.categories.subtitle')}>
       {!categories?.length ? (
-        <p className="text-sm text-gray-400 text-center py-8">No category data available yet.</p>
+        <p className="text-sm text-gray-400 text-center py-8">{t('marketAnalytics.categories.empty')}</p>
       ) : (
         <div className="space-y-4">
           {categories.map((cat, i) => (
@@ -281,18 +286,19 @@ function JobCategories({ categories }) {
 /* ── Salary Insights ────────────────────────────────────────────── */
 
 function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
+  const { t } = useTranslation();
   const data = salaries?.salaries || [];
 
   return (
-    <Section title="Salary Insights by Role" subtitle="Average salary ranges across IT positions">
+    <Section title={t('marketAnalytics.salary.title')} subtitle={t('marketAnalytics.salary.subtitle')}>
       {/* Experience filter */}
       <div className="flex flex-wrap gap-2 mb-5">
         {[
-          { value: 'all', label: 'All Levels' },
-          { value: 'no_experience', label: 'No Exp' },
-          { value: 'junior', label: 'Junior' },
-          { value: 'mid', label: 'Mid' },
-          { value: 'senior', label: 'Senior' },
+          { value: 'all', label: t('marketAnalytics.exp.all') },
+          { value: 'no_experience', label: t('marketAnalytics.exp.no_experience') },
+          { value: 'junior', label: t('marketAnalytics.exp.junior') },
+          { value: 'mid', label: t('marketAnalytics.exp.mid') },
+          { value: 'senior', label: t('marketAnalytics.exp.senior') },
         ].map((opt) => (
           <button
             key={opt.value}
@@ -309,7 +315,7 @@ function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
       </div>
 
       {!data.length ? (
-        <p className="text-sm text-gray-400 text-center py-8">No salary data available yet.</p>
+        <p className="text-sm text-gray-400 text-center py-8">{t('marketAnalytics.salary.empty')}</p>
       ) : (
         <div className="space-y-3">
           {data.map((s, i) => {
@@ -323,13 +329,13 @@ function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{s.job_title}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">{s.job_count} posting{s.job_count !== 1 ? 's' : ''}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{t('marketAnalytics.salary.postings', { count: s.job_count })}</p>
                   </div>
                   <div className="text-right flex-shrink-0 ml-3">
                     <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                       {formatSalary(avgMin)} – {formatSalary(avgMax)}
                     </p>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500">{s.currency || 'UZS'}</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">{s.currency || t('marketAnalytics.currency.uzs')}</p>
                   </div>
                 </div>
 
@@ -355,15 +361,16 @@ function SalaryInsights({ salaries, expFilter, onExpFilterChange }) {
 /* ── Experience Distribution ────────────────────────────────────── */
 
 function ExperienceDistribution({ distribution }) {
+  const { t } = useTranslation();
   if (!distribution || Object.keys(distribution).length === 0) return null;
 
   const LABELS = {
-    no_experience: 'No Experience',
-    junior: 'Junior (1-3y)',
-    mid: 'Mid-Level (3-6y)',
-    senior: 'Senior (6+y)',
-    '': 'Not Specified',
-    null: 'Not Specified',
+    no_experience: t('marketAnalytics.exp.no_experience_long'),
+    junior: t('marketAnalytics.exp.junior_long'),
+    mid: t('marketAnalytics.exp.mid_long'),
+    senior: t('marketAnalytics.exp.senior_long'),
+    '': t('marketAnalytics.exp.not_specified'),
+    null: t('marketAnalytics.exp.not_specified'),
   };
 
   const COLORS = {
@@ -377,7 +384,7 @@ function ExperienceDistribution({ distribution }) {
   const entries = Object.entries(distribution)
     .map(([key, count]) => ({
       key,
-      label: LABELS[key] || key || 'Other',
+      label: LABELS[key] || key || t('marketAnalytics.other'),
       count,
       pct: total > 0 ? (count / total) * 100 : 0,
       color: COLORS[key] || 'bg-gray-400',
@@ -385,7 +392,7 @@ function ExperienceDistribution({ distribution }) {
     .sort((a, b) => b.count - a.count);
 
   return (
-    <Section title="Experience Level Distribution" subtitle={`Based on ${total.toLocaleString()} job postings`}>
+    <Section title={t('marketAnalytics.distribution.title')} subtitle={t('marketAnalytics.distribution.subtitle', { count: total.toLocaleString() })}>
       {/* Stacked bar */}
       <div className="flex w-full h-8 rounded-lg overflow-hidden mb-4">
         {entries.map((e) => (
@@ -417,12 +424,13 @@ function ExperienceDistribution({ distribution }) {
 /* ── Top Skills per Category ────────────────────────────────────── */
 
 function TopSkillsByCategory({ categories }) {
+  const { t } = useTranslation();
   const withSkills = (categories || []).filter((c) => c.top_skills?.length > 0).slice(0, 6);
 
   if (!withSkills.length) return null;
 
   return (
-    <Section title="Top Skills by Category" subtitle="Most requested skills in each job category">
+    <Section title={t('marketAnalytics.topSkills.title')} subtitle={t('marketAnalytics.topSkills.subtitle')}>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {withSkills.map((cat) => (
           <div key={cat.category} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
@@ -431,7 +439,7 @@ function TopSkillsByCategory({ categories }) {
               {cat.top_skills.slice(0, 5).map((skill, i) => (
                 <div key={skill.skill_id || i} className="flex items-center justify-between">
                   <span className="text-xs text-gray-700 dark:text-gray-300">{skill.name}</span>
-                  <span className="text-xs font-medium text-primary-600">{skill.count} jobs</span>
+                  <span className="text-xs font-medium text-primary-600">{t('marketAnalytics.topSkills.jobs', { count: skill.count })}</span>
                 </div>
               ))}
             </div>
@@ -445,9 +453,10 @@ function TopSkillsByCategory({ categories }) {
 /* ── Top Job Titles ────────────────────────────────────────────── */
 
 function TopJobTitles({ titles, period, onPeriodChange }) {
+  const { t } = useTranslation();
   const maxCount = useMemo(() => {
     if (!titles?.length) return 1;
-    return Math.max(...titles.map((t) => t.count));
+    return Math.max(...titles.map((title) => title.count));
   }, [titles]);
 
   const RANK_COLORS = [
@@ -457,7 +466,7 @@ function TopJobTitles({ titles, period, onPeriodChange }) {
   ];
 
   return (
-    <Section title="Top Job Titles" subtitle="Most posted positions in the market">
+    <Section title={t('marketAnalytics.topTitles.title')} subtitle={t('marketAnalytics.topTitles.subtitle')}>
       {/* Period filter */}
       <div className="flex gap-2 mb-5">
         {['7d', '30d', '90d', 'all'].map((p) => (
@@ -470,31 +479,31 @@ function TopJobTitles({ titles, period, onPeriodChange }) {
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
-            {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : p === '90d' ? '90 Days' : 'All Time'}
+            {p === '7d' ? t('marketAnalytics.period.7d') : p === '30d' ? t('marketAnalytics.period.30d') : p === '90d' ? t('marketAnalytics.period.90d') : t('marketAnalytics.period.all')}
           </button>
         ))}
       </div>
 
       {!titles?.length ? (
-        <p className="text-sm text-gray-400 text-center py-8">No job title data available yet.</p>
+        <p className="text-sm text-gray-400 text-center py-8">{t('marketAnalytics.topTitles.empty')}</p>
       ) : (
         <div className="space-y-2.5">
-          {titles.map((t, i) => (
-            <div key={t.job_title} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          {titles.map((title, i) => (
+            <div key={title.job_title} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                 i < 3 ? RANK_COLORS[i] : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
               }`}>
                 {i + 1}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{t.job_title}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{title.job_title}</p>
                 <div className="mt-1">
-                  <MiniBar value={t.count} max={maxCount} color={i < 3 ? 'bg-primary-500' : 'bg-gray-400'} />
+                  <MiniBar value={title.count} max={maxCount} color={i < 3 ? 'bg-primary-500' : 'bg-gray-400'} />
                 </div>
               </div>
               <div className="flex-shrink-0 text-right">
-                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{t.count}</span>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">posts</p>
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{title.count}</span>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('marketAnalytics.topTitles.posts')}</p>
               </div>
             </div>
           ))}
@@ -521,6 +530,7 @@ function Section({ title, subtitle, children }) {
 /* ── Main Page ──────────────────────────────────────────────────── */
 
 export default function MarketAnalyticsPage() {
+  const { t } = useTranslation();
   const { user, fetchUser } = useAuthStore();
   const [overview, setOverview] = useState(null);
   const [trendingSkills, setTrendingSkills] = useState([]);
@@ -554,13 +564,13 @@ export default function MarketAnalyticsPage() {
           window.location.href = '/login?redirect=/market-analytics';
           return;
         }
-        setError('Failed to load analytics data.');
+        setError(t('marketAnalytics.errors.load'));
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [fetchUser, t, user]);
 
   // Reload trending skills when period changes
   useEffect(() => {
@@ -625,7 +635,7 @@ export default function MarketAnalyticsPage() {
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
           <p className="text-gray-600 dark:text-gray-300">{error}</p>
           <button onClick={() => window.location.reload()} className="mt-3 text-primary-600 text-sm font-medium underline bg-transparent border-none cursor-pointer">
-            Retry
+            {t('marketAnalytics.retry')}
           </button>
         </div>
       </div>
@@ -669,3 +679,5 @@ export default function MarketAnalyticsPage() {
     </DashboardLayout>
   );
 }
+
+

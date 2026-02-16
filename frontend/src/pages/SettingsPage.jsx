@@ -14,9 +14,9 @@ import api from '../services/api';
 /* ── Constants ─────────────────────────────────────────────────── */
 
 const TABS = [
-  { key: 'profile',     label: 'Profile',     icon: User,   desc: 'Personal & career details' },
-  { key: 'security',    label: 'Security',     icon: Shield, desc: 'Password & account' },
-  { key: 'preferences', label: 'Preferences',  icon: Globe,  desc: 'Theme & language' },
+  { key: 'profile',     labelKey: 'settings.tabs.profile',     descKey: 'settings.tabs.profileDesc',     icon: User },
+  { key: 'security',    labelKey: 'settings.tabs.security',    descKey: 'settings.tabs.securityDesc',    icon: Shield },
+  { key: 'preferences', labelKey: 'settings.tabs.preferences', descKey: 'settings.tabs.preferencesDesc', icon: Globe },
 ];
 
 const UZ_CITIES = [
@@ -25,13 +25,7 @@ const UZ_CITIES = [
   'Jizzakh', 'Urgench', 'Navoi', 'Termez', 'Gulistan',
 ];
 
-const EXP_LEVELS = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'junior',   label: 'Junior' },
-  { value: 'mid',      label: 'Mid-level' },
-  { value: 'senior',   label: 'Senior' },
-  { value: 'lead',     label: 'Lead / Principal' },
-];
+const EXP_LEVELS = ['beginner', 'junior', 'mid', 'senior', 'lead'];
 
 /* ── Shared UI Primitives ──────────────────────────────────────── */
 
@@ -93,6 +87,7 @@ function Toggle({ checked, onChange, label }) {
 }
 
 function SaveBtn({ onClick, saving, saved }) {
+  const { t } = useTranslation();
   return (
     <div className="flex justify-end mt-6">
       <button
@@ -101,7 +96,7 @@ function SaveBtn({ onClick, saving, saved }) {
         className="h-11 px-7 bg-primary-600 text-white rounded-xl text-sm font-semibold border-none cursor-pointer
           hover:bg-primary-700 hover:shadow-md disabled:opacity-60 transition-all flex items-center gap-2"
       >
-        {saving ? 'Saving...' : saved ? <><Check className="w-4 h-4" /> Saved</> : 'Save Changes'}
+        {saving ? t('settings.save.saving') : saved ? <><Check className="w-4 h-4" /> {t('settings.save.saved')}</> : t('settings.save.cta')}
       </button>
     </div>
   );
@@ -110,6 +105,7 @@ function SaveBtn({ onClick, saving, saved }) {
 /* ── Tab 1: Profile Information ────────────────────────────────── */
 
 function ProfileTab({ user, profile, onUserUpdate }) {
+  const { t } = useTranslation();
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -156,7 +152,7 @@ function ProfileTab({ user, profile, onUserUpdate }) {
   return (
     <div className="space-y-6">
       <Card>
-        <SectionTitle sub="Manage your personal information">Personal Details</SectionTitle>
+        <SectionTitle sub={t('settings.profile.personalSub')}>{t('settings.profile.personalTitle')}</SectionTitle>
 
         {/* Avatar */}
         <div className="flex items-center gap-5 mb-7 p-4 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-2xl">
@@ -168,34 +164,34 @@ function ProfileTab({ user, profile, onUserUpdate }) {
           </div>
           <div>
             <p className="text-base font-semibold text-gray-800 dark:text-gray-100">{user?.full_name || user?.email}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Click avatar to change photo</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t('settings.profile.avatarHint')}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="first_name">First Name</Label>
-            <Input id="first_name" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
+            <Label htmlFor="first_name">{t('settings.profile.firstName')}</Label>
+            <Input id="first_name" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder={t('settings.profile.firstNamePlaceholder')} />
           </div>
           <div>
-            <Label htmlFor="last_name">Last Name</Label>
-            <Input id="last_name" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+            <Label htmlFor="last_name">{t('settings.profile.lastName')}</Label>
+            <Input id="last_name" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder={t('settings.profile.lastNamePlaceholder')} />
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('settings.profile.email')}</Label>
             <div className="relative">
               <Input id="email" value={user?.email || ''} disabled />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                <Check className="w-3 h-3" /> Verified
+                <Check className="w-3 h-3" /> {t('settings.profile.verified')}
               </span>
             </div>
           </div>
           <div>
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 ..." />
+            <Label htmlFor="phone">{t('settings.profile.phone')}</Label>
+            <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('settings.profile.phonePlaceholder')} />
           </div>
           <div>
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location">{t('settings.profile.location')}</Label>
             <select
               id="location"
               value={location}
@@ -203,19 +199,19 @@ function ProfileTab({ user, profile, onUserUpdate }) {
               className="w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 outline-none bg-white dark:bg-gray-800
                 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             >
-              <option value="">Select city</option>
+              <option value="">{t('settings.profile.locationPlaceholder')}</option>
               {UZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="md:col-span-2">
-            <Label htmlFor="bio">Bio</Label>
+            <Label htmlFor="bio">{t('settings.profile.bio')}</Label>
             <textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value.slice(0, 200))}
               maxLength={200}
               rows={3}
-              placeholder="Tell us about yourself..."
+              placeholder={t('settings.profile.bioPlaceholder')}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none resize-none
                 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
@@ -226,37 +222,37 @@ function ProfileTab({ user, profile, onUserUpdate }) {
       </Card>
 
       <Card>
-        <SectionTitle sub="Your current position and career goals">Career Information</SectionTitle>
+        <SectionTitle sub={t('settings.profile.careerSub')}>{t('settings.profile.careerTitle')}</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="job_position">Current Job Position</Label>
-            <Input id="job_position" value={jobPosition} onChange={(e) => setJobPosition(e.target.value)} placeholder="e.g. Backend Developer" />
+            <Label htmlFor="job_position">{t('settings.profile.currentJob')}</Label>
+            <Input id="job_position" value={jobPosition} onChange={(e) => setJobPosition(e.target.value)} placeholder={t('settings.profile.currentJobPlaceholder')} />
           </div>
           <div>
-            <Label htmlFor="desired_role">Desired Role</Label>
-            <Input id="desired_role" value={desiredRole} onChange={(e) => setDesiredRole(e.target.value)} placeholder="e.g. Full-Stack Engineer" />
+            <Label htmlFor="desired_role">{t('settings.profile.desiredRole')}</Label>
+            <Input id="desired_role" value={desiredRole} onChange={(e) => setDesiredRole(e.target.value)} placeholder={t('settings.profile.desiredRolePlaceholder')} />
           </div>
           <div className="md:col-span-2">
-            <Label>Experience Level</Label>
+            <Label>{t('settings.profile.expLevel')}</Label>
             <div className="flex flex-wrap gap-2 mt-1">
               {EXP_LEVELS.map((lvl) => (
                 <button
-                  key={lvl.value}
+                  key={lvl}
                   type="button"
-                  onClick={() => setExpLevel(lvl.value)}
+                  onClick={() => setExpLevel(lvl)}
                   className={`px-4 py-2.5 rounded-xl text-sm font-medium border cursor-pointer transition-all ${
-                    expLevel === lvl.value
+                    expLevel === lvl
                       ? 'bg-primary-600 text-white border-primary-600 shadow-sm shadow-primary-600/20'
                       : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  {lvl.label}
+                  {t(`settings.profile.expLevels.${lvl}`)}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <Toggle checked={employed} onChange={setEmployed} label="Currently Employed" />
+            <Toggle checked={employed} onChange={setEmployed} label={t('settings.profile.employed')} />
           </div>
         </div>
         <SaveBtn onClick={saveCareer} saving={saving2} saved={saved2} />
@@ -268,6 +264,7 @@ function ProfileTab({ user, profile, onUserUpdate }) {
 /* ── Tab 2: Account Security ──────────────────────────────────── */
 
 function SecurityTab() {
+  const { t } = useTranslation();
   const [curPwd, setCurPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
@@ -292,12 +289,17 @@ function SecurityTab() {
   }, [newPwd]);
 
   const strengthColors = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-emerald-400'];
-  const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
+  const strengthLabels = [
+    t('settings.security.strength.weak'),
+    t('settings.security.strength.fair'),
+    t('settings.security.strength.good'),
+    t('settings.security.strength.strong'),
+  ];
 
   const changePassword = async () => {
     setPwdError('');
     setPwdSuccess('');
-    if (newPwd !== confirmPwd) { setPwdError("Passwords don't match"); return; }
+    if (newPwd !== confirmPwd) { setPwdError(t('settings.security.errors.mismatch')); return; }
     setSaving(true);
     try {
       await api.post('/users/auth/change-password/', {
@@ -305,7 +307,7 @@ function SecurityTab() {
         new_password: newPwd,
         new_password_confirm: confirmPwd,
       });
-      setPwdSuccess('Password changed successfully');
+      setPwdSuccess(t('settings.security.success.changed'));
       setCurPwd(''); setNewPwd(''); setConfirmPwd('');
     } catch (err) {
       const data = err.response?.data;
@@ -313,7 +315,7 @@ function SecurityTab() {
         data?.current_password?.[0] ||
         data?.new_password?.[0] ||
         data?.non_field_errors?.[0] ||
-        'Failed to change password'
+        t('settings.security.errors.changeFailed')
       );
     }
     setSaving(false);
@@ -328,7 +330,7 @@ function SecurityTab() {
       localStorage.removeItem('refresh_token');
       window.location.href = '/login';
     } catch (err) {
-      setDeleteError(err.response?.data?.error || 'Failed to delete account');
+      setDeleteError(err.response?.data?.error || t('settings.security.errors.deleteFailed'));
     }
     setDeleting(false);
   };
@@ -336,21 +338,21 @@ function SecurityTab() {
   return (
     <div className="space-y-6">
       <Card>
-        <SectionTitle sub="Update your password to keep your account secure">Change Password</SectionTitle>
+        <SectionTitle sub={t('settings.security.changeSub')}>{t('settings.security.changeTitle')}</SectionTitle>
         <div className="space-y-4 max-w-md">
           <div>
-            <Label htmlFor="cur_pwd">Current Password</Label>
+            <Label htmlFor="cur_pwd">{t('settings.security.currentPassword')}</Label>
             <div className="relative">
-              <Input id="cur_pwd" type={showCur ? 'text' : 'password'} value={curPwd} onChange={(e) => setCurPwd(e.target.value)} placeholder="Enter current password" />
+              <Input id="cur_pwd" type={showCur ? 'text' : 'password'} value={curPwd} onChange={(e) => setCurPwd(e.target.value)} placeholder={t('settings.security.currentPasswordPlaceholder')} />
               <button onClick={() => setShowCur(!showCur)} className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 hover:text-gray-600">
                 {showCur ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
           <div>
-            <Label htmlFor="new_pwd">New Password</Label>
+            <Label htmlFor="new_pwd">{t('settings.security.newPassword')}</Label>
             <div className="relative">
-              <Input id="new_pwd" type={showNew ? 'text' : 'password'} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="Enter new password" />
+              <Input id="new_pwd" type={showNew ? 'text' : 'password'} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder={t('settings.security.newPasswordPlaceholder')} />
               <button onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 hover:text-gray-600">
                 {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -363,14 +365,14 @@ function SecurityTab() {
                   ))}
                 </div>
                 <p className={`text-xs mt-1 font-medium ${passwordStrength >= 3 ? 'text-emerald-600' : passwordStrength >= 2 ? 'text-yellow-600' : 'text-red-500'}`}>
-                  {strengthLabels[passwordStrength - 1] || 'Too short'}
+                  {strengthLabels[passwordStrength - 1] || t('settings.security.strength.tooShort')}
                 </p>
               </div>
             )}
           </div>
           <div>
-            <Label htmlFor="confirm_pwd">Confirm New Password</Label>
-            <Input id="confirm_pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Confirm new password" />
+            <Label htmlFor="confirm_pwd">{t('settings.security.confirmPassword')}</Label>
+            <Input id="confirm_pwd" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder={t('settings.security.confirmPasswordPlaceholder')} />
           </div>
 
           {pwdError && <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg"><AlertTriangle className="w-4 h-4 flex-shrink-0" />{pwdError}</div>}
@@ -382,39 +384,39 @@ function SecurityTab() {
             className="h-11 px-7 bg-primary-600 text-white rounded-xl text-sm font-semibold border-none cursor-pointer
               hover:bg-primary-700 hover:shadow-md disabled:opacity-60 transition-all"
           >
-            {saving ? 'Updating...' : 'Update Password'}
+            {saving ? t('settings.security.updating') : t('settings.security.updatePassword')}
           </button>
         </div>
       </Card>
 
       <Card>
-        <SectionTitle sub="Devices currently logged into your account">Active Sessions</SectionTitle>
+        <SectionTitle sub={t('settings.security.sessionsSub')}>{t('settings.security.sessionsTitle')}</SectionTitle>
         <div className="bg-gradient-to-r from-gray-50 to-emerald-50/30 dark:from-gray-800 dark:to-emerald-900/10 rounded-xl px-4 py-3.5 flex items-center justify-between border border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-600">
               <Monitor className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Current Session</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">This device &middot; Active now</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t('settings.security.currentSession')}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t('settings.security.currentSessionMeta')}</p>
             </div>
           </div>
           <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-            Active
+            {t('settings.security.active')}
           </span>
         </div>
       </Card>
 
       <Card danger>
-        <SectionTitle sub="Permanent actions that cannot be undone">Danger Zone</SectionTitle>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Deleting your account will remove all your data, skills, roadmaps, and progress permanently.</p>
+        <SectionTitle sub={t('settings.security.dangerSub')}>{t('settings.security.dangerTitle')}</SectionTitle>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('settings.security.deleteWarning')}</p>
         <button
           onClick={() => setDeleteModal(true)}
           className="h-11 px-6 bg-white text-red-600 border-2 border-red-200 rounded-xl text-sm font-semibold cursor-pointer
             hover:bg-red-50 hover:border-red-300 transition-all"
         >
-          Delete My Account
+          {t('settings.security.deleteAccount')}
         </button>
       </Card>
 
@@ -427,20 +429,20 @@ function SecurityTab() {
                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Delete Account</h3>
-                <p className="text-xs text-gray-400 dark:text-gray-500">This action cannot be undone</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('settings.security.deleteModalTitle')}</h3>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t('settings.security.deleteModalSub')}</p>
               </div>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">All your data will be permanently deleted. Enter your password to confirm.</p>
-            <Label htmlFor="delete_pwd">Password</Label>
-            <Input id="delete_pwd" type="password" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} placeholder="Your password" />
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('settings.security.deleteModalBody')}</p>
+            <Label htmlFor="delete_pwd">{t('settings.security.password')}</Label>
+            <Input id="delete_pwd" type="password" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} placeholder={t('settings.security.passwordPlaceholder')} />
             {deleteError && <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mt-2"><AlertTriangle className="w-4 h-4 flex-shrink-0" />{deleteError}</div>}
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => { setDeleteModal(false); setDeletePwd(''); setDeleteError(''); }}
                 className="h-10 px-5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium border-none cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                Cancel
+                {t('settings.security.cancel')}
               </button>
               <button
                 onClick={deleteAccount}
@@ -448,7 +450,7 @@ function SecurityTab() {
                 className="h-10 px-5 bg-red-600 text-white rounded-xl text-sm font-semibold border-none cursor-pointer
                   hover:bg-red-700 disabled:opacity-60 transition-all"
               >
-                {deleting ? 'Deleting...' : 'Delete Account'}
+                {deleting ? t('settings.security.deleting') : t('settings.security.deleteAccount')}
               </button>
             </div>
           </div>
@@ -461,7 +463,7 @@ function SecurityTab() {
 /* ── Tab 3: Preferences ────────────────────────────────────────── */
 
 function PreferencesTab({ user, onUserUpdate }) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [lang, setLang] = useState(i18n.language || user?.preferred_language || 'en');
   const { theme, setTheme } = useThemeStore();
   const [selectedTheme, setSelectedTheme] = useState(theme);
@@ -492,15 +494,15 @@ function PreferencesTab({ user, onUserUpdate }) {
   ];
 
   const THEMES = [
-    { value: 'light',  label: 'Light',  icon: Sun },
-    { value: 'dark',   label: 'Dark',   icon: Moon },
-    { value: 'system', label: 'System', icon: Monitor },
+    { value: 'light',  labelKey: 'settings.theme.light',  icon: Sun },
+    { value: 'dark',   labelKey: 'settings.theme.dark',   icon: Moon },
+    { value: 'system', labelKey: 'settings.theme.system', icon: Monitor },
   ];
 
   return (
     <div className="space-y-6">
       <Card>
-        <SectionTitle sub="Choose your preferred interface language">Language</SectionTitle>
+        <SectionTitle sub={t('settings.languageSub')}>{t('settings.language')}</SectionTitle>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {LANGUAGES.map((l) => (
             <button
@@ -527,29 +529,29 @@ function PreferencesTab({ user, onUserUpdate }) {
       </Card>
 
       <Card>
-        <SectionTitle sub="Customize the look and feel of SkillBridge">Theme</SectionTitle>
+        <SectionTitle sub={t('settings.themeSub')}>{t('settings.theme')}</SectionTitle>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {THEMES.map((t) => {
-            const Icon = t.icon;
+          {THEMES.map((themeOption) => {
+            const Icon = themeOption.icon;
             return (
               <button
-                key={t.value}
-                onClick={() => setSelectedTheme(t.value)}
+                key={themeOption.value}
+                onClick={() => setSelectedTheme(themeOption.value)}
                 className={`relative flex flex-col items-center gap-3 px-4 py-5 rounded-xl border-2 cursor-pointer transition-all ${
-                  selectedTheme === t.value
+                  selectedTheme === themeOption.value
                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-sm shadow-primary-500/10'
                     : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-sm'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  selectedTheme === t.value ? 'bg-primary-100 dark:bg-primary-900/50' : 'bg-gray-100 dark:bg-gray-700'
+                  selectedTheme === themeOption.value ? 'bg-primary-100 dark:bg-primary-900/50' : 'bg-gray-100 dark:bg-gray-700'
                 }`}>
-                  <Icon className={`w-6 h-6 ${selectedTheme === t.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+                  <Icon className={`w-6 h-6 ${selectedTheme === themeOption.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
                 </div>
-                <span className={`text-sm font-semibold ${selectedTheme === t.value ? 'text-primary-700 dark:text-primary-400' : 'text-gray-600 dark:text-gray-300'}`}>
-                  {t.label}
+                <span className={`text-sm font-semibold ${selectedTheme === themeOption.value ? 'text-primary-700 dark:text-primary-400' : 'text-gray-600 dark:text-gray-300'}`}>
+                  {t(themeOption.labelKey)}
                 </span>
-                {selectedTheme === t.value && (
+                {selectedTheme === themeOption.value && (
                   <div className="absolute top-2 right-2 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
                   </div>
@@ -568,6 +570,7 @@ function PreferencesTab({ user, onUserUpdate }) {
 /* ── Main Settings Page ────────────────────────────────────────── */
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const { user, fetchUser, logout } = useAuthStore();
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
@@ -634,8 +637,8 @@ export default function SettingsPage() {
             <Settings className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
-            <p className="text-sm text-gray-400 dark:text-gray-500">Manage your account and preferences</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('settings.title')}</h1>
+            <p className="text-sm text-gray-400 dark:text-gray-500">{t('settings.subtitle')}</p>
           </div>
         </div>
       </div>
@@ -656,7 +659,7 @@ export default function SettingsPage() {
               }`}
             >
               <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-gray-400'}`} />
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="hidden sm:inline">{t(tab.labelKey)}</span>
             </button>
           );
         })}

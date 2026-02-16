@@ -37,6 +37,7 @@ class StartConversationView(APIView):
         result = service.start_conversation(
             context_type=serializer.validated_data.get('context_type', 'help'),
             initial_message=serializer.validated_data.get('initial_message'),
+            language=serializer.validated_data.get('language', 'en'),
         )
 
         return Response(result, status=status.HTTP_201_CREATED)
@@ -188,6 +189,7 @@ class QuickChatView(APIView):
         # Start conversation
         result = service.start_conversation(
             context_type=context_type,
+            language=language,
         )
 
         # Send the message with language preference

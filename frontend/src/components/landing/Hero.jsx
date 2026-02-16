@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Hero() {
@@ -32,21 +32,13 @@ export default function Hero() {
           {t('hero.subtitle')}
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex items-center justify-center">
           <Link
-            to="/assessment"
+            to="/register"
             className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold text-primary-700 bg-white rounded-xl hover:bg-primary-50 no-underline transition-all shadow-lg shadow-primary-900/20 hover:shadow-xl"
           >
-            {t('hero.cta')}
+            {t('hero.getStartedFree')}
             <ArrowRight className="w-5 h-5" />
-          </Link>
-
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold text-white border-2 border-white/30 rounded-xl hover:bg-white/10 no-underline transition-all backdrop-blur-sm"
-          >
-            <BarChart3 className="w-5 h-5" />
-            {t('hero.secondary')}
           </Link>
         </div>
       </div>

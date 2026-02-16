@@ -1,23 +1,26 @@
 ﻿import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Zap, TrendingUp, BarChart3, Target } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/dashboard';
-  const { login, loading, error, clearError } = useAuthStore();
+  const { login, loading, error, clearError, isAuthenticated } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    if (isAuthenticated) navigate('/dashboard', { replace: true });
+  }, [isAuthenticated, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await login(email, password);
-      navigate(redirectTo);
+      navigate('/dashboard');
     } catch {
       // error is set in the store
     }
@@ -221,7 +224,7 @@ export default function LoginPage() {
           {/* Sign up link */}
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-6">
             Don&apos;t have an account?{' '}
-            <Link to={`/register${redirectTo !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
+            <Link to="/register" className="font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors">
               Sign up
             </Link>
           </p>

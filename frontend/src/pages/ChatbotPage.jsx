@@ -17,43 +17,43 @@ import api from '../services/api';
    ═══════════════════════════════════════════ */
 
 const CONTEXT_TYPES = [
-  { key: 'onboarding', label: 'Onboarding', icon: GraduationCap, emoji: '🎓', color: 'text-purple-600', bg: 'bg-purple-50', activeBg: 'bg-purple-600' },
-  { key: 'roadmap',    label: 'Roadmap',    icon: Target,        emoji: '🎯', color: 'text-blue-600',   bg: 'bg-blue-50',   activeBg: 'bg-blue-600' },
-  { key: 'career',     label: 'Career',     icon: Briefcase,     emoji: '💼', color: 'text-emerald-600',bg: 'bg-emerald-50', activeBg: 'bg-emerald-600' },
-  { key: 'help',       label: 'Help',       icon: HelpCircle,    emoji: '❓', color: 'text-orange-600', bg: 'bg-orange-50',  activeBg: 'bg-orange-600' },
+  { key: 'onboarding', labelKey: 'chatbot.context.onboarding', icon: GraduationCap, emoji: '🎓', color: 'text-purple-600', bg: 'bg-purple-50', activeBg: 'bg-purple-600' },
+  { key: 'roadmap',    labelKey: 'chatbot.context.roadmap',    icon: Target,        emoji: '🎯', color: 'text-blue-600',   bg: 'bg-blue-50',   activeBg: 'bg-blue-600' },
+  { key: 'career',     labelKey: 'chatbot.context.career',     icon: Briefcase,     emoji: '💼', color: 'text-emerald-600',bg: 'bg-emerald-50', activeBg: 'bg-emerald-600' },
+  { key: 'help',       labelKey: 'chatbot.context.help',       icon: HelpCircle,    emoji: '❓', color: 'text-orange-600', bg: 'bg-orange-50',  activeBg: 'bg-orange-600' },
 ];
 
 const INTENT_BADGES = {
-  skill_inquiry:    { label: 'Skill Inquiry',    color: 'bg-blue-100 text-blue-700',    icon: Target },
-  salary_inquiry:   { label: 'Salary Inquiry',   color: 'bg-emerald-100 text-emerald-700', icon: DollarSign },
-  job_inquiry:      { label: 'Job Inquiry',      color: 'bg-purple-100 text-purple-700', icon: Briefcase },
-  resource_inquiry: { label: 'Resource Inquiry', color: 'bg-orange-100 text-orange-700', icon: BookOpen },
-  roadmap_inquiry:  { label: 'Roadmap Inquiry',  color: 'bg-teal-100 text-teal-700',    icon: Map },
-  trend_inquiry:    { label: 'Trend Inquiry',    color: 'bg-red-100 text-red-700',      icon: TrendingUp },
+  skill_inquiry:    { labelKey: 'chatbot.intent.skill_inquiry',    color: 'bg-blue-100 text-blue-700',    icon: Target },
+  salary_inquiry:   { labelKey: 'chatbot.intent.salary_inquiry',   color: 'bg-emerald-100 text-emerald-700', icon: DollarSign },
+  job_inquiry:      { labelKey: 'chatbot.intent.job_inquiry',      color: 'bg-purple-100 text-purple-700', icon: Briefcase },
+  resource_inquiry: { labelKey: 'chatbot.intent.resource_inquiry', color: 'bg-orange-100 text-orange-700', icon: BookOpen },
+  roadmap_inquiry:  { labelKey: 'chatbot.intent.roadmap_inquiry',  color: 'bg-teal-100 text-teal-700',    icon: Map },
+  trend_inquiry:    { labelKey: 'chatbot.intent.trend_inquiry',    color: 'bg-red-100 text-red-700',      icon: TrendingUp },
 };
 
 const SUGGESTIONS = {
-  onboarding: ['Help me choose a career', 'Analyze my skills', 'Create my roadmap'],
-  roadmap:    ['What should I learn next?', 'Show my progress', 'Find learning resources'],
-  career:     ["What's the average salary?", 'Show trending skills', 'Find matching jobs'],
-  help:       ['Market insights', 'Skill recommendations', 'Job search tips'],
+  onboarding: ['chatbot.suggestions.onboarding.1', 'chatbot.suggestions.onboarding.2', 'chatbot.suggestions.onboarding.3'],
+  roadmap:    ['chatbot.suggestions.roadmap.1', 'chatbot.suggestions.roadmap.2', 'chatbot.suggestions.roadmap.3'],
+  career:     ['chatbot.suggestions.career.1', 'chatbot.suggestions.career.2', 'chatbot.suggestions.career.3'],
+  help:       ['chatbot.suggestions.help.1', 'chatbot.suggestions.help.2', 'chatbot.suggestions.help.3'],
 };
 
 const WELCOME = {
-  onboarding: { title: "Let's get you started!", sub: 'Tell me about your background and goals.' },
-  roadmap:    { title: 'Ready to level up?',      sub: 'Ask about your learning path and next steps.' },
-  career:     { title: 'Your career advisor here!',sub: 'Ask about the job market, salaries, and skills.' },
-  help:       { title: 'How can I assist?',        sub: 'I can help with careers, skills, jobs, and more.' },
+  onboarding: { titleKey: 'chatbot.welcome.onboarding.title', subKey: 'chatbot.welcome.onboarding.sub' },
+  roadmap:    { titleKey: 'chatbot.welcome.roadmap.title',    subKey: 'chatbot.welcome.roadmap.sub' },
+  career:     { titleKey: 'chatbot.welcome.career.title',     subKey: 'chatbot.welcome.career.sub' },
+  help:       { titleKey: 'chatbot.welcome.help.title',       subKey: 'chatbot.welcome.help.sub' },
 };
 
 const LOADING_MESSAGES = {
-  skill_inquiry:    'Analyzing market data...',
-  salary_inquiry:   'Fetching salary info...',
-  job_inquiry:      'Searching jobs...',
-  resource_inquiry: 'Finding resources...',
-  roadmap_inquiry:  'Loading roadmap...',
-  trend_inquiry:    'Analyzing trends...',
-  general:          'Thinking...',
+  skill_inquiry:    'chatbot.loading.skill_inquiry',
+  salary_inquiry:   'chatbot.loading.salary_inquiry',
+  job_inquiry:      'chatbot.loading.job_inquiry',
+  resource_inquiry: 'chatbot.loading.resource_inquiry',
+  roadmap_inquiry:  'chatbot.loading.roadmap_inquiry',
+  trend_inquiry:    'chatbot.loading.trend_inquiry',
+  general:          'chatbot.loading.general',
 };
 
 /* ═══════════════════════════════════════════
@@ -62,7 +62,7 @@ const LOADING_MESSAGES = {
 
 export default function ChatbotPage() {
   const { user } = useAuthStore();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   // Conversation state
   const [conversations, setConversations] = useState([]);
@@ -127,6 +127,7 @@ export default function ChatbotPage() {
     try {
       const { data } = await api.post('/chatbot/conversations/start/', {
         context_type: type || contextType,
+        language: i18n.language || 'en',
       });
       setActiveConv({
         conversation_id: data.conversation_id,
@@ -196,7 +197,7 @@ export default function ChatbotPage() {
         {
           id: Date.now() + 1,
           sender: 'bot',
-          text: 'Sorry, something went wrong. Please try again.',
+          text: t('chatbot.error.sendFailed'),
           timestamp: new Date().toISOString(),
           context: { response_type: 'error' },
         },
@@ -258,7 +259,7 @@ export default function ChatbotPage() {
         {
           id: Date.now() + 1,
           sender: 'bot',
-          text: 'Sorry, something went wrong. Please try again.',
+          text: t('chatbot.error.sendFailed'),
           timestamp: new Date().toISOString(),
           context: { response_type: 'error' },
         },
@@ -327,7 +328,7 @@ export default function ChatbotPage() {
                   }`}
                 >
                   <span>{ct.emoji}</span>
-                  {ct.label}
+                  {t(ct.labelKey)}
                 </button>
               ))}
             </div>
@@ -375,7 +376,7 @@ export default function ChatbotPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your message..."
+                placeholder={t('chatbot.input.placeholder')}
                 rows={1}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 resize-none focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all max-h-32"
                 style={{ minHeight: 42 }}
@@ -405,6 +406,7 @@ export default function ChatbotPage() {
    ═══════════════════════════════════════════ */
 
 function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onSelect, onNew, onClose }) {
+  const { t } = useTranslation();
   const grouped = groupConversations(conversations);
 
   return (
@@ -423,12 +425,12 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
       `}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Conversations</h3>
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t('chatbot.sidebar.title')}</h3>
           <div className="flex items-center gap-1">
             <button
               onClick={onNew}
               className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent border-none cursor-pointer"
-              title="New conversation"
+              title={t('chatbot.sidebar.newConversation')}
             >
               <Plus className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
@@ -450,14 +452,14 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
           ) : conversations.length === 0 ? (
             <div className="text-center py-8 px-4">
               <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-xs text-gray-400 dark:text-gray-500">No conversations yet</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t('chatbot.sidebar.empty')}</p>
             </div>
           ) : (
             Object.entries(grouped).map(([group, convs]) =>
               convs.length > 0 && (
                 <div key={group}>
                   <div className="px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                    {group}
+                    {t(`chatbot.groups.${group.toLowerCase().replace(/\s+/g, '_')}`, { defaultValue: group })}
                   </div>
                   {convs.map((conv) => {
                     const ct = CONTEXT_TYPES.find((c) => c.key === conv.context_type) || CONTEXT_TYPES[3];
@@ -473,9 +475,9 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
                       >
                         <span className="text-base flex-shrink-0">{ct.emoji}</span>
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium truncate">{ct.label}</div>
+                          <div className="text-xs font-medium truncate">{t(ct.labelKey)}</div>
                           <div className="text-[10px] text-gray-400 dark:text-gray-500">
-                            {conv.message_count} messages
+                            {t('chatbot.sidebar.messagesCount', { count: conv.message_count })}
                           </div>
                         </div>
                         {conv.is_active && (
@@ -499,6 +501,7 @@ function ConversationSidebar({ conversations, activeConvId, loading, isOpen, onS
    ═══════════════════════════════════════════ */
 
 function WelcomeScreen({ contextType, suggestions, onSuggestion }) {
+  const { t } = useTranslation();
   const welcome = WELCOME[contextType] || WELCOME.help;
   const ct = CONTEXT_TYPES.find((c) => c.key === contextType) || CONTEXT_TYPES[3];
 
@@ -507,17 +510,17 @@ function WelcomeScreen({ contextType, suggestions, onSuggestion }) {
       <div className={`w-16 h-16 ${ct.bg} rounded-2xl flex items-center justify-center mb-5`}>
         <span className="text-3xl">{ct.emoji}</span>
       </div>
-      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{welcome.title}</h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">{welcome.sub}</p>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{t(welcome.titleKey)}</h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">{t(welcome.subKey)}</p>
 
       <div className="flex flex-wrap justify-center gap-2">
         {(suggestions || []).map((s) => (
           <button
             key={s}
-            onClick={() => onSuggestion(s)}
+            onClick={() => onSuggestion(t(s))}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer transition-all"
           >
-            {s}
+            {t(s)}
             <ArrowRight className="w-3.5 h-3.5 opacity-50" />
           </button>
         ))}
@@ -531,6 +534,7 @@ function WelcomeScreen({ contextType, suggestions, onSuggestion }) {
    ═══════════════════════════════════════════ */
 
 function ChatMessage({ message, showInfo, onToggleInfo }) {
+  const { t } = useTranslation();
   const isUser = message.sender === 'user';
   const intent = message.context?.intent || message.context?.response_type;
   const badge = !isUser && intent ? INTENT_BADGES[intent] : null;
@@ -554,7 +558,7 @@ function ChatMessage({ message, showInfo, onToggleInfo }) {
         {badge && (
           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 ${badge.color}`}>
             <badge.icon className="w-3 h-3" />
-            {badge.label}
+            {t(badge.labelKey)}
           </span>
         )}
 
@@ -590,12 +594,12 @@ function ChatMessage({ message, showInfo, onToggleInfo }) {
               </button>
               {showInfo && (
                 <div className="absolute bottom-6 left-0 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 z-30 text-xs">
-                  <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Response Info</div>
+                  <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t('chatbot.message.responseInfo')}</div>
                   <div className="space-y-1 text-gray-500 dark:text-gray-400 dark:text-gray-500">
-                    <div>Intent: <span className="text-gray-700 dark:text-gray-200">{message.context.intent}</span></div>
-                    <div>Type: <span className="text-gray-700 dark:text-gray-200">{message.context.response_type}</span></div>
+                    <div>{t('chatbot.message.intent')}: <span className="text-gray-700 dark:text-gray-200">{message.context.intent}</span></div>
+                    <div>{t('chatbot.message.type')}: <span className="text-gray-700 dark:text-gray-200">{message.context.response_type}</span></div>
                     {message.context.context_used && (
-                      <div>Context: <span className="text-gray-700 dark:text-gray-200">{message.context.context_used.join(', ')}</span></div>
+                      <div>{t('chatbot.message.context')}: <span className="text-gray-700 dark:text-gray-200">{message.context.context_used.join(', ')}</span></div>
                     )}
                   </div>
                 </div>
@@ -645,18 +649,19 @@ function RichDataCards({ context }) {
 }
 
 function SkillMarketCard({ skills }) {
+  const { t } = useTranslation();
   return (
     <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
       <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <TrendingUp className="w-3.5 h-3.5 text-blue-500" />
-        Top In-Demand Skills
+        {t('chatbot.cards.skills.title')}
       </h4>
       <div className="space-y-2.5">
         {skills.slice(0, 5).map((s, i) => (
           <div key={i}>
             <div className="flex items-center justify-between text-xs mb-0.5">
               <span className="font-medium text-gray-800 dark:text-gray-100">{s.name}</span>
-              <span className="text-gray-400 dark:text-gray-500">{s.job_count} jobs</span>
+              <span className="text-gray-400 dark:text-gray-500">{t('chatbot.cards.skills.jobsCount', { count: s.job_count })}</span>
             </div>
             <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
               <div
@@ -673,25 +678,26 @@ function SkillMarketCard({ skills }) {
         ))}
       </div>
       <Link to="/market-analytics" className="flex items-center gap-1 text-xs text-primary-600 font-medium mt-3 no-underline hover:underline">
-        View Full Analytics <ExternalLink className="w-3 h-3" />
+        {t('chatbot.cards.skills.cta')} <ExternalLink className="w-3 h-3" />
       </Link>
     </div>
   );
 }
 
 function SalaryCard({ salaries }) {
+  const { t } = useTranslation();
   return (
     <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
       <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
-        Salary Insights
+        {t('chatbot.cards.salary.title')}
       </h4>
       <div className="space-y-2">
         {salaries.slice(0, 5).map((s, i) => (
           <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
             <span className="font-medium text-gray-800 dark:text-gray-100 truncate flex-1 mr-2">{s.job_title}</span>
             <span className="text-emerald-600 font-semibold whitespace-nowrap">
-              {s.salary_avg ? formatSalary(s.salary_avg) : 'N/A'}
+              {s.salary_avg ? formatSalary(s.salary_avg, t) : t('chatbot.na')}
             </span>
           </div>
         ))}
@@ -701,16 +707,17 @@ function SalaryCard({ salaries }) {
 }
 
 function JobMarketCard({ data }) {
+  const { t } = useTranslation();
   return (
     <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
       <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <Briefcase className="w-3.5 h-3.5 text-purple-500" />
-        Current Job Market
+        {t('chatbot.cards.jobs.title')}
       </h4>
       <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
         {(data.total_active_jobs || 0).toLocaleString()}
       </div>
-      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">active job postings</div>
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t('chatbot.cards.jobs.activePostings')}</div>
       {data.top_categories?.length > 0 && (
         <div className="space-y-1.5 mb-3">
           {data.top_categories.slice(0, 4).map((c, i) => (
@@ -723,24 +730,25 @@ function JobMarketCard({ data }) {
       )}
       {data.remote_jobs > 0 && (
         <span className="inline-flex text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-          {data.remote_jobs} remote jobs
+          {t('chatbot.cards.jobs.remoteCount', { count: data.remote_jobs })}
         </span>
       )}
       <Link to="/jobs" className="flex items-center gap-1 text-xs text-primary-600 font-medium mt-3 no-underline hover:underline">
-        Browse Jobs <ExternalLink className="w-3 h-3" />
+        {t('chatbot.cards.jobs.cta')} <ExternalLink className="w-3 h-3" />
       </Link>
     </div>
   );
 }
 
 function ResourcesCard({ resources }) {
+  const { t } = useTranslation();
   const typeIcons = { video: '🎬', book: '📖', tutorial: '📝', course: '🎓', documentation: '📄' };
 
   return (
     <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
       <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-1.5">
         <BookOpen className="w-3.5 h-3.5 text-orange-500" />
-        Recommended Resources
+        {t('chatbot.cards.resources.title')}
       </h4>
       <div className="space-y-2.5">
         {resources.slice(0, 4).map((r, i) => (
@@ -766,11 +774,12 @@ function ResourcesCard({ resources }) {
 }
 
 function RoadmapCard({ roadmap }) {
+  const { t } = useTranslation();
   return (
     <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-sm">
       <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-1.5">
         <Map className="w-3.5 h-3.5 text-teal-500" />
-        Your Learning Roadmap
+        {t('chatbot.cards.roadmap.title')}
       </h4>
       {roadmap.target_role && (
         <span className="inline-flex text-[10px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium mb-2">
@@ -793,12 +802,12 @@ function RoadmapCard({ roadmap }) {
         </svg>
         <div>
           <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">{roadmap.completion}</div>
-          <div className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500">skills completed</div>
+          <div className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500">{t('chatbot.cards.roadmap.skillsCompleted')}</div>
         </div>
       </div>
       {roadmap.next_skills?.length > 0 && (
         <div>
-          <div className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Next skills:</div>
+          <div className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1">{t('chatbot.cards.roadmap.nextSkills')}</div>
           <div className="flex flex-wrap gap-1">
             {roadmap.next_skills.map((s, i) => (
               <span key={i} className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2 py-0.5 rounded-full">{s}</span>
@@ -807,7 +816,7 @@ function RoadmapCard({ roadmap }) {
         </div>
       )}
       <Link to="/roadmap" className="flex items-center gap-1 text-xs text-primary-600 font-medium mt-3 no-underline hover:underline">
-        View Full Roadmap <ExternalLink className="w-3 h-3" />
+        {t('chatbot.cards.roadmap.cta')} <ExternalLink className="w-3 h-3" />
       </Link>
     </div>
   );
@@ -818,6 +827,7 @@ function RoadmapCard({ roadmap }) {
    ═══════════════════════════════════════════ */
 
 function TypingIndicator({ contextType, lastIntent }) {
+  const { t } = useTranslation();
   const loadingMsg = LOADING_MESSAGES[lastIntent] || LOADING_MESSAGES.general;
 
   return (
@@ -832,7 +842,7 @@ function TypingIndicator({ contextType, lastIntent }) {
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{loadingMsg}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{t(loadingMsg)}</span>
         </div>
       </div>
     </div>
@@ -844,6 +854,7 @@ function TypingIndicator({ contextType, lastIntent }) {
    ═══════════════════════════════════════════ */
 
 function SmartSuggestions({ contextType, onSuggestion }) {
+  const { t } = useTranslation();
   const suggestions = SUGGESTIONS[contextType] || SUGGESTIONS.help;
 
   return (
@@ -851,10 +862,10 @@ function SmartSuggestions({ contextType, onSuggestion }) {
       {suggestions.map((s) => (
         <button
           key={s}
-          onClick={() => onSuggestion(s)}
+          onClick={() => onSuggestion(t(s))}
           className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-xs text-gray-600 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer transition-all"
         >
-          {s}
+          {t(s)}
           <ChevronRight className="w-3 h-3 opacity-40" />
         </button>
       ))}
@@ -872,8 +883,8 @@ function formatTime(ts) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatSalary(amount) {
-  if (!amount) return 'N/A';
+function formatSalary(amount, t) {
+  if (!amount) return t('chatbot.na');
   if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M UZS`;
   if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K UZS`;
   return `${amount} UZS`;

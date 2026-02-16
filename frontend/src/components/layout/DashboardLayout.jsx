@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Zap, TrendingUp, Briefcase, BarChart3, MessageSquare,
   Home, Map, Lightbulb, FileText, Settings,
@@ -21,9 +21,16 @@ const NAV_ITEMS = [
 
 function Sidebar({ user, mobileOpen, onClose }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { logout } = useAuthStore();
   const firstName = user?.first_name || user?.email?.split('@')[0] || 'User';
   const initial = (user?.first_name?.[0] || user?.email?.[0] || 'U').toUpperCase();
+
+  const handleLogout = async () => {
+    await logout();
+    onClose?.();
+    navigate('/', { replace: true });
+  };
 
   const navContent = (
     <div className="flex flex-col h-full">
@@ -68,7 +75,7 @@ function Sidebar({ user, mobileOpen, onClose }) {
             <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user?.email || ''}</p>
           </div>
           <button
-            onClick={() => { logout(); window.location.href = '/login'; }}
+            onClick={handleLogout}
             className="p-1.5 text-gray-400 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer"
             title="Logout"
           >

@@ -80,7 +80,8 @@ class ChatbotService:
     def start_conversation(
         self,
         context_type: str = 'help',
-        initial_message: Optional[str] = None
+        initial_message: Optional[str] = None,
+        language: str = 'en'
     ) -> Dict[str, Any]:
         """
         Start a new chatbot conversation.
@@ -111,7 +112,7 @@ class ChatbotService:
         )
 
         # Generate greeting based on context
-        greeting = self._generate_greeting(context_type)
+        greeting = self._generate_greeting(context_type, language)
 
         # Store bot greeting
         ChatbotMessage.objects.create(
@@ -135,29 +136,66 @@ class ChatbotService:
         if initial_message:
             response = self.send_message(
                 conversation_id=conversation.conversation_id,
-                message=initial_message
+                message=initial_message,
+                language=language
             )
             result['initial_response'] = response
 
         return result
 
-    def _generate_greeting(self, context_type: str) -> str:
+    def _generate_greeting(self, context_type: str, language: str = 'en') -> str:
         """Generate context-appropriate greeting."""
 
         user_name = self.user.first_name or self.user.username
+        if language == 'ru':
+            greetings = {
+                'onboarding': f"Привет, {user_name}! Я помогу вам начать. "
+                             f"Расскажите о своем опыте и карьерных целях, "
+                             f"и я предложу персональный план обучения.",
+                'roadmap': f"Здравствуйте, {user_name}! Я помогу с вашей дорожной картой. "
+                          f"Спросите про навыки, ресурсы или ваш прогресс.",
+                'career': f"Привет, {user_name}! Я ваш карьерный консультант. "
+                         f"Могу подсказать по трендам рынка, зарплатам, "
+                         f"востребованным навыкам и карьерным возможностям.",
+                'help': f"Здравствуйте, {user_name}! Я готов помочь. "
+                       f"Вы можете спросить о:\n"
+                       f"• трендах рынка и зарплатах\n"
+                       f"• востребованных навыках\n"
+                       f"• учебных ресурсах\n"
+                       f"• карьерных рекомендациях\n"
+                       f"Чем могу помочь?",
+            }
+            return greetings.get(context_type, greetings['help'])
+
+        if language == 'uz':
+            greetings = {
+                'onboarding': f"Salom, {user_name}! Boshlashingizga yordam beraman. "
+                             f"Tajriba va karyera maqsadlaringizni ayting, "
+                             f"men sizga shaxsiy o'quv yo'lini taklif qilaman.",
+                'roadmap': f"Salom, {user_name}! O'quv yo'l xaritangiz bo'yicha yordam bera olaman. "
+                          f"Ko'nikmalar, resurslar yoki progress haqida so'rang.",
+                'career': f"Salom, {user_name}! Men sizning karyera maslahatchingizman. "
+                         f"Mehnat bozori trendlari, maoshlar, talab yuqori ko'nikmalar "
+                         f"va karyera imkoniyatlari haqida ma'lumot bera olaman.",
+                'help': f"Salom, {user_name}! Yordam berishga tayyorman. "
+                       f"Quyidagilar haqida so'rashingiz mumkin:\n"
+                       f"• bozor trendlari va maoshlar\n"
+                       f"• talab yuqori ko'nikmalar\n"
+                       f"• o'quv resurslari\n"
+                       f"• karyera yo'l-yo'riqlari\n"
+                       f"Nimadan boshlaymiz?",
+            }
+            return greetings.get(context_type, greetings['help'])
 
         greetings = {
             'onboarding': f"Hi {user_name}! I'm here to help you get started. "
                          f"Tell me about your background and career goals, "
                          f"and I'll help you create a personalized learning path.",
-
             'roadmap': f"Hello {user_name}! I can help you with your learning roadmap. "
                       f"Ask me about skills to learn, resources, or your progress.",
-
             'career': f"Hi {user_name}! I'm your career advisor. "
                      f"I can provide insights about job market trends, salary data, "
                      f"in-demand skills, and career opportunities.",
-
             'help': f"Hello {user_name}! I'm here to help. "
                    f"You can ask me about:\n"
                    f"• Job market trends and salaries\n"
@@ -166,7 +204,6 @@ class ChatbotService:
                    f"• Career guidance\n"
                    f"How can I assist you today?",
         }
-
         return greetings.get(context_type, greetings['help'])
 
     def send_message(
@@ -565,7 +602,11 @@ Provide a helpful response:"""
 
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
-            response_text = self._fallback_response(intent_data.get('intent'), context)
+            response_text = self._fallback_response(
+                intent=intent_data.get('intent'),
+                context=context,
+                language=language
+            )
 
         response_data = {
             'response_type': intent_data.get('intent', 'general'),
@@ -575,25 +616,43 @@ Provide a helpful response:"""
 
         return response_text, response_data
 
-    def _fallback_response(self, intent: Optional[str], context: Dict) -> str:
+    def _fallback_response(self, intent: Optional[str], context: Dict, language: str = 'en') -> str:
         """Generate fallback response when LLM is unavailable."""
 
         if intent == 'skill_inquiry':
             skills = context.get('market_data', {}).get('top_skills', [])
             if skills:
                 top_names = [s['name'] for s in skills[:5]]
+                if language == 'ru':
+                    return f"По текущим данным рынка самые востребованные навыки: {', '.join(top_names)}. Хотите узнать подробнее о каком-то из них?"
+                if language == 'uz':
+                    return f"Hozirgi bozor ma'lumotlariga ko'ra eng talabgir ko'nikmalar: {', '.join(top_names)}. Shulardan birortasi haqida batafsil ma'lumot beraymi?"
                 return f"Based on current market data, the most in-demand skills are: {', '.join(top_names)}. Would you like to learn more about any of these?"
 
         elif intent == 'salary_inquiry':
             salaries = context.get('market_data', {}).get('salaries', [])
             if salaries:
-                return f"Here are some salary insights from our job market data. The highest paying roles include positions like {salaries[0]['job_title'] if salaries else 'various tech roles'}."
+                top_role = salaries[0]['job_title'] if salaries else 'various tech roles'
+                if language == 'ru':
+                    return f"Вот краткая информация по зарплатам с рынка. Среди самых высокооплачиваемых ролей есть позиции вроде {top_role}."
+                if language == 'uz':
+                    return f"Bozor ma'lumotlari asosida maosh bo'yicha qisqa tahlil: eng yuqori maoshli rollar orasida {top_role} kabi lavozimlar bor."
+                return f"Here are some salary insights from our job market data. The highest paying roles include positions like {top_role}."
 
         elif intent == 'job_inquiry':
             job_data = context.get('job_data', {})
             if job_data:
-                return f"Currently there are {job_data.get('total_active_jobs', 'many')} active job postings in our database. What specific role or industry interests you?"
+                job_count = job_data.get('total_active_jobs', 'many')
+                if language == 'ru':
+                    return f"Сейчас в нашей базе {job_count} активных вакансий. Какая роль или направление вам интересны?"
+                if language == 'uz':
+                    return f"Hozir bazamizda {job_count} ta faol vakansiya bor. Qaysi rol yoki yo'nalish sizni qiziqtiradi?"
+                return f"Currently there are {job_count} active job postings in our database. What specific role or industry interests you?"
 
+        if language == 'ru':
+            return "Я помогаю с карьерными рекомендациями и аналитикой рынка труда. Переформулируйте вопрос или спросите о конкретных навыках, вакансиях и карьерных направлениях."
+        if language == 'uz':
+            return "Men karyera yo'l-yo'riqlari va ish bozori tahlili bo'yicha yordam beraman. Savolingizni boshqacha yozing yoki aniq ko'nikmalar, ishlar yoki karyera yo'nalishlari haqida so'rang."
         return "I'm here to help with career guidance and job market insights. Could you please rephrase your question or ask about specific skills, jobs, or career paths?"
 
     def get_conversation_history(
