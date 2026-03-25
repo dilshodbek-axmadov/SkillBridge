@@ -21,13 +21,25 @@ import ChatbotPage from './pages/ChatbotPage';
 import ProjectIdeasPage from './pages/ProjectIdeasPage';
 import BackgroundTasksPage from './pages/BackgroundTasksPage';
 import ActivityPage from './pages/ActivityPage';
+import RecruiterDashboardPage from './pages/RecruiterDashboardPage';
+import RecruiterCandidatesPage from './pages/RecruiterCandidatesPage';
+import RecruiterCandidateDetailPage from './pages/RecruiterCandidateDetailPage';
+import RecruiterSavedCandidatesPage from './pages/RecruiterSavedCandidatesPage';
+import RecruiterSavedSearchesPage from './pages/RecruiterSavedSearchesPage';
+import RecruiterJobsPage from './pages/RecruiterJobsPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
 const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills', '/roadmap', '/cv-builder', '/chat', '/project-ideas', '/background-tasks', '/activity'];
 
+function isStandalonePath(pathname) {
+  if (STANDALONE_ROUTES.includes(pathname)) return true;
+  if (pathname.startsWith('/recruiter')) return true;
+  return false;
+}
+
 function AppLayout() {
   const location = useLocation();
-  const isStandalone = STANDALONE_ROUTES.includes(location.pathname);
+  const isStandalone = isStandalonePath(location.pathname);
 
   if (isStandalone) {
     return (
@@ -40,6 +52,12 @@ function AppLayout() {
         <Route path="/assessment" element={<AssessmentPage />} />
         <Route path="/recommendations" element={<RecommendationsPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/recruiter/candidates/:candidateId" element={<RecruiterCandidateDetailPage />} />
+        <Route path="/recruiter/candidates" element={<RecruiterCandidatesPage />} />
+        <Route path="/recruiter/saved-candidates" element={<RecruiterSavedCandidatesPage />} />
+        <Route path="/recruiter/saved-searches" element={<RecruiterSavedSearchesPage />} />
+        <Route path="/recruiter/jobs" element={<RecruiterJobsPage />} />
+        <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
         <Route path="/market-analytics" element={<MarketAnalyticsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/jobs" element={<JobsPage />} />

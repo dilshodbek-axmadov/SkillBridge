@@ -1,26 +1,34 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Zap, TrendingUp, BarChart3, Target } from 'lucide-react';
 import useAuthStore from '../store/authStore';
+import { getHomePathForUser } from '../utils/authPaths';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, loading, error, clearError, isAuthenticated } = useAuthStore();
+  const { login, loading, error, clearError, isAuthenticated, user, fetchUser } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated && !user) {
+      fetchUser();
+    }
+  }, [isAuthenticated, user, fetchUser]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(getHomePathForUser(user), { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await login(email, password);
-      navigate('/dashboard');
     } catch {
       // error is set in the store
     }

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import RecruiterLayout from '../components/layout/RecruiterLayout';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import api from '../services/api';
@@ -604,14 +605,15 @@ export default function SettingsPage() {
   };
 
   const currentUser = useAuthStore.getState().user || user;
+  const Shell = currentUser?.user_type === 'recruiter' ? RecruiterLayout : DashboardLayout;
 
   if (loading) {
     return (
-      <DashboardLayout user={currentUser}>
+      <Shell user={currentUser}>
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin" />
         </div>
-      </DashboardLayout>
+      </Shell>
     );
   }
 
@@ -629,7 +631,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <DashboardLayout user={currentUser}>
+    <Shell user={currentUser}>
       {/* Page header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
@@ -669,6 +671,6 @@ export default function SettingsPage() {
       <div className="max-w-[800px]">
         {renderTab()}
       </div>
-    </DashboardLayout>
+    </Shell>
   );
 }

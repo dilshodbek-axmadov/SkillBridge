@@ -1,8 +1,9 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, Zap, TrendingUp, BarChart3, Target, Check } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Zap, TrendingUp, BarChart3, Target, Check, Code2, Briefcase } from 'lucide-react';
 import useAuthStore from '../store/authStore';
+import { getHomePathForUser } from '../utils/authPaths';
 
 function getPasswordStrength(password) {
   if (!password) return { score: 0, label: '', color: '' };
@@ -21,13 +22,14 @@ function getPasswordStrength(password) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register, loading, error, clearError, isAuthenticated } = useAuthStore();
+  const { register, loading, error, clearError, isAuthenticated, user, fetchUser } = useAuthStore();
 
   const [form, setForm] = useState({
     full_name: '',
     email: '',
     password: '',
     password_confirm: '',
+    user_type: 'developer',
     agreed: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -35,8 +37,16 @@ export default function RegisterPage() {
   const [localError, setLocalError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated && !user) {
+      fetchUser();
+    }
+  }, [isAuthenticated, user, fetchUser]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(getHomePathForUser(user), { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const strength = useMemo(() => getPasswordStrength(form.password), [form.password]);
 
@@ -70,15 +80,18 @@ export default function RegisterPage() {
     const username = form.email.split('@')[0];
 
     try {
-      await register({
+      const data = await register({
         email: form.email,
         username,
         first_name: firstName,
         last_name: lastName,
         password: form.password,
         password_confirm: form.password_confirm,
+        user_type: form.user_type,
       });
-      navigate('/dashboard');
+      if (data?.user) {
+        navigate(getHomePathForUser(data.user), { replace: true });
+      }
     } catch {
       // error is set in the store
     }
@@ -213,6 +226,49 @@ export default function RegisterPage() {
                     required
                     className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white dark:bg-gray-800"
                   />
+                </div>
+              </div>
+
+              {/* Account type */}
+              <div>
+                <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  I am joining as
+                </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((p) => ({ ...p, user_type: 'developer' }));
+                      if (error) clearError();
+                      if (localError) setLocalError('');
+                    }}
+                    className={`rounded-xl border-2 p-4 text-left transition-colors cursor-pointer bg-white dark:bg-gray-800 ${
+                      form.user_type === 'developer'
+                        ? 'border-primary-600 ring-1 ring-primary-600'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    <Code2 className="w-6 h-6 text-primary-600 mb-2" />
+                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100 block">Developer</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Grow skills & apply to jobs</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((p) => ({ ...p, user_type: 'recruiter' }));
+                      if (error) clearError();
+                      if (localError) setLocalError('');
+                    }}
+                    className={`rounded-xl border-2 p-4 text-left transition-colors cursor-pointer bg-white dark:bg-gray-800 ${
+                      form.user_type === 'recruiter'
+                        ? 'border-primary-600 ring-1 ring-primary-600'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    <Briefcase className="w-6 h-6 text-primary-600 mb-2" />
+                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100 block">Recruiter</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Search candidates & post jobs</span>
+                  </button>
                 </div>
               </div>
 

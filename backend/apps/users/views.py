@@ -42,11 +42,16 @@ class RegisterView(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
+            home_path = (
+                '/recruiter/dashboard'
+                if user.user_type == User.UserType.RECRUITER
+                else '/dashboard'
+            )
             log_user_activity(
                 user,
                 UserActivity.ActivityType.ACCOUNT_CREATED,
                 'Welcome! Your SkillBridge account is ready.',
-                link_path='/dashboard',
+                link_path=home_path,
             )
 
             # Generate JWT tokens

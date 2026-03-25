@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Zap, TrendingUp, Target, Briefcase, BarChart3, Code2,
   Clock, Lock, ChevronRight, ArrowRight, Sparkles,
@@ -608,6 +608,7 @@ function Section({ title, subtitle, actionLabel, actionTo, children }) {
 /* ── Main Dashboard ─────────────────────────────────────────────── */
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { user, fetchUser } = useAuthStore();
   const [profile, setProfile] = useState(null);
   const [skills, setSkills] = useState([]);
@@ -619,6 +620,12 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user?.user_type === 'recruiter') {
+      navigate('/recruiter/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const load = async () => {

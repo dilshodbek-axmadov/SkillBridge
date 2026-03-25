@@ -26,7 +26,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         required=True,
         style={'input_type': 'password'}
     )
-    
+    user_type = serializers.ChoiceField(
+        choices=User.UserType.choices,
+        required=True,
+        help_text='developer (talent) or recruiter (employer)',
+    )
+
     class Meta:
         model = User
         fields = [
@@ -34,6 +39,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'username',
             'password',
             'password_confirm',
+            'user_type',
             'first_name',
             'last_name',
             'phone',
@@ -56,7 +62,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create user with hashed password."""
         validated_data.pop('password_confirm')
-        
+        user_type = validated_data.pop('user_type', User.UserType.DEVELOPER)
+
         user = User.objects.create_user(
             email=validated_data['email'],
             username=validated_data['username'],
@@ -64,7 +71,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             phone=validated_data.get('phone', ''),
-            preferred_language=validated_data.get('preferred_language', 'en')
+            preferred_language=validated_data.get('preferred_language', 'en'),
+            user_type=user_type,
+            recruiter_plan=User.RecruiterPlan.FREE,
         )
         
         # Create empty profile
@@ -169,13 +178,15 @@ class UserSerializer(serializers.ModelSerializer):
             'full_name',
             'phone',
             'preferred_language',
+            'user_type',
+            'recruiter_plan',
             'profile_completed',
             'is_staff',
             'is_superuser',
             'created_at',
             'last_login'
         ]
-        read_only_fields = ['id', 'created_at', 'last_login', 'is_staff', 'is_superuser']
+        read_only_fields = ['id', 'created_at', 'last_login', 'is_staff', 'is_superuser', 'user_type', 'recruiter_plan']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
