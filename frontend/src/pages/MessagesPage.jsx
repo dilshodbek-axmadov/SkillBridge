@@ -64,6 +64,8 @@ export default function MessagesPage() {
     try {
       const { data } = await api.get(`/messages/threads/${threadId}/messages/`);
       setMessages(data?.messages || []);
+      // Backend marks unread as read when opened; refresh badges.
+      loadThreads();
     } catch {
       setMessagesError('Could not load messages.');
       setMessages([]);

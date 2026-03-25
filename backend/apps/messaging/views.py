@@ -1,6 +1,7 @@
 from django.db import IntegrityError, transaction
 from django.db.models import Q, Prefetch
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -102,6 +103,10 @@ class ThreadMessageListView(APIView):
     def get(self, request, thread_id):
         thread = get_object_or_404(_thread_queryset_for_user(request.user), thread_id=thread_id)
         qs = thread.messages.select_related('sender').order_by('created_at')
+
+        # Mark messages from the other participant as read when opened.
+        thread.messages.filter(read_at__isnull=True).exclude(sender_id=request.user.id).update(read_at=timezone.now())
+
         return Response({'count': qs.count(), 'messages': ThreadMessageSerializer(qs, many=True).data})
 
 
