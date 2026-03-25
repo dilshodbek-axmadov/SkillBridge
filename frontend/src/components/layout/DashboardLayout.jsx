@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Zap, TrendingUp, Briefcase, BarChart3, MessageSquare,
+  Zap, TrendingUp, Briefcase, BarChart3, MessageSquare, MessagesSquare,
   Home, Map, Lightbulb, FileText, Settings,
   Menu, X, LogOut, ServerCog,
 } from 'lucide-react';
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { path: '/market-analytics', label: 'Market Analytics',   icon: TrendingUp },
   { path: '/cv-builder',       label: 'CV Builder',         icon: FileText },
   { path: '/chat',             label: 'AI Chatbot',         icon: MessageSquare },
+  { path: '/messages',         label: 'Messages',           icon: MessagesSquare },
   { path: '/settings',         label: 'Settings',           icon: Settings },
 ];
 

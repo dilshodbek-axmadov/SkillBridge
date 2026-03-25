@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.projects',
     'apps.cv',
     'apps.chatbot',
+    'apps.messaging',
 ]
 
 # REST Framework configuration

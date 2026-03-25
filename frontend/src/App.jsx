@@ -21,6 +21,7 @@ import ChatbotPage from './pages/ChatbotPage';
 import ProjectIdeasPage from './pages/ProjectIdeasPage';
 import BackgroundTasksPage from './pages/BackgroundTasksPage';
 import ActivityPage from './pages/ActivityPage';
+import MessagesPage from './pages/MessagesPage';
 import RecruiterDashboardPage from './pages/RecruiterDashboardPage';
 import RecruiterCandidatesPage from './pages/RecruiterCandidatesPage';
 import RecruiterCandidateDetailPage from './pages/RecruiterCandidateDetailPage';
@@ -75,6 +76,7 @@ function AppRoutes() {
       <Route path="/roadmap" element={<LearningRoadmapPage />} />
       <Route path="/cv-builder" element={<CVBuilderPage />} />
       <Route path="/chat" element={<ChatbotPage />} />
+      <Route path="/messages" element={<MessagesPage />} />
       <Route path="/project-ideas" element={<ProjectIdeasPage />} />
       <Route path="/admin-panel/users" element={<AdminUsersPage />} />
       <Route path="/admin-panel/tasks" element={<BackgroundTasksPage variant="admin" />} />

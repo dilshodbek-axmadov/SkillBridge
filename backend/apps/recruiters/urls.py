@@ -14,6 +14,11 @@ urlpatterns = [
 
     path('candidates/', views.CandidateListView.as_view(), name='candidate_list'),
     path('candidates/<int:candidate_id>/', views.CandidateDetailView.as_view(), name='candidate_detail'),
+    path(
+        'candidates/<int:candidate_id>/cv/download/',
+        views.CandidateCVDownloadView.as_view(),
+        name='candidate_cv_download',
+    ),
 
     path('saved-candidates/', views.SavedCandidateListCreateView.as_view(), name='saved_candidate_list_create'),
     path('saved-candidates/<int:saved_id>/', views.SavedCandidateDetailView.as_view(), name='saved_candidate_detail'),

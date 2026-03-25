@@ -272,16 +272,35 @@ class ExportCVView(APIView):
         export_format = serializer.validated_data.get('export_format', 'pdf')
 
         try:
-            cv = CV.objects.prefetch_related(
-                'cv_sections'
-            ).get(cv_id=cv_id, user=request.user)
+            cv = (
+                CV.objects.select_related('user', 'user__profile')
+                .prefetch_related('cv_sections')
+                .get(cv_id=cv_id)
+            )
         except CV.DoesNotExist:
             return Response(
                 {'error': 'CV not found.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        return _build_export_response(cv, export_format)
+        # Owner can always export their own CV.
+        if cv.user_id == request.user.id:
+            return _build_export_response(cv, export_format)
+
+        # Staff may export any CV for support/testing.
+        if request.user.is_staff:
+            return _build_export_response(cv, export_format)
+
+        # Recruiter Pro may export CVs of visible developer profiles.
+        if request.user.is_recruiter_pro:
+            owner = cv.user
+            owner_profile = getattr(owner, 'profile', None)
+            if owner.is_developer and owner_profile and owner_profile.open_to_recruiters:
+                return _build_export_response(cv, export_format)
+
+        # Avoid leaking CV existence.
+        return Response({'error': 'CV not found.'}, status=status.HTTP_404_NOT_FOUND)
+
 
 
 class TemplateListView(APIView):

@@ -12,6 +12,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.cv.models import CV
+from apps.cv.services.cv_export import CVExportService
 from apps.jobs.models import JobPosting
 from apps.recruiters.analytics import get_recruiter_analytics
 from apps.recruiters.models import RecruiterSavedSearch, SavedCandidate
@@ -185,6 +187,110 @@ class CandidateDetailView(RecruiterOnlyMixin, APIView):
             data['email'] = None
             data['phone'] = None
         return Response(data)
+
+
+class CandidateCVDownloadView(RecruiterOnlyMixin, APIView):
+    """
+    GET /api/v1/recruiters/candidates/{candidate_id}/cv/download/?format=pdf|docx
+
+    Recruiter Pro feature: download candidate CV export (default CV).
+    """
+
+    def get(self, request, candidate_id):
+        denied = self._ensure_recruiter(request)
+        if denied:
+            return denied
+
+        if not request.user.is_recruiter_pro and not request.user.is_staff:
+            return Response(
+                {
+                    'error': 'CV download is available on SkillBridge Recruiter Pro.',
+                    'code': 'pro_required',
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        export_format = (request.query_params.get('format') or 'pdf').strip().lower()
+        if export_format not in ('pdf', 'docx'):
+            return Response({'error': 'format must be pdf or docx'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            requested_cv_id = int(request.query_params.get('cv_id')) if request.query_params.get('cv_id') else None
+        except (TypeError, ValueError):
+            return Response({'error': 'cv_id must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+
+        candidate = (
+            User.objects.select_related('profile')
+            .filter(
+                id=candidate_id,
+                user_type=User.UserType.DEVELOPER,
+                profile__open_to_recruiters=True,
+            )
+            .first()
+        )
+        if not candidate:
+            return Response(
+                {'error': 'Candidate not found or not visible to recruiters.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        cv_qs = CV.objects.prefetch_related('cv_sections').filter(user_id=candidate.id)
+        if requested_cv_id is not None:
+            cv = cv_qs.filter(cv_id=requested_cv_id).first()
+        else:
+            cv = cv_qs.order_by('-is_default', '-updated_at').first()
+
+        if not cv:
+            # Fallback: some users upload a raw CV file without creating a CV model record.
+            p = getattr(candidate, 'profile', None)
+            uploaded = getattr(p, 'cv_file_path', None) if p else None
+            if uploaded and getattr(uploaded, 'name', None):
+                from django.http import FileResponse
+                import mimetypes
+                import os
+
+                try:
+                    file_path = uploaded.path
+                    filename = os.path.basename(uploaded.name)
+                    content_type, _ = mimetypes.guess_type(filename)
+                    resp = FileResponse(open(file_path, 'rb'), content_type=content_type or 'application/octet-stream')
+                    resp['Content-Disposition'] = f'attachment; filename=\"{filename}\"'
+                    return resp
+                except FileNotFoundError:
+                    return Response(
+                        {'error': 'Candidate CV file record exists, but file is missing on server.'},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                except Exception:
+                    return Response(
+                        {'error': 'Could not open candidate CV file.'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+            return Response(
+                {
+                    'error': 'Candidate has no CV.',
+                    'cv_count': cv_qs.count(),
+                    'has_uploaded_cv_file': bool(uploaded and getattr(uploaded, 'name', None)),
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        export_service = CVExportService(cv)
+        if export_format == 'pdf':
+            buffer = export_service.export_pdf()
+            content_type = 'application/pdf'
+            filename = f"{cv.title.replace(' ', '_')}.pdf"
+        else:
+            buffer = export_service.export_docx()
+            content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            filename = f"{cv.title.replace(' ', '_')}.docx"
+
+        from django.http import HttpResponse
+
+        resp = HttpResponse(buffer.getvalue(), content_type=content_type)
+        resp['Content-Disposition'] = f'attachment; filename=\"{filename}\"'
+        return resp
 
 
 class SavedCandidateListCreateView(RecruiterOnlyMixin, APIView):

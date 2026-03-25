@@ -108,6 +108,7 @@ function SaveBtn({ onClick, saving, saved }) {
 
 function ProfileTab({ user, profile, onUserUpdate }) {
   const { t } = useTranslation();
+  const isRecruiter = user?.user_type === 'recruiter';
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -223,42 +224,44 @@ function ProfileTab({ user, profile, onUserUpdate }) {
         <SaveBtn onClick={savePersonal} saving={saving1} saved={saved1} />
       </Card>
 
-      <Card>
-        <SectionTitle sub={t('settings.profile.careerSub')}>{t('settings.profile.careerTitle')}</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="job_position">{t('settings.profile.currentJob')}</Label>
-            <Input id="job_position" value={jobPosition} onChange={(e) => setJobPosition(e.target.value)} placeholder={t('settings.profile.currentJobPlaceholder')} />
-          </div>
-          <div>
-            <Label htmlFor="desired_role">{t('settings.profile.desiredRole')}</Label>
-            <Input id="desired_role" value={desiredRole} onChange={(e) => setDesiredRole(e.target.value)} placeholder={t('settings.profile.desiredRolePlaceholder')} />
-          </div>
-          <div className="md:col-span-2">
-            <Label>{t('settings.profile.expLevel')}</Label>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {EXP_LEVELS.map((lvl) => (
-                <button
-                  key={lvl}
-                  type="button"
-                  onClick={() => setExpLevel(lvl)}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-medium border cursor-pointer transition-all ${
-                    expLevel === lvl
-                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm shadow-primary-600/20'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {t(`settings.profile.expLevels.${lvl}`)}
-                </button>
-              ))}
+      {!isRecruiter && (
+        <Card>
+          <SectionTitle sub={t('settings.profile.careerSub')}>{t('settings.profile.careerTitle')}</SectionTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="job_position">{t('settings.profile.currentJob')}</Label>
+              <Input id="job_position" value={jobPosition} onChange={(e) => setJobPosition(e.target.value)} placeholder={t('settings.profile.currentJobPlaceholder')} />
+            </div>
+            <div>
+              <Label htmlFor="desired_role">{t('settings.profile.desiredRole')}</Label>
+              <Input id="desired_role" value={desiredRole} onChange={(e) => setDesiredRole(e.target.value)} placeholder={t('settings.profile.desiredRolePlaceholder')} />
+            </div>
+            <div className="md:col-span-2">
+              <Label>{t('settings.profile.expLevel')}</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {EXP_LEVELS.map((lvl) => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setExpLevel(lvl)}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-medium border cursor-pointer transition-all ${
+                      expLevel === lvl
+                        ? 'bg-primary-600 text-white border-primary-600 shadow-sm shadow-primary-600/20'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {t(`settings.profile.expLevels.${lvl}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Toggle checked={employed} onChange={setEmployed} label={t('settings.profile.employed')} />
             </div>
           </div>
-          <div>
-            <Toggle checked={employed} onChange={setEmployed} label={t('settings.profile.employed')} />
-          </div>
-        </div>
-        <SaveBtn onClick={saveCareer} saving={saving2} saved={saved2} />
-      </Card>
+          <SaveBtn onClick={saveCareer} saving={saving2} saved={saved2} />
+        </Card>
+      )}
     </div>
   );
 }

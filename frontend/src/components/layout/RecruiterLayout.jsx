@@ -7,6 +7,7 @@ import {
   Users,
   BarChart3,
   Briefcase,
+  MessagesSquare,
   Settings,
   Menu,
   X,
@@ -21,6 +22,7 @@ const RECRUITER_NAV_ITEMS = [
   { path: '/recruiter/saved-candidates', label: 'Saved candidates', icon: Users },
   { path: '/recruiter/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/recruiter/jobs', label: 'My job posts', icon: Briefcase },
+  { path: '/messages', label: 'Messages', icon: MessagesSquare },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
