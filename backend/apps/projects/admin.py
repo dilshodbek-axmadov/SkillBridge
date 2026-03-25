@@ -28,6 +28,7 @@ class ProjectIdeaAdmin(admin.ModelAdmin):
     list_display = [
         'project_id',
         'title',
+        'created_by_email',
         'target_role',
         'difficulty_badge',
         'estimated_hours',
@@ -42,6 +43,8 @@ class ProjectIdeaAdmin(admin.ModelAdmin):
         'created_at'
     ]
     
+    raw_id_fields = ['created_by']
+    
     search_fields = [
         'title',
         'description',
@@ -52,7 +55,7 @@ class ProjectIdeaAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (_('Basic Information'), {
-            'fields': ('title', 'target_role')
+            'fields': ('created_by', 'title', 'target_role')
         }),
         (_('Details'), {
             'fields': ('description', 'difficulty_level', 'estimated_hours')
@@ -67,6 +70,13 @@ class ProjectIdeaAdmin(admin.ModelAdmin):
     
     inlines = [ProjectSkillInline]
     
+    def created_by_email(self, obj):
+        u = obj.created_by
+        return u.email if u else '—'
+
+    created_by_email.short_description = _('Owner')
+    created_by_email.admin_order_field = 'created_by__email'
+
     def difficulty_badge(self, obj):
         """Display difficulty with color badge."""
         colors = {

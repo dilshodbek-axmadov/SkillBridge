@@ -172,7 +172,7 @@ class HHAPIClient:
         professional_role: Optional[List[str]] = None,
         per_page: int = 100,
         page: int = 0,
-        period: int = 30,
+        period: Optional[int] = 30,
         **kwargs
     ) -> Dict:
         """Search vacancies with IT role filtering."""
@@ -180,8 +180,10 @@ class HHAPIClient:
             'area': area,
             'per_page': per_page,
             'page': page,
-            'period': period,
         }
+
+        if period is not None:
+            params['period'] = period
         
         if text:
             params['text'] = text

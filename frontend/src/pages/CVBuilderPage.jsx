@@ -10,6 +10,7 @@ import {
   User, Briefcase, GraduationCap, Code2, FolderOpen, Award, Languages,
   Trophy, AlignLeft, Mail, Phone, MapPin, Github, Linkedin, Globe,
   Pen, Save, AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════
@@ -73,6 +74,7 @@ export default function CVBuilderPage() {
 
   // download
   const [showDownload, setShowDownload] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   /* ─── load ──────────────────────────── */
   useEffect(() => {
@@ -217,6 +219,45 @@ export default function CVBuilderPage() {
     }
   };
 
+  /* ─── full refresh from source data (profile, projects, etc.) ── */
+  const handleRefresh = async () => {
+    if (!cv) return;
+    setRefreshing(true);
+    setError('');
+
+    try {
+      const { data } = await api.post(`/cv/${cv.cv_id}/auto-populate/`);
+
+      // Keep currently selected template if backend refresh returned another default.
+      let nextCv = data;
+      let nextSections = data.sections || [];
+      const selectedTemplate = template || 'modern';
+      const returnedTemplate = data.template_type || 'modern';
+
+      if (selectedTemplate !== returnedTemplate) {
+        try {
+          const switched = await api.put(`/cv/${cv.cv_id}/template/`, { template_type: selectedTemplate });
+          nextCv = { ...data, ...switched.data, template_type: selectedTemplate };
+          nextSections = switched.data.sections || nextSections;
+        } catch {
+          // If template switch fails, keep refreshed data as-is.
+        }
+      }
+
+      setCv(nextCv);
+      setSections(nextSections);
+      setTemplate(nextCv.template_type || selectedTemplate);
+      if (nextSections.length > 0) {
+        setActiveSection(nextSections[0].section_type);
+      }
+      setLastSaved(new Date());
+    } catch {
+      setError(t('cvBuilder.errors.refresh'));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   /* ─── render ────────────────────────── */
   if (loading) {
     return (
@@ -255,6 +296,8 @@ export default function CVBuilderPage() {
           saving={saving}
           lastSaved={lastSaved}
           onTemplateSwitch={handleTemplateSwitch}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
           onDownload={() => setShowDownload(true)}
         />
 
@@ -392,7 +435,7 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
    Top Bar
    ═══════════════════════════════════════════ */
 
-function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onDownload }) {
+function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onRefresh, refreshing, onDownload }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
@@ -425,6 +468,11 @@ function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onDownload 
             <option key={key} value={key}>{t(item.nameKey)} {t('cvBuilder.topbar.templateSuffix')}</option>
           ))}
         </select>
+
+        <button onClick={onRefresh} disabled={refreshing} className={btnOutline}>
+          {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {refreshing ? t('cvBuilder.topbar.refreshing') : t('cvBuilder.topbar.refresh')}
+        </button>
 
         <button onClick={onDownload} className={btnPrimary}>
           <Download className="w-4 h-4" />{t('cvBuilder.topbar.download')}

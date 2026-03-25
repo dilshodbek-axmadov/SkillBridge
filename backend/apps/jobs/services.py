@@ -4,13 +4,25 @@ Jobs App Services
 Job listing, filtering, and skill-based recommendation logic.
 """
 
+from datetime import timedelta
+
 from django.db.models import Q, Count, Case, When, IntegerField, Value, F
+from django.utils import timezone
+
 from apps.jobs.models import JobPosting, JobSkill
 from apps.skills.models import UserSkill
+
+# Only show jobs posted within the last 6 months
+FRESHNESS_DAYS = 180
 
 
 class JobService:
     """Service for listing, filtering, and recommending jobs."""
+
+    def _fresh_active_jobs(self):
+        """Base queryset: active jobs posted within last 6 months."""
+        cutoff = timezone.now() - timedelta(days=FRESHNESS_DAYS)
+        return JobPosting.objects.filter(is_active=True, posted_date__gte=cutoff)
 
     def list_jobs(self, filters: dict, limit: int = 20, offset: int = 0):
         """
@@ -27,7 +39,7 @@ class JobService:
         - sort: posted_date (default), salary_max, salary_min
         """
 
-        qs = JobPosting.objects.filter(is_active=True)
+        qs = self._fresh_active_jobs()
 
         q = filters.get('q', '').strip()
         if q:
@@ -119,8 +131,8 @@ class JobService:
 
         # Get jobs that have at least one skill in common
         jobs_with_match = (
-            JobPosting.objects
-            .filter(is_active=True, job_skills__skill_id__in=user_skill_ids)
+            self._fresh_active_jobs()
+            .filter(job_skills__skill_id__in=user_skill_ids)
             .distinct()
             .prefetch_related('job_skills__skill')
             .order_by('-posted_date')[:200]  # pool
@@ -160,7 +172,7 @@ class JobService:
 
     def get_filter_options(self):
         """Get available filter values from active jobs."""
-        active = JobPosting.objects.filter(is_active=True)
+        active = self._fresh_active_jobs()
 
         categories = list(
             active

@@ -45,6 +45,7 @@ from .views_profile import (
     # Quick updates
     UpdateJobPositionView,
     UpdateExperienceLevelView,
+    UserActivityListView,
 )
 
 app_name = 'users'
@@ -100,4 +101,6 @@ urlpatterns = [
     # ===== QUICK UPDATES =====
     path('profile/update-position/', UpdateJobPositionView.as_view(), name='update_position'),
     path('profile/update-experience/', UpdateExperienceLevelView.as_view(), name='update_experience'),
+
+    path('profile/activity/', UserActivityListView.as_view(), name='user_activity'),
 ]

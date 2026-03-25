@@ -15,7 +15,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 
-from .models import User, UserProfile
+from .models import User, UserProfile, UserActivity
+from .activity_log import log_user_activity
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
@@ -40,7 +41,14 @@ class RegisterView(APIView):
         
         if serializer.is_valid():
             user = serializer.save()
-            
+
+            log_user_activity(
+                user,
+                UserActivity.ActivityType.ACCOUNT_CREATED,
+                'Welcome! Your SkillBridge account is ready.',
+                link_path='/dashboard',
+            )
+
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             

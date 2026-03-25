@@ -19,9 +19,11 @@ import LearningRoadmapPage from './pages/LearningRoadmapPage';
 import CVBuilderPage from './pages/CVBuilderPage';
 import ChatbotPage from './pages/ChatbotPage';
 import ProjectIdeasPage from './pages/ProjectIdeasPage';
+import BackgroundTasksPage from './pages/BackgroundTasksPage';
+import ActivityPage from './pages/ActivityPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
-const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills', '/roadmap', '/cv-builder', '/chat', '/project-ideas'];
+const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills', '/roadmap', '/cv-builder', '/chat', '/project-ideas', '/background-tasks', '/activity'];
 
 function AppLayout() {
   const location = useLocation();
@@ -47,6 +49,8 @@ function AppLayout() {
         <Route path="/cv-builder" element={<CVBuilderPage />} />
         <Route path="/chat" element={<ChatbotPage />} />
         <Route path="/project-ideas" element={<ProjectIdeasPage />} />
+        <Route path="/background-tasks" element={<BackgroundTasksPage />} />
+        <Route path="/activity" element={<ActivityPage />} />
       </Routes>
     );
   }

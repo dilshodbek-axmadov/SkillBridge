@@ -7,7 +7,7 @@ Serializers for user authentication
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
-from .models import User, UserProfile
+from .models import User, UserProfile, UserActivity
 from apps.skills.models import Skill, UserSkill
 
 
@@ -170,10 +170,12 @@ class UserSerializer(serializers.ModelSerializer):
             'phone',
             'preferred_language',
             'profile_completed',
+            'is_staff',
+            'is_superuser',
             'created_at',
             'last_login'
         ]
-        read_only_fields = ['id', 'created_at', 'last_login']
+        read_only_fields = ['id', 'created_at', 'last_login', 'is_staff', 'is_superuser']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -263,3 +265,19 @@ class CVUploadSerializer(serializers.Serializer):
             )
         
         return value
+
+
+class UserActivitySerializer(serializers.ModelSerializer):
+    """Serialized row for activity feed APIs."""
+
+    class Meta:
+        model = UserActivity
+        fields = [
+            'activity_id',
+            'activity_type',
+            'description',
+            'metadata',
+            'link_path',
+            'created_at',
+        ]
+        read_only_fields = fields

@@ -37,6 +37,7 @@ const ROLES = [
   { value: 'Frontend Developer', labelKey: 'projectIdeas.roles.frontend' },
   { value: 'Full Stack Developer', labelKey: 'projectIdeas.roles.fullstack' },
   { value: 'Data Scientist', labelKey: 'projectIdeas.roles.datascientist' },
+  { value: 'Data Engineer', labelKey: 'projectIdeas.roles.dataengineer' },
   { value: 'DevOps Engineer', labelKey: 'projectIdeas.roles.devops' },
   { value: 'Mobile Developer', labelKey: 'projectIdeas.roles.mobile' },
   { value: 'UI/UX Designer', labelKey: 'projectIdeas.roles.uiux' },

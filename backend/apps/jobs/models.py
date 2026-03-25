@@ -283,3 +283,94 @@ class JobSkillExtraction(models.Model):
 
     def __str__(self):
         return f"Job {self.job_posting_id} → {self.alias.alias_text}"
+
+
+# ==================== EXTRACTION RUN ====================
+
+class ExtractionRun(models.Model):
+    """
+    Tracks each job extraction run.
+    Unique constraint on (source, run_date) prevents duplicate daily runs.
+    """
+
+    STATUS_CHOICES = [
+        ('pending', _('Pending')),
+        ('running', _('Running')),
+        ('success', _('Success')),
+        ('failed', _('Failed')),
+    ]
+
+    TRIGGER_CHOICES = [
+        ('scheduled', _('Scheduled')),
+        ('manual', _('Manual')),
+        ('startup', _('Startup Catch-up')),
+    ]
+
+    id = models.AutoField(primary_key=True)
+
+    source = models.CharField(
+        _('source'),
+        max_length=50,
+        default='hh.uz',
+    )
+
+    run_date = models.DateField(
+        _('run date'),
+        help_text=_('The calendar date this extraction covers.'),
+    )
+
+    status = models.CharField(
+        _('status'),
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+    )
+
+    trigger = models.CharField(
+        _('trigger'),
+        max_length=20,
+        choices=TRIGGER_CHOICES,
+        default='scheduled',
+    )
+
+    started_at = models.DateTimeField(_('started at'), null=True, blank=True)
+    finished_at = models.DateTimeField(_('finished at'), null=True, blank=True)
+
+    jobs_created = models.IntegerField(_('jobs created'), default=0)
+    jobs_updated = models.IntegerField(_('jobs updated'), default=0)
+    jobs_skipped = models.IntegerField(_('jobs skipped'), default=0)
+    jobs_deactivated = models.IntegerField(_('jobs deactivated'), default=0)
+    aliases_created = models.IntegerField(_('aliases created'), default=0)
+    errors_count = models.IntegerField(_('errors'), default=0)
+
+    error_message = models.TextField(_('error message'), blank=True)
+
+    celery_task_id = models.CharField(
+        _('celery task ID'),
+        max_length=255,
+        blank=True,
+        db_index=True,
+    )
+
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+
+    class Meta:
+        db_table = 'extraction_runs'
+        ordering = ['-run_date', '-started_at']
+        verbose_name = _('extraction run')
+        verbose_name_plural = _('extraction runs')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['source', 'run_date'],
+                name='unique_source_run_date',
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.source} | {self.run_date} | {self.status}"
+
+    @property
+    def duration_seconds(self):
+        if self.started_at and self.finished_at:
+            return (self.finished_at - self.started_at).total_seconds()
+        return None

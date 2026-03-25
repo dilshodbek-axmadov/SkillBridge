@@ -200,7 +200,7 @@ class RoadmapItem(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.roadmap.title} - Step {self.sequence_order}: {self.skill.skill_name}"
+        return f"{self.roadmap.title} - Step {self.sequence_order}: {self.skill.name_en}"
     
     def mark_as_completed(self):
         """

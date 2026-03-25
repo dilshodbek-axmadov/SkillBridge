@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from apps.learning.models import LearningRoadmap, RoadmapItem, LearningResource
+from apps.users.activity_log import log_user_activity
+from apps.users.models import UserActivity
 from apps.learning.services import RoadmapGenerator, ResourceRecommender
 from apps.learning.serializers import (
     RoadmapItemDetailSerializer,
@@ -47,6 +49,18 @@ class GenerateRoadmapView(APIView):
         )
 
         if result.get('success'):
+            n = result.get('items_count', 0)
+            log_user_activity(
+                request.user,
+                UserActivity.ActivityType.ROADMAP_CREATED,
+                f'Learning roadmap created with {n} skill step(s).',
+                metadata={
+                    'roadmap_id': result.get('roadmap_id'),
+                    'target_role': result.get('target_role'),
+                    'items_count': n,
+                },
+                link_path='/roadmap',
+            )
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
@@ -142,6 +156,28 @@ class UpdateItemStatusView(APIView):
             return Response(
                 {'error': 'Roadmap item not found or invalid status'},
                 status=status.HTTP_404_NOT_FOUND
+            )
+
+        if result.get('old_status') != result.get('new_status'):
+            skill_name = result.get('skill_name', '')
+            ns = result.get('new_status')
+            if ns == 'completed':
+                msg = f'Completed roadmap step: {skill_name}.'
+            elif ns == 'in_progress':
+                msg = f'Started learning: {skill_name}.'
+            else:
+                msg = f'Updated roadmap step: {skill_name} → {ns}.'
+            log_user_activity(
+                request.user,
+                UserActivity.ActivityType.ROADMAP_PROGRESS,
+                msg,
+                metadata={
+                    'item_id': result.get('item_id'),
+                    'roadmap_id': result.get('roadmap_id'),
+                    'old_status': result.get('old_status'),
+                    'new_status': ns,
+                },
+                link_path='/roadmap',
             )
 
         return Response(result)

@@ -1,6 +1,7 @@
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+from celery.schedules import crontab
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -35,6 +36,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'drf_spectacular',
+    'django_celery_beat',
+    'django_celery_results',
 
     # apps
     'apps.users',
@@ -260,4 +263,24 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Chatbot', 'description': 'AI-powered career guidance chatbot'},
         {'name': 'CV', 'description': 'CV builder with templates and export'},
     ],
+}
+
+
+# Celery Configuration
+CELERY_BROKER_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Tashkent'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_WORKER_POOL = 'solo'  # Windows does not support prefork
+
+CELERY_BEAT_SCHEDULE = {
+    'daily-job-extraction': {
+        'task': 'apps.jobs.tasks.run_daily_extraction',
+        'schedule': crontab(hour=9, minute=0),
+    },
 }

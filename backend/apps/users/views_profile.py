@@ -11,12 +11,13 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.db import transaction
 from django.db.models import Q
 
-from .models import User, UserProfile
+from .models import User, UserProfile, UserActivity
 from apps.skills.models import Skill, UserSkill
 from .serializers import (
     UserProfileSerializer,
     UserProfileUpdateSerializer,
     CVUploadSerializer,
+    UserActivitySerializer,
 )
 from .serializers_profile import (
     StepByStepProfileSerializer,
@@ -29,6 +30,7 @@ from .serializers_profile import (
 )
 from .utils.cv_processor import CVProcessor
 from apps.users.utils.profile_updater import ProfileUpdater
+from .activity_log import log_user_activity
 
 class UserProfileView(APIView):
     """
@@ -157,6 +159,14 @@ class CVUploadView(APIView):
             validation = updater.validate_for_roadmap(request.user)
             
             # Response
+            skills_n = len(result['data'].get('skill_matches') or [])
+            log_user_activity(
+                request.user,
+                UserActivity.ActivityType.CV_UPLOADED,
+                f'CV processed: {skills_n} skill(s) matched to your profile.',
+                metadata={'skills_found': skills_n},
+                link_path='/profile-cv',
+            )
             return Response({
                 'success': True,
                 'extraction': {
@@ -164,7 +174,7 @@ class CVUploadView(APIView):
                     'quality': result['data'].get('_quality_score'),
                     'time': result['data'].get('_processing_time'),
                     'job_position': result['data']['job_position'],
-                    'skills_found': len(result['data']['skill_matches']),
+                    'skills_found': skills_n,
                     'years': result['data']['years_of_experience']
                 },
                 'updates': update_result,
@@ -399,7 +409,18 @@ class CreateManualProfileView(APIView):
         
         # Prepare response
         profile_serializer = UserProfileSummarySerializer(result['profile'])
-        
+
+        log_user_activity(
+            request.user,
+            UserActivity.ActivityType.PROFILE_SETUP,
+            'Profile created with your role, skills, and interests.',
+            metadata={
+                'skills_added': result.get('skills_added', 0),
+                'interests_added': result.get('interests_added', 0),
+            },
+            link_path='/dashboard',
+        )
+
         return Response({
             'message': 'Profile created successfully',
             'profile': profile_serializer.data,
@@ -553,7 +574,16 @@ class AddSkillView(APIView):
         )
         
         response_serializer = UserSkillSerializer(user_skill)
-        
+        skill_name = user_skill.skill.name_en if hasattr(user_skill, 'skill') else ''
+
+        log_user_activity(
+            request.user,
+            UserActivity.ActivityType.SKILL_ADDED,
+            f'Added skill: {skill_name}.',
+            metadata={'skill_id': user_skill.skill_id, 'skill_name': skill_name},
+            link_path='/manage-skills',
+        )
+
         return Response({
             'message': 'Skill added successfully',
             'skill': response_serializer.data
@@ -604,7 +634,16 @@ class BulkAddSkillsView(APIView):
                 source='manual'
             )
             added += 1
-        
+
+        if added > 0:
+            log_user_activity(
+                request.user,
+                UserActivity.ActivityType.SKILLS_BULK_ADDED,
+                f'Added {added} skills to your profile.',
+                metadata={'added': added, 'skipped': skipped},
+                link_path='/manage-skills',
+            )
+
         return Response({
             'message': f'Added {added} skills',
             'added': added,
@@ -692,7 +731,15 @@ class DeleteSkillView(APIView):
         
         skill_name = user_skill.skill.name_en
         user_skill.delete()
-        
+
+        log_user_activity(
+            request.user,
+            UserActivity.ActivityType.SKILL_REMOVED,
+            f'Removed skill: {skill_name}.',
+            metadata={'skill_name': skill_name},
+            link_path='/manage-skills',
+        )
+
         return Response({
             'message': f'Skill "{skill_name}" removed from profile'
         })
@@ -760,4 +807,39 @@ class UpdateExperienceLevelView(APIView):
         return Response({
             'message': 'Experience level updated',
             'experience_level': profile.experience_level
+        })
+
+
+class UserActivityListView(APIView):
+    """
+    Paginated activity feed for the authenticated user.
+
+    GET /api/v1/users/profile/activity/?page=1&page_size=20
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            page = max(1, int(request.query_params.get('page', 1)))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            page_size = int(request.query_params.get('page_size', 20))
+        except (TypeError, ValueError):
+            page_size = 20
+        page_size = min(max(page_size, 1), 50)
+
+        qs = UserActivity.objects.filter(user=request.user).order_by('-created_at')
+        total = qs.count()
+        start = (page - 1) * page_size
+        rows = qs[start:start + page_size]
+        total_pages = (total + page_size - 1) // page_size if total else 0
+
+        return Response({
+            'count': total,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': total_pages,
+            'results': UserActivitySerializer(rows, many=True).data,
         })

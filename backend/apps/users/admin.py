@@ -7,7 +7,7 @@ Django admin interface customization for User and UserProfile models.
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
-from .models import User, UserProfile
+from .models import User, UserProfile, UserActivity
 
 
 @admin.register(User)
@@ -197,3 +197,20 @@ class UserProfileAdmin(admin.ModelAdmin):
         """Optimize queryset with select_related."""
         queryset = super().get_queryset(request)
         return queryset.select_related('user')
+
+
+@admin.register(UserActivity)
+class UserActivityAdmin(admin.ModelAdmin):
+    list_display = ['activity_id', 'user', 'activity_type', 'description_short', 'created_at']
+    list_filter = ['activity_type', 'created_at']
+    search_fields = ['user__email', 'description']
+    readonly_fields = ['activity_id', 'user', 'activity_type', 'description', 'metadata', 'link_path', 'created_at']
+    ordering = ['-created_at']
+
+    def description_short(self, obj):
+        return (obj.description[:80] + '…') if len(obj.description) > 80 else obj.description
+
+    description_short.short_description = _('Description')
+
+    def has_add_permission(self, request):
+        return False

@@ -1,11 +1,12 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Zap, TrendingUp, Target, Briefcase, BarChart3, Code2,
-  Clock, Book, Lock, ChevronRight, ArrowRight, Sparkles,
-  CheckCircle2, Star, Trophy, MessageSquare, Loader2,
+  Clock, Lock, ChevronRight, ArrowRight, Sparkles,
+  CheckCircle2, MessageSquare, Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { formatRelativeTime, getActivityVisual } from '../utils/activityFeed';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -74,19 +75,32 @@ function WelcomeBanner({ user, profile, completion }) {
 
 /* ── Quick Stats ────────────────────────────────────────────────── */
 
-function QuickStats({ skills, careerStatus, recommendations }) {
+function QuickStats({ skills, hasGapAnalysis, primaryRoadmap, gapPendingLearning, recommendations }) {
   const totalSkills = skills?.length || 0;
   const primarySkills = skills?.filter(s => s.is_primary).length || 0;
   const jobMatches = recommendations?.length || 0;
-  const skillsToLearn = Math.max(0, 10 - totalSkills);
+  const skillsToLearn = gapPendingLearning > 0 ? gapPendingLearning : 0;
+
+  const roadmapPct = primaryRoadmap?.completion_percentage != null
+    ? Math.round(primaryRoadmap.completion_percentage)
+    : null;
+  let roadmapSub = 'Run skill gap analysis first';
+  if (hasGapAnalysis && primaryRoadmap && primaryRoadmap.stats) {
+    const { completed = 0, total_items: totalItems = 0 } = primaryRoadmap.stats;
+    roadmapSub = `${completed} of ${totalItems} roadmap steps`;
+  } else if (hasGapAnalysis && !primaryRoadmap?.items?.length) {
+    roadmapSub = 'Generate your roadmap';
+  } else if (hasGapAnalysis && roadmapPct != null) {
+    roadmapSub = `${totalSkills} skills on profile`;
+  }
 
   const cards = [
     {
       icon: <BarChart3 className="w-5 h-5 text-primary-600" />,
       iconBg: 'bg-primary-100',
-      value: careerStatus?.completed ? '65%' : '—',
+      value: hasGapAnalysis && roadmapPct != null ? `${roadmapPct}%` : '—',
       label: 'Roadmap Progress',
-      sub: careerStatus?.completed ? `${totalSkills} skills learned` : 'Take assessment first',
+      sub: roadmapSub,
       color: 'text-primary-600',
     },
     {
@@ -100,9 +114,9 @@ function QuickStats({ skills, careerStatus, recommendations }) {
     {
       icon: <Target className="w-5 h-5 text-orange-600" />,
       iconBg: 'bg-orange-100',
-      value: skillsToLearn,
+      value: hasGapAnalysis ? skillsToLearn : '—',
       label: 'Skills to Learn',
-      sub: skillsToLearn > 0 ? 'Based on your profile' : 'Looking great!',
+      sub: skillsToLearn > 0 ? 'From your skill gap analysis' : (hasGapAnalysis ? 'No open gaps' : 'Run analysis to see gaps'),
       color: 'text-orange-600',
     },
     {
@@ -178,82 +192,198 @@ function YourSkills({ skills }) {
 
 /* ── Learning Roadmap Preview ───────────────────────────────────── */
 
-function LearningRoadmap({ careerStatus }) {
-  if (!careerStatus?.completed) {
+function buildRoadmapPreviewRows(items) {
+  if (!items?.length) return [];
+  const sorted = [...items]
+    .filter((it) => it.status !== 'skipped')
+    .sort((a, b) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0));
+  const preview = sorted.slice(0, 4);
+
+  const inProgressIdx = sorted.findIndex((it) => it.status === 'in_progress');
+  let nextPendingGlobal = sorted.findIndex((it) => it.status === 'pending');
+  if (inProgressIdx >= 0) {
+    const after = sorted.findIndex((it, idx) => it.status === 'pending' && idx > inProgressIdx);
+    if (after >= 0) nextPendingGlobal = after;
+  }
+
+  return preview.map((it, idx) => {
+    const prev = idx > 0 ? preview[idx - 1] : null;
+    const unlocksAfter = prev?.skill_name ?? null;
+
+    if (it.status === 'completed') {
+      return {
+        key: `done-${it.item_id}`,
+        displayStatus: 'completed',
+        skill: it.skill_name,
+        estHours: it.estimated_duration_hours ?? 0,
+        priority: it.priority,
+      };
+    }
+    if (it.status === 'in_progress') {
+      return {
+        key: `learn-${it.item_id}`,
+        displayStatus: 'learning',
+        skill: it.skill_name,
+        estHours: it.estimated_duration_hours ?? 0,
+        priority: it.priority,
+        progress: 45,
+      };
+    }
+    const globalIdx = sorted.indexOf(it);
+    const isNext = it.status === 'pending' && globalIdx === nextPendingGlobal;
+    return {
+      key: `pend-${it.item_id}`,
+      displayStatus: isNext ? 'next' : 'pending',
+      skill: it.skill_name,
+      estHours: it.estimated_duration_hours ?? 0,
+      priority: it.priority,
+      unlocksAfter: isNext ? unlocksAfter : null,
+    };
+  });
+}
+
+function LearningRoadmap({ hasGapAnalysis, primaryRoadmap, topGapSkillNames }) {
+  if (!hasGapAnalysis) {
     return (
       <Section title="Your Learning Roadmap">
         <div className="text-center py-10 text-gray-400 dark:text-gray-500">
           <Target className="w-10 h-10 mx-auto mb-3 opacity-50" />
-          <p className="text-sm mb-2">Complete the career assessment to get your personalized roadmap.</p>
+          <p className="text-sm mb-2 max-w-md mx-auto">
+            Run a skill gap analysis to compare your profile with real market demand and unlock a personalized learning path.
+          </p>
           <Link
-            to="/assessment"
+            to="/skills-gap"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium no-underline hover:bg-primary-700 transition-colors"
           >
-            Take Assessment <ArrowRight className="w-4 h-4" />
+            Get your roadmap <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </Section>
     );
   }
 
-  const items = [
-    { status: 'learning', skill: 'Docker', progress: 75, timeLeft: '12 hours left', tutorials: 3 },
-    { status: 'next', skill: 'Kubernetes', unlocksAfter: 'Docker', estHours: 20 },
-    { status: 'pending', skill: 'AWS', estHours: 30, priority: 'HIGH' },
-  ];
+  const roadmapItems = primaryRoadmap?.items ?? [];
+  if (!roadmapItems.length) {
+    return (
+      <Section title="Your Learning Roadmap" actionLabel="View gaps" actionTo="/skills-gap">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <p className="text-sm mb-4 max-w-lg mx-auto">
+            Your skill gaps are saved. Generate a step-by-step roadmap to turn them into an ordered learning plan.
+          </p>
+          {topGapSkillNames?.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-2 mb-5">
+              {topGapSkillNames.slice(0, 6).map((name) => (
+                <span
+                  key={name}
+                  className="text-xs font-medium px-3 py-1 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          )}
+          <Link
+            to="/roadmap"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium no-underline hover:bg-primary-700 transition-colors"
+          >
+            Build learning roadmap <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </Section>
+    );
+  }
+
+  const items = buildRoadmapPreviewRows(roadmapItems);
 
   const statusConfig = {
+    completed: { dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700', label: 'DONE' },
     learning: { dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700', label: 'LEARNING' },
-    next:     { dot: 'bg-orange-400',  badge: 'bg-orange-100 text-orange-700',   label: 'NEXT' },
-    pending:  { dot: 'bg-gray-300',    badge: 'bg-gray-100 text-gray-500',       label: 'PENDING' },
+    next: { dot: 'bg-orange-400', badge: 'bg-orange-100 text-orange-700', label: 'NEXT' },
+    pending: { dot: 'bg-gray-300', badge: 'bg-gray-100 text-gray-500', label: 'PENDING' },
   };
 
   return (
-    <Section title="Your Learning Roadmap" actionLabel="View Full Roadmap" actionTo="/roadmap">
+    <Section title="Your Learning Roadmap" actionLabel="View full roadmap" actionTo="/roadmap">
       <div className="relative">
-        <div className="absolute left-[11px] top-4 bottom-4 w-0.5 bg-gray-200" />
+        <div className="absolute left-[11px] top-4 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-700" />
         <div className="space-y-6">
-          {items.map((item, i) => {
-            const cfg = statusConfig[item.status];
+          {items.map((item) => {
+            const cfg = statusConfig[item.displayStatus];
+            const pri = item.priority === 'high' ? 'HIGH' : item.priority === 'medium' ? 'MED' : null;
             return (
-              <div key={i} className="relative flex gap-4">
-                <div className={`relative z-10 w-6 h-6 rounded-full ${cfg.dot} border-4 border-white shadow-sm flex-shrink-0 mt-1`} />
-                <div className={`flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 ${item.status === 'pending' ? 'opacity-60' : ''}`}>
-                  <div className="flex items-center gap-2 mb-2">
+              <div key={item.key} className="relative flex gap-4">
+                <div className={`relative z-10 w-6 h-6 rounded-full ${cfg.dot} border-4 border-white dark:border-gray-900 shadow-sm flex-shrink-0 mt-1`} />
+                <div
+                  className={`flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 ${
+                    item.displayStatus === 'pending' ? 'opacity-60' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${cfg.badge}`}>{cfg.label}</span>
                     <span className="text-base font-bold text-gray-900 dark:text-gray-100">{item.skill}</span>
-                    {item.priority && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">{item.priority}</span>
+                    {pri && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">{pri}</span>
                     )}
                   </div>
-                  {item.status === 'learning' && (
+                  {item.displayStatus === 'learning' && (
                     <>
                       <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full mb-2">
-                        <div className="h-2 bg-emerald-500 rounded-full" style={{ width: `${item.progress}%` }} />
+                        <div className="h-2 bg-emerald-500 rounded-full transition-all" style={{ width: `${item.progress}%` }} />
                       </div>
                       <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{item.timeLeft}</span>
-                        <span className="flex items-center gap-1"><Book className="w-3 h-3" />{item.tutorials} tutorials completed</span>
+                        {item.estHours > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Est. {item.estHours} h
+                          </span>
+                        )}
                       </div>
-                      <button className="w-full py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors border-none cursor-pointer">
-                        Continue Learning
-                      </button>
+                      <Link
+                        to="/roadmap"
+                        className="block w-full py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors text-center no-underline"
+                      >
+                        Continue learning
+                      </Link>
                     </>
                   )}
-                  {item.status === 'next' && (
+                  {item.displayStatus === 'next' && (
                     <>
-                    <p className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      <Lock className="w-3 h-3" /> Unlocks after {item.unlocksAfter}
-                      <span className="ml-3 flex items-center gap-1"><Clock className="w-3 h-3" /> Est. {item.estHours} hours</span>
-                    </p>
-                      <button className="w-full py-2 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-gray-900 cursor-pointer">
-                        Preview
-                      </button>
+                      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        {item.unlocksAfter && (
+                          <span className="flex items-center gap-1">
+                            <Lock className="w-3 h-3" />
+                            After {item.unlocksAfter}
+                          </span>
+                        )}
+                        {item.estHours > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Est. {item.estHours} h
+                          </span>
+                        )}
+                      </p>
+                      <Link
+                        to="/roadmap"
+                        className="block w-full py-2 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-gray-900 text-center no-underline"
+                      >
+                        Open roadmap
+                      </Link>
                     </>
                   )}
-                  {item.status === 'pending' && (
+                  {item.displayStatus === 'pending' && (
                     <p className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
-                      <Clock className="w-3 h-3" /> Est. {item.estHours} hours
+                      {item.estHours > 0 && (
+                        <>
+                          <Clock className="w-3 h-3" />
+                          Est. {item.estHours} h
+                        </>
+                      )}
+                    </p>
+                  )}
+                  {item.displayStatus === 'completed' && (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Completed
                     </p>
                   )}
                 </div>
@@ -266,44 +396,64 @@ function LearningRoadmap({ careerStatus }) {
   );
 }
 
-/* ── Skills Gap Analysis ────────────────────────────────────────── */
+/* ── Skills Gap Analysis (real data only) ───────────────────────── */
 
-function SkillsGapAnalysis({ profile, recommendations }) {
-  const desiredRole = profile?.desired_role || recommendations?.[0]?.role_name || 'Senior Backend Developer';
+function SkillsGapAnalysis({ profile, recommendations, gaps }) {
+  if (!gaps?.length) return null;
 
-  const gaps = [
-    { skill: 'Kubernetes', priority: 'high', reason: 'Essential for senior backend roles — appears in 72% of job postings', jobs: 63, salaryBoost: '+2M UZS avg salary boost', actionLabel: 'Start Learning' },
-    { skill: 'GraphQL', priority: 'medium', reason: 'Modern API technology gaining rapid adoption in Uzbek tech companies', jobs: 34, salaryBoost: '', actionLabel: 'Add to Roadmap' },
-  ];
+  const desiredRole = profile?.desired_role || profile?.current_job_position || recommendations?.[0]?.role_name || 'your target role';
+  const openGaps = gaps.filter((g) => g.status === 'pending' || g.status === 'learning');
+  const preview = (openGaps.length > 0 ? openGaps : gaps).slice(0, 4);
 
   return (
-    <Section title={`Skills You Need for ${desiredRole}`} subtitle="Based on 87 job postings analysis">
+    <Section
+      title={`Skills to close for ${desiredRole}`}
+      subtitle="From your latest skill gap analysis"
+    >
       <div className="space-y-4">
-        {gaps.map((gap, i) => {
-          const s = PRIORITY_STYLES[gap.priority];
+        {preview.map((gap) => {
+          const s = PRIORITY_STYLES[gap.priority] || PRIORITY_STYLES.medium;
+          const importanceLabel = gap.importance === 'core' ? 'Core' : 'Secondary';
+          const jobLine = gap.job_count > 0 ? `${gap.job_count} postings (30d trend)` : 'Market demand tracked';
+          const reason = `${importanceLabel} gap — ${jobLine}.`;
+
           return (
-            <div key={i} className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 border-l-4 ${s.border} p-5`}>
+            <div
+              key={gap.gap_id}
+              className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 border-l-4 ${s.border} p-5`}
+            >
               <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${s.badge} mb-2`}>
-                {gap.priority} PRIORITY
+                {gap.priority} priority · {importanceLabel}
               </span>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{gap.skill}</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{gap.skill_name}</h3>
               <p className="flex items-start gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-3">
                 <Sparkles className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
-                {gap.reason}
+                {reason}
               </p>
-              <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
-                <span className="flex items-center gap-1"><Zap className="w-3 h-3" />{gap.jobs} jobs</span>
-                {gap.salaryBoost && <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" />{gap.salaryBoost}</span>}
+              <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                <span className="flex items-center gap-1">
+                  <Zap className="w-3 h-3" />
+                  Demand score {typeof gap.demand_score === 'number' ? Math.round(gap.demand_score) : '—'}
+                </span>
+                {gap.growth_rate ? (
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Growth {gap.growth_rate}%
+                  </span>
+                ) : null}
               </div>
-              <button className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors border-none cursor-pointer ${s.btn}`}>
-                {gap.actionLabel}
-              </button>
+              <Link
+                to="/roadmap"
+                className={`block w-full py-2.5 rounded-lg text-sm font-semibold transition-colors text-center no-underline ${s.btn}`}
+              >
+                View roadmap & resources
+              </Link>
             </div>
           );
         })}
       </div>
       <Link to="/skills-gap" className="inline-flex items-center gap-1 text-primary-600 text-sm font-medium no-underline hover:underline mt-4">
-        View All Skill Gaps <ArrowRight className="w-4 h-4" />
+        View all skill gaps <ArrowRight className="w-4 h-4" />
       </Link>
     </Section>
   );
@@ -311,27 +461,47 @@ function SkillsGapAnalysis({ profile, recommendations }) {
 
 /* ── Recent Activity ────────────────────────────────────────────── */
 
-function RecentActivity() {
-  const activities = [
-    { icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" />, bg: 'bg-emerald-100', text: 'Completed profile setup', time: '2 hours ago' },
-    { icon: <Book className="w-4 h-4 text-blue-600" />, bg: 'bg-blue-100', text: 'Added skills to profile', time: 'Yesterday' },
-    { icon: <Star className="w-4 h-4 text-amber-600" />, bg: 'bg-amber-100', text: 'Updated experience level', time: '2 days ago' },
-    { icon: <Sparkles className="w-4 h-4 text-purple-600" />, bg: 'bg-purple-100', text: 'Identified skill gaps via AI', time: '3 days ago' },
-    { icon: <Trophy className="w-4 h-4 text-yellow-600" />, bg: 'bg-yellow-100', text: 'Profile completion reached 80%', time: '5 days ago' },
-  ];
+function RecentActivity({ activities }) {
+  if (!activities?.length) {
+    return (
+      <Section title="Your recent activity" actionLabel="View all" actionTo="/activity">
+        <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
+          <p>No activity recorded yet.</p>
+          <p className="mt-1 text-xs">Register, set up your profile, or run skill gap analysis to see your timeline here.</p>
+        </div>
+      </Section>
+    );
+  }
 
   return (
-    <Section title="Your Recent Activity" actionLabel="View All" actionTo="/activity">
+    <Section title="Your recent activity" actionLabel="View all" actionTo="/activity">
       <div className="space-y-3">
-        {activities.map((a, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className={`w-8 h-8 ${a.bg} rounded-full flex items-center justify-center flex-shrink-0`}>
-              {a.icon}
+        {activities.map((a) => {
+          const v = getActivityVisual(a.activity_type);
+          const Icon = v.Icon;
+          const row = (
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 ${v.bg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`w-4 h-4 ${v.iconClass}`} />
+              </div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 flex-1 min-w-0">{a.description}</p>
+              <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                {formatRelativeTime(a.created_at)}
+              </span>
             </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 flex-1">{a.text}</p>
-            <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{a.time}</span>
-          </div>
-        ))}
+          );
+          return (
+            <div key={a.activity_id}>
+              {a.link_path ? (
+                <Link to={a.link_path} className="block no-underline hover:opacity-90">
+                  {row}
+                </Link>
+              ) : (
+                row
+              )}
+            </div>
+          );
+        })}
       </div>
     </Section>
   );
@@ -442,8 +612,11 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState(null);
   const [skills, setSkills] = useState([]);
   const [completion, setCompletion] = useState(null);
-  const [careerStatus, setCareerStatus] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
+  const [skillGaps, setSkillGaps] = useState([]);
+  const [gapByStatus, setGapByStatus] = useState({ pending: 0, learning: 0, completed: 0 });
+  const [primaryRoadmap, setPrimaryRoadmap] = useState(null);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -452,9 +625,12 @@ export default function DashboardPage() {
       try {
         if (!user) await fetchUser();
 
-        const [summaryRes, statusRes] = await Promise.all([
+        const [summaryRes, statusRes, gapsRes, roadmapsRes, activityRes] = await Promise.all([
           api.get('/users/profile/summary/'),
           api.get('/career/status/').catch(() => ({ data: {} })),
+          api.get('/skills/gaps/').catch(() => ({ data: { gaps: [], by_status: {} } })),
+          api.get('/roadmaps/').catch(() => ({ data: { roadmaps: [] } })),
+          api.get('/users/profile/activity/', { params: { page: 1, page_size: 6 } }).catch(() => ({ data: { results: [] } })),
         ]);
 
         const summary = summaryRes.data;
@@ -475,7 +651,18 @@ export default function DashboardPage() {
           profile_completed: summary.user?.profile_completed ?? summary.completion?.profile_completed,
           completion_percentage: summary.completion?.completion_percentage ?? (summary.user?.profile_completed ? 100 : 50),
         });
-        setCareerStatus(statusRes.data);
+        const gData = gapsRes.data || {};
+        setSkillGaps(gData.gaps || []);
+        setGapByStatus({
+          pending: gData.by_status?.pending ?? 0,
+          learning: gData.by_status?.learning ?? 0,
+          completed: gData.by_status?.completed ?? 0,
+        });
+
+        const roadmaps = roadmapsRes.data?.roadmaps || [];
+        setPrimaryRoadmap(roadmaps[0] || null);
+
+        setActivities(activityRes.data?.results || []);
 
         if (statusRes.data?.has_recommendations) {
           try {
@@ -497,6 +684,10 @@ export default function DashboardPage() {
     };
     load();
   }, []);
+
+  const hasGapAnalysis = skillGaps.length > 0;
+  const gapPendingLearning = (gapByStatus.pending || 0) + (gapByStatus.learning || 0);
+  const topGapSkillNames = skillGaps.map((g) => g.skill_name).filter(Boolean);
 
   if (loading) {
     return (
@@ -524,16 +715,26 @@ export default function DashboardPage() {
     <DashboardLayout user={user}>
       <div className="space-y-6">
         <WelcomeBanner user={user} profile={profile} completion={completion} />
-        <QuickStats skills={skills} careerStatus={careerStatus} recommendations={recommendations} />
+        <QuickStats
+          skills={skills}
+          hasGapAnalysis={hasGapAnalysis}
+          primaryRoadmap={primaryRoadmap}
+          gapPendingLearning={gapPendingLearning}
+          recommendations={recommendations}
+        />
 
         <div className="grid lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3 space-y-6">
             <YourSkills skills={skills} />
-            <LearningRoadmap careerStatus={careerStatus} />
-            <SkillsGapAnalysis profile={profile} recommendations={recommendations} />
+            <LearningRoadmap
+              hasGapAnalysis={hasGapAnalysis}
+              primaryRoadmap={primaryRoadmap}
+              topGapSkillNames={topGapSkillNames}
+            />
+            <SkillsGapAnalysis profile={profile} recommendations={recommendations} gaps={skillGaps} />
           </div>
           <div className="lg:col-span-2 space-y-6">
-            <RecentActivity />
+            <RecentActivity activities={activities} />
             <RecommendedJobs />
           </div>
         </div>

@@ -21,6 +21,8 @@ from django.db.models import Count
 
 from .models import SkillGap, MarketTrend, Skill
 from .services.gap_analyzer import SkillGapAnalyzer
+from apps.users.activity_log import log_user_activity
+from apps.users.models import UserActivity
 from .serializers import (
     AnalyzeGapRequestSerializer,
     AnalyzeGapResponseSerializer,
@@ -67,6 +69,15 @@ class AnalyzeGapView(APIView):
             response_serializer.is_valid(raise_exception=False)
 
             if result.get('success'):
+                missing = result.get('missing_skills') or []
+                n = len(missing)
+                log_user_activity(
+                    request.user,
+                    UserActivity.ActivityType.GAP_ANALYZED,
+                    f'Skill gap analysis completed ({n} gap(s) identified).',
+                    metadata={'gaps_count': n, 'target_role': result.get('target_role')},
+                    link_path='/skills-gap',
+                )
                 return Response(result, status=status.HTTP_200_OK)
             else:
                 return Response(result, status=status.HTTP_400_BAD_REQUEST)
@@ -168,6 +179,18 @@ class UpdateGapStatusView(APIView):
         result = analyzer.update_gap_status(gap_id=gap_id, status=new_status)
 
         if result:
+            if result.get('old_status') != result.get('new_status'):
+                log_user_activity(
+                    request.user,
+                    UserActivity.ActivityType.GAP_STATUS,
+                    f'Skill gap updated: {result.get("skill_name", "skill")} → {new_status}.',
+                    metadata={
+                        'gap_id': gap_id,
+                        'skill_name': result.get('skill_name'),
+                        'new_status': new_status,
+                    },
+                    link_path='/skills-gap',
+                )
             response_serializer = UpdateGapStatusResponseSerializer(data=result)
             response_serializer.is_valid(raise_exception=False)
             return Response(result, status=status.HTTP_200_OK)
@@ -194,6 +217,15 @@ class ClearGapsView(APIView):
         ).exclude(
             status='completed'
         ).update(status='skipped')
+
+        if updated:
+            log_user_activity(
+                request.user,
+                UserActivity.ActivityType.GAPS_CLEARED,
+                f'Archived {updated} skill gap(s) before re-analysis.',
+                metadata={'cleared': updated},
+                link_path='/skills-gap',
+            )
 
         return Response({
             'cleared': updated,

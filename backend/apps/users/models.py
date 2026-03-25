@@ -202,3 +202,49 @@ class UserProfile(models.Model):
         return bool(
             self.current_job_position or self.desired_role
         ) and self.user.profile_completed
+
+
+class UserActivity(models.Model):
+    """Append-only log of user-visible actions for dashboard activity feeds."""
+
+    class ActivityType(models.TextChoices):
+        ACCOUNT_CREATED = 'account_created', _('Account created')
+        PROFILE_SETUP = 'profile_setup', _('Profile set up')
+        CV_UPLOADED = 'cv_uploaded', _('CV uploaded')
+        SKILL_ADDED = 'skill_added', _('Skill added')
+        SKILLS_BULK_ADDED = 'skills_bulk_added', _('Skills bulk added')
+        SKILL_REMOVED = 'skill_removed', _('Skill removed')
+        GAP_ANALYZED = 'gap_analyzed', _('Skill gap analyzed')
+        GAP_STATUS = 'gap_status', _('Skill gap updated')
+        GAPS_CLEARED = 'gaps_cleared', _('Skill gaps cleared')
+        ROADMAP_CREATED = 'roadmap_created', _('Learning roadmap created')
+        ROADMAP_PROGRESS = 'roadmap_progress', _('Roadmap progress')
+
+    activity_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='activities',
+        verbose_name=_('user'),
+    )
+    activity_type = models.CharField(
+        _('activity type'),
+        max_length=32,
+        choices=ActivityType.choices,
+    )
+    description = models.CharField(_('description'), max_length=500)
+    metadata = models.JSONField(_('metadata'), default=dict, blank=True)
+    link_path = models.CharField(_('link path'), max_length=200, blank=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'user_activities'
+        ordering = ['-created_at']
+        verbose_name = _('user activity')
+        verbose_name_plural = _('user activities')
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} {self.activity_type} @ {self.created_at}'

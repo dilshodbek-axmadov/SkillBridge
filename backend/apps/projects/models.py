@@ -26,6 +26,16 @@ class ProjectIdea(models.Model):
     ]
     
     project_id = models.AutoField(primary_key=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_project_ideas',
+        null=True,
+        blank=True,
+        verbose_name=_('created by'),
+        help_text=_('User who generated this idea; only this user can view or use it via the API.'),
+    )
     
     title = models.CharField(
         _('title'),

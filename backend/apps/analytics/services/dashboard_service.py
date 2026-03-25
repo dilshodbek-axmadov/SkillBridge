@@ -87,9 +87,10 @@ class DashboardService:
         now = timezone.now()
         last_7d = now - timedelta(days=7)
         last_30d = now - timedelta(days=30)
+        six_months_ago = now - timedelta(days=180)
 
-        # Job counts
-        active_jobs = JobPosting.objects.filter(is_active=True)
+        # Job counts (exclude jobs older than 6 months)
+        active_jobs = JobPosting.objects.filter(is_active=True, posted_date__gte=six_months_ago)
         total_active = active_jobs.count()
         jobs_7d = active_jobs.filter(posted_date__gte=last_7d).count()
         jobs_30d = active_jobs.filter(posted_date__gte=last_30d).count()
@@ -253,9 +254,11 @@ class DashboardService:
     ) -> Dict[str, Any]:
         """Compute salary insights in real-time."""
 
+        six_months_ago = timezone.now() - timedelta(days=180)
         queryset = JobPosting.objects.filter(
             is_active=True,
-            salary_min__isnull=False
+            salary_min__isnull=False,
+            posted_date__gte=six_months_ago,
         )
 
         if experience_level and experience_level != 'all':
@@ -315,9 +318,11 @@ class DashboardService:
                 for s in snapshots
             ]
 
-        # Compute real-time
+        # Compute real-time (exclude jobs older than 6 months)
+        six_months_ago = timezone.now() - timedelta(days=180)
         categories = JobPosting.objects.filter(
-            is_active=True
+            is_active=True,
+            posted_date__gte=six_months_ago,
         ).values('job_category').annotate(
             job_count=Count('job_id'),
             avg_min=Avg('salary_min'),
@@ -479,7 +484,8 @@ class DashboardService:
             period: Time filter — '7d', '30d', '90d', or 'all'.
         """
 
-        jobs = JobPosting.objects.filter(is_active=True)
+        six_months_ago = timezone.now() - timedelta(days=180)
+        jobs = JobPosting.objects.filter(is_active=True, posted_date__gte=six_months_ago)
 
         if period != 'all':
             days = {'7d': 7, '30d': 30, '90d': 90}.get(period, 30)
@@ -528,8 +534,9 @@ class SnapshotGenerator:
         today = date.today()
         last_7d = now - timedelta(days=7)
         last_30d = now - timedelta(days=30)
+        six_months_ago = now - timedelta(days=180)
 
-        active_jobs = JobPosting.objects.filter(is_active=True)
+        active_jobs = JobPosting.objects.filter(is_active=True, posted_date__gte=six_months_ago)
         total_active = active_jobs.count()
 
         if total_active == 0:
@@ -590,9 +597,11 @@ class SnapshotGenerator:
         # Delete old snapshots for today
         SkillDemandSnapshot.objects.filter(snapshot_date=today).delete()
 
-        # Get skill counts from active jobs
+        # Get skill counts from active jobs (last 6 months only)
+        six_months_ago = timezone.now() - timedelta(days=180)
         skill_counts = JobSkill.objects.filter(
-            job_posting__is_active=True
+            job_posting__is_active=True,
+            job_posting__posted_date__gte=six_months_ago,
         ).values('skill_id').annotate(
             job_count=Count('job_posting_id', distinct=True)
         ).order_by('-job_count')
@@ -613,6 +622,7 @@ class SnapshotGenerator:
             # Get salary for jobs with this skill
             avg_salary = JobPosting.objects.filter(
                 is_active=True,
+                posted_date__gte=six_months_ago,
                 job_skills__skill_id=sc['skill_id'],
                 salary_min__isnull=False
             ).aggregate(avg=Avg('salary_min'))['avg']
@@ -643,9 +653,11 @@ class SnapshotGenerator:
         # Delete old snapshots
         JobCategorySnapshot.objects.filter(snapshot_date=today).delete()
 
-        # Get categories
+        # Get categories (last 6 months only)
+        six_months_ago = timezone.now() - timedelta(days=180)
         categories = JobPosting.objects.filter(
-            is_active=True
+            is_active=True,
+            posted_date__gte=six_months_ago,
         ).values('job_category').annotate(
             job_count=Count('job_id'),
             avg_min=Avg('salary_min'),
@@ -659,6 +671,7 @@ class SnapshotGenerator:
             exp_breakdown = dict(
                 JobPosting.objects.filter(
                     is_active=True,
+                    posted_date__gte=six_months_ago,
                     job_category=cat['job_category']
                 ).values('experience_required').annotate(
                     count=Count('job_id')
@@ -669,6 +682,7 @@ class SnapshotGenerator:
             top_skills = list(
                 JobSkill.objects.filter(
                     job_posting__is_active=True,
+                    job_posting__posted_date__gte=six_months_ago,
                     job_posting__job_category=cat['job_category']
                 ).values('skill__skill_id', 'skill__name_en').annotate(
                     count=Count('job_skill_id')
@@ -701,10 +715,12 @@ class SnapshotGenerator:
         # Delete old snapshots
         SalarySnapshot.objects.filter(snapshot_date=today).delete()
 
-        # Get salary data by normalized job title
+        # Get salary data by normalized job title (last 6 months only)
+        six_months_ago = timezone.now() - timedelta(days=180)
         salary_data = JobPosting.objects.filter(
             is_active=True,
-            salary_min__isnull=False
+            salary_min__isnull=False,
+            posted_date__gte=six_months_ago,
         ).values('job_title').annotate(
             job_count=Count('job_id'),
             min_sal=Min('salary_min'),

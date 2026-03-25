@@ -1,0 +1,14 @@
+"""
+Celery Application Configuration
+=================================
+Configures Celery for SkillBridge background tasks.
+"""
+
+import os
+from celery import Celery
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'skillbridge.settings')
+
+app = Celery('skillbridge')
+app.config_from_object('django.conf:settings', namespace='CELERY')
+app.autodiscover_tasks()

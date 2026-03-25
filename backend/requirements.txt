@@ -40,3 +40,9 @@ dateparser==1.2.0
 # File Validation
 python-magic==0.4.27
 Pillow==10.1.0
+
+# Task Queue
+celery==5.4.0
+redis==5.0.1
+django-celery-beat==2.6.0
+django-celery-results==2.5.1
