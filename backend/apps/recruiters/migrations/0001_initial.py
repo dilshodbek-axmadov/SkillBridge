@@ -1,0 +1,105 @@
+# Generated manually
+
+import django.db.models.deletion
+from django.conf import settings
+from django.db import migrations, models
+from django.db.models import F, Q
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='RecruiterSavedSearch',
+            fields=[
+                ('search_id', models.AutoField(primary_key=True, serialize=False)),
+                ('name', models.CharField(max_length=120, verbose_name='name')),
+                (
+                    'filters',
+                    models.JSONField(
+                        default=dict,
+                        help_text='Serialized search state, e.g. skills, location, experience.',
+                        verbose_name='filters',
+                    ),
+                ),
+                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
+                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
+                (
+                    'recruiter',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='recruiter_saved_searches',
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name='recruiter',
+                    ),
+                ),
+            ],
+            options={
+                'verbose_name': 'saved search',
+                'verbose_name_plural': 'saved searches',
+                'db_table': 'recruiter_saved_searches',
+                'ordering': ['-updated_at'],
+            },
+        ),
+        migrations.CreateModel(
+            name='SavedCandidate',
+            fields=[
+                ('saved_id', models.AutoField(primary_key=True, serialize=False)),
+                ('notes', models.TextField(blank=True, verbose_name='notes')),
+                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
+                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
+                (
+                    'candidate',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='saved_by_recruiters',
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name='candidate',
+                    ),
+                ),
+                (
+                    'recruiter',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='saved_candidates',
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name='recruiter',
+                    ),
+                ),
+            ],
+            options={
+                'verbose_name': 'saved candidate',
+                'verbose_name_plural': 'saved candidates',
+                'db_table': 'recruiter_saved_candidates',
+                'ordering': ['-created_at'],
+            },
+        ),
+        migrations.AddIndex(
+            model_name='recruitersavedsearch',
+            index=models.Index(fields=['recruiter', '-updated_at'], name='rec_saved_srch_rec_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='savedcandidate',
+            index=models.Index(fields=['recruiter', '-created_at'], name='rec_saved_cand_rec_idx'),
+        ),
+        migrations.AddConstraint(
+            model_name='savedcandidate',
+            constraint=models.UniqueConstraint(
+                fields=('recruiter', 'candidate'),
+                name='uniq_recruiter_saved_candidate',
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name='savedcandidate',
+            constraint=models.CheckConstraint(
+                check=~Q(recruiter_id=F('candidate_id')),
+                name='saved_candidate_recruiter_ne_candidate',
+            ),
+        ),
+    ]

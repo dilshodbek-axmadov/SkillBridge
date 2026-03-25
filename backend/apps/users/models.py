@@ -18,7 +18,15 @@ class User(AbstractUser):
     Custom User model extending Django's AbstractUser.
     Handles authentication and basic user information.
     """
-    
+
+    class UserType(models.TextChoices):
+        DEVELOPER = 'developer', _('Developer')
+        RECRUITER = 'recruiter', _('Recruiter')
+
+    class RecruiterPlan(models.TextChoices):
+        FREE = 'free', _('Free')
+        PRO = 'pro', _('Pro')
+
     email = models.EmailField(
         _('email address'),
         unique=True,
@@ -41,6 +49,21 @@ class User(AbstractUser):
         ],
         default='en',
         help_text=_('User preferred interface language.')
+    )
+    user_type = models.CharField(
+        _('user type'),
+        max_length=20,
+        choices=UserType.choices,
+        default=UserType.DEVELOPER,
+        db_index=True,
+        help_text=_('Developer (talent) or recruiter (employer) account; set at registration.'),
+    )
+    recruiter_plan = models.CharField(
+        _('recruiter plan'),
+        max_length=10,
+        choices=RecruiterPlan.choices,
+        default=RecruiterPlan.FREE,
+        help_text=_('Subscription tier for recruiter accounts; ignored for developers.'),
     )
     profile_completed = models.BooleanField(
         _('profile completed'),
@@ -70,6 +93,9 @@ class User(AbstractUser):
         verbose_name_plural = _('users')
         ordering = ['-created_at']
         db_table = 'users'
+        indexes = [
+            models.Index(fields=['user_type', '-created_at']),
+        ]
     
     def __str__(self):
         return self.email
@@ -78,6 +104,18 @@ class User(AbstractUser):
     def full_name(self):
         """Return user's full name."""
         return f"{self.first_name} {self.last_name}".strip() or self.username
+
+    @property
+    def is_developer(self) -> bool:
+        return self.user_type == self.UserType.DEVELOPER
+
+    @property
+    def is_recruiter_account(self) -> bool:
+        return self.user_type == self.UserType.RECRUITER
+
+    @property
+    def is_recruiter_pro(self) -> bool:
+        return self.is_recruiter_account and self.recruiter_plan == self.RecruiterPlan.PRO
 
 
 class UserProfile(models.Model):
@@ -177,6 +215,37 @@ class UserProfile(models.Model):
         _('Portfolio URL'),
         blank=True,
         null=True
+    )
+    # —— Developer: visibility in recruiter search ——
+    open_to_recruiters = models.BooleanField(
+        _('open to recruiters'),
+        default=True,
+        help_text=_(
+            'If true, this developer profile may appear in recruiter search (subject to product rules).'
+        ),
+    )
+    # —— Recruiter: organization (optional; developers leave blank) ——
+    company_name = models.CharField(
+        _('company name'),
+        max_length=255,
+        blank=True,
+        help_text=_('Employer or agency name; used for recruiter accounts.'),
+    )
+    company_website = models.URLField(
+        _('company website'),
+        blank=True,
+        null=True,
+    )
+    company_description = models.TextField(
+        _('company description'),
+        blank=True,
+        help_text=_('Short company overview for candidate-facing pages.'),
+    )
+    recruiter_title = models.CharField(
+        _('recruiter title at company'),
+        max_length=200,
+        blank=True,
+        help_text=_('e.g. HR Business Partner, Technical Recruiter.'),
     )
     created_at = models.DateTimeField(
         _('created at'),

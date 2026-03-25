@@ -54,6 +54,7 @@ class JobPostingAdmin(admin.ModelAdmin):
     list_display = [
         'job_title',
         'company_name',
+        'posted_by',
         'original_language',
         'experience_required',
         'salary_display',
@@ -72,6 +73,7 @@ class JobPostingAdmin(admin.ModelAdmin):
         'is_remote',
         'posted_date',
         'source',
+        'posted_by',
     ]
     
     search_fields = [
@@ -90,6 +92,8 @@ class JobPostingAdmin(admin.ModelAdmin):
         'scraped_at',
         'updated_at',
     ]
+
+    raw_id_fields = ['posted_by']
     
     date_hierarchy = 'posted_date'
     
@@ -101,6 +105,7 @@ class JobPostingAdmin(admin.ModelAdmin):
                 'job_id',
                 'external_job_id',
                 'source',
+                'posted_by',
                 'original_language',
             )
         }),

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     # apps
     'apps.users',
+    'apps.recruiters',
     'apps.skills',
     'apps.jobs',
     'apps.learning',

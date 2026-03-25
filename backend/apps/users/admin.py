@@ -21,6 +21,8 @@ class UserAdmin(BaseUserAdmin):
         'username',
         'first_name',
         'last_name',
+        'user_type',
+        'recruiter_plan',
         'preferred_language',
         'profile_completed',
         'is_active',
@@ -29,6 +31,8 @@ class UserAdmin(BaseUserAdmin):
     ]
     
     list_filter = [
+        'user_type',
+        'recruiter_plan',
         'is_active',
         'is_staff',
         'is_superuser',
@@ -57,7 +61,7 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('first_name', 'last_name', 'phone')
         }),
         (_('Preferences'), {
-            'fields': ('preferred_language', 'profile_completed')
+            'fields': ('preferred_language', 'profile_completed', 'user_type', 'recruiter_plan')
         }),
         (_('Permissions'), {
             'fields': (
@@ -82,6 +86,8 @@ class UserAdmin(BaseUserAdmin):
                 'password1',
                 'password2',
                 'preferred_language',
+                'user_type',
+                'recruiter_plan',
             ),
         }),
     )
@@ -128,6 +134,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_filter = [
         'experience_level',
         'profile_source',
+        'open_to_recruiters',
         'created_at',
         'updated_at',
     ]
@@ -168,6 +175,16 @@ class UserProfileAdmin(admin.ModelAdmin):
                 'github_url',
                 'linkedin_url',
                 'portfolio_url',
+            ),
+            'classes': ('collapse',),
+        }),
+        (_('Marketplace'), {
+            'fields': (
+                'open_to_recruiters',
+                'company_name',
+                'company_website',
+                'company_description',
+                'recruiter_title',
             ),
             'classes': ('collapse',),
         }),

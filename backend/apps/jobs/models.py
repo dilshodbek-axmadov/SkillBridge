@@ -4,6 +4,7 @@ Jobs App Models (UPDATED)
 Multilingual job postings with canonical skill linkage.
 """
 
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.skills.models import Skill, SkillAlias
@@ -45,6 +46,16 @@ class JobPosting(models.Model):
         _('source'),
         max_length=50,
         default='hh.uz'
+    )
+
+    posted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='employer_job_postings',
+        null=True,
+        blank=True,
+        verbose_name=_('posted by'),
+        help_text=_('Recruiter who created this listing on the platform; null for scraped jobs (e.g. hh.uz).'),
     )
 
     original_language = models.CharField(
@@ -119,6 +130,10 @@ class JobPosting(models.Model):
         ordering = ['-posted_date']
         verbose_name = _('job posting')
         verbose_name_plural = _('job postings')
+        indexes = [
+            models.Index(fields=['posted_by', '-posted_date']),
+            models.Index(fields=['source', 'is_active']),
+        ]
 
     def __str__(self):
         return f"{self.job_title} – {self.company_name}"
