@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { safeGetItem, safeSetItem } from '../utils/safeStorage';
 
 const STORAGE_KEY = 'skillbridge-theme';
 
@@ -17,16 +18,16 @@ function applyTheme(theme) {
 }
 
 const useThemeStore = create((set, get) => ({
-  theme: localStorage.getItem(STORAGE_KEY) || 'light',
+  theme: safeGetItem(STORAGE_KEY) || 'light',
 
   setTheme: (theme) => {
-    localStorage.setItem(STORAGE_KEY, theme);
+    safeSetItem(STORAGE_KEY, theme);
     applyTheme(theme);
     set({ theme });
   },
 
   initTheme: () => {
-    const saved = localStorage.getItem(STORAGE_KEY) || 'light';
+    const saved = safeGetItem(STORAGE_KEY) || 'light';
     applyTheme(saved);
     set({ theme: saved });
 

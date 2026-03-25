@@ -21,6 +21,12 @@ from .views import (
     DeleteAccountView,
     ExportUserDataView,
 )
+from .staff_views import (
+    StaffOverviewView,
+    StaffUserListView,
+    StaffUserDetailView,
+    StaffPlatformSettingsView,
+)
 from .views_profile import (
     UserProfileView,
     CVUploadView
@@ -103,4 +109,10 @@ urlpatterns = [
     path('profile/update-experience/', UpdateExperienceLevelView.as_view(), name='update_experience'),
 
     path('profile/activity/', UserActivityListView.as_view(), name='user_activity'),
+
+    # ==================== Staff / in-app admin ====================
+    path('staff/overview/', StaffOverviewView.as_view(), name='staff_overview'),
+    path('staff/users/', StaffUserListView.as_view(), name='staff_user_list'),
+    path('staff/users/<int:user_id>/', StaffUserDetailView.as_view(), name='staff_user_detail'),
+    path('staff/settings/', StaffPlatformSettingsView.as_view(), name='staff_platform_settings'),
 ]

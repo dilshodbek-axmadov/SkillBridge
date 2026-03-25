@@ -11,6 +11,7 @@ import RecruiterLayout from '../components/layout/RecruiterLayout';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import api from '../services/api';
+import { safeRemoveItem } from '../utils/safeStorage';
 
 /* ── Constants ─────────────────────────────────────────────────── */
 
@@ -327,8 +328,8 @@ function SecurityTab() {
     setDeleting(true);
     try {
       await api.post('/users/auth/delete-account/', { password: deletePwd });
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      safeRemoveItem('access_token');
+      safeRemoveItem('refresh_token');
       window.location.href = '/login';
     } catch (err) {
       setDeleteError(err.response?.data?.error || t('settings.security.errors.deleteFailed'));

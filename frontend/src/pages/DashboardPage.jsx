@@ -622,7 +622,8 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user?.user_type === 'recruiter') {
+    const staff = user?.is_staff || user?.is_superuser;
+    if (user?.user_type === 'recruiter' && !staff) {
       navigate('/recruiter/dashboard', { replace: true });
     }
   }, [user, navigate]);

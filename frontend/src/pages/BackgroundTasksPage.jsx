@@ -7,6 +7,7 @@ import {
   AlertTriangle, TrendingUp, ShieldAlert,
 } from 'lucide-react';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import AdminLayout from '../components/layout/AdminLayout';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 
@@ -186,9 +187,10 @@ function RunDetailModal({ run, onClose, onRetry, retrying }) {
   );
 }
 
-export default function BackgroundTasksPage() {
+export default function BackgroundTasksPage({ variant = 'developer' }) {
   const { t } = useTranslation();
   const { user, fetchUser } = useAuthStore();
+  const Layout = variant === 'admin' ? AdminLayout : DashboardLayout;
   const [stats, setStats] = useState(null);
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -262,11 +264,11 @@ export default function BackgroundTasksPage() {
   // Guard: must be authenticated
   if (!user) {
     return (
-      <DashboardLayout user={user}>
+      <Layout user={user}>
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
         </div>
-      </DashboardLayout>
+      </Layout>
     );
   }
 
@@ -276,7 +278,7 @@ export default function BackgroundTasksPage() {
   }
 
   return (
-    <DashboardLayout user={user}>
+    <Layout user={user}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -483,6 +485,6 @@ export default function BackgroundTasksPage() {
         onRetry={handleRetry}
         retrying={retryingId === selectedRun?.id}
       />
-    </DashboardLayout>
+    </Layout>
   );
 }

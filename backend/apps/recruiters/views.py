@@ -29,6 +29,9 @@ class RecruiterOnlyMixin:
     permission_classes = [IsAuthenticated]
 
     def _ensure_recruiter(self, request):
+        # Staff may access recruiter tools to test the product without switching accounts.
+        if request.user.is_staff:
+            return None
         if not request.user.is_recruiter_account:
             return Response({'error': 'Recruiter account required.'}, status=status.HTTP_403_FORBIDDEN)
         return None
@@ -74,7 +77,7 @@ class RecruiterAnalyticsView(RecruiterOnlyMixin, APIView):
         denied = self._ensure_recruiter(request)
         if denied:
             return denied
-        if not request.user.is_recruiter_pro:
+        if not request.user.is_recruiter_pro and not request.user.is_staff:
             return Response(
                 {
                     'error': 'Analytics are available on SkillBridge Recruiter Pro.',
@@ -176,8 +179,9 @@ class CandidateDetailView(RecruiterOnlyMixin, APIView):
             profile__open_to_recruiters=True,
         )
         data = CandidateProfileDetailSerializer(candidate).data
-        data['contact_unlocked'] = request.user.is_recruiter_pro
-        if not request.user.is_recruiter_pro:
+        contact_unlocked = request.user.is_recruiter_pro or request.user.is_staff
+        data['contact_unlocked'] = contact_unlocked
+        if not contact_unlocked:
             data['email'] = None
             data['phone'] = None
         return Response(data)

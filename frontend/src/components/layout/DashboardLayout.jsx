@@ -6,6 +6,7 @@ import {
   Menu, X, LogOut, ServerCog,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import StaffWorkspaceSwitcher, { showStaffWorkspaceSwitcher } from '../StaffWorkspaceSwitcher';
 
 const NAV_ITEMS = [
   { path: '/dashboard',        label: 'Dashboard',          icon: Home },
@@ -47,6 +48,8 @@ function Sidebar({ user, mobileOpen, onClose }) {
         </span>
       </div>
 
+      {showStaffWorkspaceSwitcher(user) ? <StaffWorkspaceSwitcher /> : null}
+
       <nav className="flex-1 px-3 mt-2 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const active = location.pathname === item.path;
@@ -67,31 +70,6 @@ function Sidebar({ user, mobileOpen, onClose }) {
             </Link>
           );
         })}
-
-        {(user?.is_staff || user?.is_superuser) && (
-          <>
-            <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
-            {ADMIN_NAV_ITEMS.map((item) => {
-              const active = location.pathname === item.path;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium no-underline transition-colors ${
-                    active
-                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-                >
-                  <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </>
-        )}
       </nav>
 
       <div className="border-t border-gray-200 dark:border-gray-800 px-4 py-4">
