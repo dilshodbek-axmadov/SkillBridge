@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.jobs.models import JobPosting
+from apps.recruiters.analytics import get_recruiter_analytics
 from apps.recruiters.models import RecruiterSavedSearch, SavedCandidate
 from apps.recruiters.serializers import (
     CandidateCardSerializer,
@@ -46,7 +47,6 @@ class RecruiterDashboardView(RecruiterOnlyMixin, APIView):
         candidates_saved = SavedCandidate.objects.filter(recruiter=request.user).count()
         jobs_posted = JobPosting.objects.filter(posted_by=request.user).count()
         active_jobs = JobPosting.objects.filter(posted_by=request.user, is_active=True).count()
-        searches_saved = RecruiterSavedSearch.objects.filter(recruiter=request.user).count()
 
         return Response(
             {
@@ -54,12 +54,41 @@ class RecruiterDashboardView(RecruiterOnlyMixin, APIView):
                     'candidates_saved': candidates_saved,
                     'jobs_posted': jobs_posted,
                     'active_jobs': active_jobs,
-                    'saved_searches': searches_saved,
                 },
                 'subscription': {
                     'plan': request.user.recruiter_plan,
                     'is_pro': request.user.is_recruiter_pro,
                 },
+            }
+        )
+
+
+class RecruiterAnalyticsView(RecruiterOnlyMixin, APIView):
+    """
+    GET /api/v1/recruiters/analytics/
+
+    SkillBridge Recruiter Pro — market and workspace metrics.
+    """
+
+    def get(self, request):
+        denied = self._ensure_recruiter(request)
+        if denied:
+            return denied
+        if not request.user.is_recruiter_pro:
+            return Response(
+                {
+                    'error': 'Analytics are available on SkillBridge Recruiter Pro.',
+                    'code': 'pro_required',
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response(
+            {
+                'subscription': {
+                    'plan': request.user.recruiter_plan,
+                    'is_pro': True,
+                },
+                **get_recruiter_analytics(request.user),
             }
         )
 

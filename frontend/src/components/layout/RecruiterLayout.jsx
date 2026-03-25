@@ -5,7 +5,7 @@ import {
   Home,
   Search,
   Users,
-  Bookmark,
+  BarChart3,
   Briefcase,
   Settings,
   Menu,
@@ -18,7 +18,7 @@ const RECRUITER_NAV_ITEMS = [
   { path: '/recruiter/dashboard', label: 'Dashboard', icon: Home },
   { path: '/recruiter/candidates', label: 'Find candidates', icon: Search },
   { path: '/recruiter/saved-candidates', label: 'Saved candidates', icon: Users },
-  { path: '/recruiter/saved-searches', label: 'Saved searches', icon: Bookmark },
+  { path: '/recruiter/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/recruiter/jobs', label: 'My job posts', icon: Briefcase },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];

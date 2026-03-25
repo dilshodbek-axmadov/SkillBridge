@@ -10,6 +10,7 @@ app_name = 'recruiters'
 
 urlpatterns = [
     path('dashboard/', views.RecruiterDashboardView.as_view(), name='dashboard'),
+    path('analytics/', views.RecruiterAnalyticsView.as_view(), name='analytics'),
 
     path('candidates/', views.CandidateListView.as_view(), name='candidate_list'),
     path('candidates/<int:candidate_id>/', views.CandidateDetailView.as_view(), name='candidate_detail'),

@@ -25,7 +25,7 @@ import RecruiterDashboardPage from './pages/RecruiterDashboardPage';
 import RecruiterCandidatesPage from './pages/RecruiterCandidatesPage';
 import RecruiterCandidateDetailPage from './pages/RecruiterCandidateDetailPage';
 import RecruiterSavedCandidatesPage from './pages/RecruiterSavedCandidatesPage';
-import RecruiterSavedSearchesPage from './pages/RecruiterSavedSearchesPage';
+import RecruiterAnalyticsPage from './pages/RecruiterAnalyticsPage';
 import RecruiterJobsPage from './pages/RecruiterJobsPage';
 import RecruiterJobEditorPage from './pages/RecruiterJobEditorPage';
 
@@ -56,7 +56,7 @@ function AppLayout() {
         <Route path="/recruiter/candidates/:candidateId" element={<RecruiterCandidateDetailPage />} />
         <Route path="/recruiter/candidates" element={<RecruiterCandidatesPage />} />
         <Route path="/recruiter/saved-candidates" element={<RecruiterSavedCandidatesPage />} />
-        <Route path="/recruiter/saved-searches" element={<RecruiterSavedSearchesPage />} />
+        <Route path="/recruiter/analytics" element={<RecruiterAnalyticsPage />} />
         <Route path="/recruiter/jobs/new" element={<RecruiterJobEditorPage />} />
         <Route path="/recruiter/jobs/:jobId/edit" element={<RecruiterJobEditorPage />} />
         <Route path="/recruiter/jobs" element={<RecruiterJobsPage />} />

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Search,
   Users,
-  Bookmark,
+  BarChart3,
   Briefcase,
   Sparkles,
   Lock,
@@ -136,7 +136,7 @@ export default function RecruiterDashboardPage() {
               Welcome back, {firstName}
             </h1>
             <p className="text-white/85 mt-2 max-w-xl text-sm sm:text-base leading-relaxed">
-              Search developers who opted in to recruiter visibility, save shortlists and searches, and manage your platform job postings in one place.
+              Search developers who opted in to recruiter visibility, build your shortlist, and manage job postings in one place.
             </p>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-2">
@@ -159,9 +159,8 @@ export default function RecruiterDashboardPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid sm:grid-cols-3 gap-4 mb-8">
           <StatCard label="Saved candidates" value={stats.candidates_saved} icon={Users} />
-          <StatCard label="Saved searches" value={stats.saved_searches} icon={Bookmark} />
           <StatCard label="Jobs posted" value={stats.jobs_posted} icon={Briefcase} />
           <StatCard label="Active jobs" value={stats.active_jobs} icon={TrendingUp} />
         </div>
@@ -190,10 +189,10 @@ export default function RecruiterDashboardPage() {
             icon={Users}
           />
           <QuickAction
-            to="/recruiter/saved-searches"
-            title="Saved searches"
-            description="Re-run stored filter sets without retyping criteria."
-            icon={Bookmark}
+            to="/recruiter/analytics"
+            title="Analytics (Pro)"
+            description="Market insights, shortlist trends, response metrics, and hiring funnel — Recruiter Pro only."
+            icon={BarChart3}
           />
         </div>
       </div>
