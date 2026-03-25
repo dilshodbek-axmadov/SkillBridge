@@ -67,7 +67,13 @@ class DataTransformer:
             
             # Meta
             'job_url': api_data.get('alternate_url', ''),
-            'is_active': not api_data.get('closed_for_applicants', False) and not api_data.get('archived', False),
+            'is_active': (
+                is_live := (
+                    not api_data.get('closed_for_applicants', False)
+                    and not api_data.get('archived', False)
+                )
+            ),
+            'listing_status': 'active' if is_live else 'archived',
         }
         
         return transformed

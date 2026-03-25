@@ -4,7 +4,7 @@ Recruiter API views.
 
 import uuid
 
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
@@ -278,7 +278,11 @@ class RecruiterJobListCreateView(RecruiterOnlyMixin, APIView):
         denied = self._ensure_recruiter(request)
         if denied:
             return denied
-        rows = JobPosting.objects.filter(posted_by=request.user).order_by('-posted_date')
+        rows = (
+            JobPosting.objects.filter(posted_by=request.user)
+            .annotate(application_count=Count('applications', distinct=True))
+            .order_by('-posted_date')
+        )
         return Response({'count': rows.count(), 'jobs': RecruiterJobPostingSerializer(rows, many=True).data})
 
     def post(self, request):
@@ -288,14 +292,21 @@ class RecruiterJobListCreateView(RecruiterOnlyMixin, APIView):
         serializer = RecruiterJobPostingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        listing_status = data.get('listing_status', JobPosting.ListingStatus.DRAFT)
+        if listing_status not in dict(JobPosting.ListingStatus.choices):
+            listing_status = JobPosting.ListingStatus.DRAFT
+        is_active = listing_status == JobPosting.ListingStatus.ACTIVE
+        create_kwargs = {k: v for k, v in data.items() if k not in {'posted_date', 'is_active', 'listing_status'}}
+        create_kwargs.setdefault('job_url', '')
         obj = JobPosting.objects.create(
             external_job_id=f"platform-{uuid.uuid4().hex[:20]}",
             source='platform',
             posted_by=request.user,
             original_language=request.user.preferred_language or 'en',
             posted_date=data.get('posted_date') or timezone.now(),
-            is_active=data.get('is_active', True),
-            **{k: v for k, v in data.items() if k not in {'posted_date', 'is_active'}},
+            is_active=is_active,
+            listing_status=listing_status,
+            **create_kwargs,
         )
         return Response(RecruiterJobPostingSerializer(obj).data, status=status.HTTP_201_CREATED)
 
@@ -312,7 +323,13 @@ class RecruiterJobDetailView(RecruiterOnlyMixin, APIView):
         denied = self._ensure_recruiter(request)
         if denied:
             return denied
-        obj = self.get_object(request, job_id)
+        obj = (
+            JobPosting.objects.filter(job_id=job_id, posted_by=request.user)
+            .annotate(application_count=Count('applications', distinct=True))
+            .first()
+        )
+        if not obj:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
         return Response(RecruiterJobPostingSerializer(obj).data)
 
     def patch(self, request, job_id):

@@ -27,6 +27,7 @@ import RecruiterCandidateDetailPage from './pages/RecruiterCandidateDetailPage';
 import RecruiterSavedCandidatesPage from './pages/RecruiterSavedCandidatesPage';
 import RecruiterSavedSearchesPage from './pages/RecruiterSavedSearchesPage';
 import RecruiterJobsPage from './pages/RecruiterJobsPage';
+import RecruiterJobEditorPage from './pages/RecruiterJobEditorPage';
 
 // Pages rendered without Navbar/Footer (full-screen)
 const STANDALONE_ROUTES = ['/login', '/register', '/forgot-password', '/profile-setup', '/profile-manual', '/profile-cv', '/assessment', '/recommendations', '/dashboard', '/market-analytics', '/settings', '/jobs', '/skills-gap', '/manage-skills', '/roadmap', '/cv-builder', '/chat', '/project-ideas', '/background-tasks', '/activity'];
@@ -56,6 +57,8 @@ function AppLayout() {
         <Route path="/recruiter/candidates" element={<RecruiterCandidatesPage />} />
         <Route path="/recruiter/saved-candidates" element={<RecruiterSavedCandidatesPage />} />
         <Route path="/recruiter/saved-searches" element={<RecruiterSavedSearchesPage />} />
+        <Route path="/recruiter/jobs/new" element={<RecruiterJobEditorPage />} />
+        <Route path="/recruiter/jobs/:jobId/edit" element={<RecruiterJobEditorPage />} />
         <Route path="/recruiter/jobs" element={<RecruiterJobsPage />} />
         <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
         <Route path="/market-analytics" element={<MarketAnalyticsPage />} />

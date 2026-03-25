@@ -20,9 +20,12 @@ class JobService:
     """Service for listing, filtering, and recommending jobs."""
 
     def _fresh_active_jobs(self):
-        """Base queryset: active jobs posted within last 6 months."""
+        """Public job search: live listings from the last freshness window."""
         cutoff = timezone.now() - timedelta(days=FRESHNESS_DAYS)
-        return JobPosting.objects.filter(is_active=True, posted_date__gte=cutoff)
+        return JobPosting.objects.filter(
+            listing_status=JobPosting.ListingStatus.ACTIVE,
+            posted_date__gte=cutoff,
+        )
 
     def list_jobs(self, filters: dict, limit: int = 20, offset: int = 0):
         """
@@ -94,18 +97,27 @@ class JobService:
         }
 
     def get_job_detail(self, job_id: int):
-        """Get a single job with full details."""
+        """Get a single job with full details; increments view counter for analytics."""
+        cutoff = timezone.now() - timedelta(days=FRESHNESS_DAYS)
         try:
             job = (
                 JobPosting.objects
                 .prefetch_related('job_skills__skill')
-                .get(job_id=job_id, is_active=True)
+                .get(
+                    job_id=job_id,
+                    listing_status=JobPosting.ListingStatus.ACTIVE,
+                    posted_date__gte=cutoff,
+                )
             )
         except JobPosting.DoesNotExist:
             return None
 
+        JobPosting.objects.filter(pk=job.pk).update(view_count=F('view_count') + 1)
+        job.refresh_from_db(fields=['view_count'])
+
         data = self._serialize_job(job)
         data['description'] = job.job_description
+        data['view_count'] = job.view_count
         return data
 
     def recommend_jobs(self, user, limit: int = 20):

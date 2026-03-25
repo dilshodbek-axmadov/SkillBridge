@@ -4,12 +4,20 @@ Jobs App Views
 API endpoints for job listings, search, and recommendations.
 """
 
+from datetime import timedelta
+
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 
+from apps.jobs.models import JobPosting, JobApplication
 from apps.jobs.services import JobService
+from apps.users.models import User
+
+FRESHNESS_DAYS = 180
 
 
 class JobListView(APIView):
@@ -78,6 +86,40 @@ class JobDetailView(APIView):
             )
 
         return Response(job)
+
+
+class JobApplyView(APIView):
+    """
+    POST /api/v1/jobs/<job_id>/apply/
+
+    Logged-in developers submit interest in a live job (counts toward recruiter analytics).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, job_id):
+        if request.user.user_type != User.UserType.DEVELOPER:
+            return Response(
+                {'error': 'Only developer accounts can apply to jobs.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        cutoff = timezone.now() - timedelta(days=FRESHNESS_DAYS)
+        job = get_object_or_404(
+            JobPosting,
+            job_id=job_id,
+            listing_status=JobPosting.ListingStatus.ACTIVE,
+            posted_date__gte=cutoff,
+        )
+
+        _, created = JobApplication.objects.get_or_create(
+            job_posting=job,
+            applicant=request.user,
+        )
+        return Response(
+            {'applied': True, 'created': created},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 class RecommendedJobsView(APIView):

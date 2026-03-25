@@ -15,6 +15,7 @@ urlpatterns = [
     path('', views.JobListView.as_view(), name='job_list'),
     path('recommended/', views.RecommendedJobsView.as_view(), name='recommended'),
     path('filters/', views.JobFiltersView.as_view(), name='filters'),
+    path('<int:job_id>/apply/', views.JobApplyView.as_view(), name='job_apply'),
     path('<int:job_id>/', views.JobDetailView.as_view(), name='job_detail'),
 
     # Extraction admin endpoints (IsAdminUser)

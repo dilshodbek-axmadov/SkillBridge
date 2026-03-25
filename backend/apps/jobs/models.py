@@ -33,6 +33,11 @@ class JobPosting(models.Model):
         ('uz', _('Uzbek')),
     ]
 
+    class ListingStatus(models.TextChoices):
+        DRAFT = 'draft', _('Draft')
+        ACTIVE = 'active', _('Active')
+        ARCHIVED = 'archived', _('Archived')
+
     job_id = models.AutoField(primary_key=True)
 
     external_job_id = models.CharField(
@@ -113,8 +118,18 @@ class JobPosting(models.Model):
     posted_date = models.DateTimeField(_('posted date'))
     deadline_date = models.DateTimeField(_('deadline'), null=True, blank=True)
 
-    job_url = models.URLField(_('job URL'), max_length=500)
+    job_url = models.URLField(_('job URL'), max_length=500, blank=True, default='')
     is_active = models.BooleanField(_('active'), default=True)
+
+    listing_status = models.CharField(
+        _('listing status'),
+        max_length=20,
+        choices=ListingStatus.choices,
+        default=ListingStatus.ACTIVE,
+        db_index=True,
+        help_text=_('draft = not public; active = visible in job search; archived = closed listing.'),
+    )
+    view_count = models.PositiveIntegerField(_('view count'), default=0)
 
     scraped_at = models.DateTimeField(_('scraped at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
@@ -137,6 +152,42 @@ class JobPosting(models.Model):
 
     def __str__(self):
         return f"{self.job_title} – {self.company_name}"
+
+
+class JobApplication(models.Model):
+    """Developer application to a job posting (SkillBridge platform roles)."""
+
+    application_id = models.AutoField(primary_key=True)
+    job_posting = models.ForeignKey(
+        JobPosting,
+        on_delete=models.CASCADE,
+        related_name='applications',
+        verbose_name=_('job posting'),
+    )
+    applicant = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='job_applications',
+        verbose_name=_('applicant'),
+    )
+    created_at = models.DateTimeField(_('applied at'), auto_now_add=True)
+
+    class Meta:
+        db_table = 'job_applications'
+        verbose_name = _('job application')
+        verbose_name_plural = _('job applications')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['job_posting', 'applicant'],
+                name='unique_job_applicant',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['job_posting', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.applicant_id} → job {self.job_posting_id}"
 
 
 # ==================== JOB TRANSLATION ====================

@@ -121,7 +121,7 @@ class Command(BaseCommand):
             updated = JobPosting.objects.filter(
                 source=source,
                 external_job_id__in=to_deactivate,
-            ).update(is_active=False)
+            ).update(is_active=False, listing_status=JobPosting.ListingStatus.ARCHIVED)
             self.stdout.write(self.style.SUCCESS(
                 f"\nDeactivated {updated} jobs."
             ))

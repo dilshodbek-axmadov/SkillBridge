@@ -307,7 +307,7 @@ class ExtractionService:
         deactivated = JobPosting.objects.filter(
             source=self.source,
             external_job_id__in=to_deactivate,
-        ).update(is_active=False)
+        ).update(is_active=False, listing_status=JobPosting.ListingStatus.ARCHIVED)
 
         logger.info(f"Deactivated {deactivated} jobs no longer listed on API.")
         return deactivated

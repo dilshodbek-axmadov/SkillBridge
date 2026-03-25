@@ -148,6 +148,8 @@ class RecruiterSavedSearchSerializer(serializers.ModelSerializer):
 
 
 class RecruiterJobPostingSerializer(serializers.ModelSerializer):
+    application_count = serializers.SerializerMethodField()
+
     class Meta:
         model = JobPosting
         fields = [
@@ -167,9 +169,36 @@ class RecruiterJobPostingSerializer(serializers.ModelSerializer):
             'deadline_date',
             'job_url',
             'is_active',
+            'listing_status',
+            'view_count',
+            'application_count',
             'source',
             'external_job_id',
             'updated_at',
         ]
-        read_only_fields = ['job_id', 'source', 'external_job_id', 'updated_at']
+        read_only_fields = [
+            'job_id',
+            'source',
+            'external_job_id',
+            'updated_at',
+            'view_count',
+            'is_active',
+        ]
+        extra_kwargs = {
+            'job_url': {'required': False, 'allow_blank': True},
+            'listing_status': {'required': False},
+        }
+
+    def get_application_count(self, obj):
+        v = getattr(obj, 'application_count', None)
+        if v is not None:
+            return v
+        return obj.applications.count()
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        ls = instance.listing_status
+        instance.is_active = ls == JobPosting.ListingStatus.ACTIVE
+        instance.save(update_fields=['is_active'])
+        return instance
 
