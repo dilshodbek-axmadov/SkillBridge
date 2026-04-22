@@ -9,7 +9,6 @@ from django.db import transaction
 
 from .models import User, UserProfile
 from apps.skills.models import Skill, UserSkill
-from apps.interests.models import Interest, UserInterest
 
 
 class SkillListSerializer(serializers.ModelSerializer):
@@ -125,7 +124,6 @@ class StepByStepProfileSerializer(serializers.Serializer):
             {"skill_id": 1, "proficiency_level": "intermediate", "years_of_experience": 2.0},
             {"skill_id": 5, "proficiency_level": "beginner", "years_of_experience": 0.5}
         ],
-        "interest_ids": [1, 3, 5],
         "bio": "Optional bio text"
     }
     """
@@ -158,13 +156,6 @@ class StepByStepProfileSerializer(serializers.Serializer):
         min_length=1,
         required=True,
         help_text="At least 1 skill required"
-    )
-    
-    # Step 4: Interests (optional)
-    interest_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=False,
-        allow_empty=True
     )
     
     # Optional bio
@@ -202,20 +193,6 @@ class StepByStepProfileSerializer(serializers.Serializer):
         
         return validated_skills
     
-    def validate_interest_ids(self, interest_ids):
-        """Validate interests exist."""
-        if not interest_ids:
-            return []
-        
-        existing_interests = Interest.objects.filter(interest_id__in=interest_ids)
-        existing_ids = set(existing_interests.values_list('interest_id', flat=True))
-        
-        invalid_ids = set(interest_ids) - existing_ids
-        if invalid_ids:
-            raise serializers.ValidationError(f"Invalid interest IDs: {invalid_ids}")
-        
-        return interest_ids
-    
     @transaction.atomic
     def create_profile(self, user):
         """
@@ -224,8 +201,7 @@ class StepByStepProfileSerializer(serializers.Serializer):
         Returns:
             {
                 'profile': UserProfile,
-                'skills_added': int,
-                'interests_added': int
+                'skills_added': int
             }
         """
         validated_data = self.validated_data
@@ -255,22 +231,6 @@ class StepByStepProfileSerializer(serializers.Serializer):
             if created:
                 skills_added += 1
         
-        # Add interests
-        interests_added = 0
-        interest_ids = validated_data.get('interest_ids', [])
-        
-        if interest_ids:
-            # Remove old interests
-            UserInterest.objects.filter(user=user).delete()
-            
-            # Add new interests
-            for interest_id in interest_ids:
-                UserInterest.objects.create(
-                    user=user,
-                    interest_id=interest_id
-                )
-                interests_added += 1
-        
         # Mark profile as completed
         user.profile_completed = True
         user.save()
@@ -278,15 +238,13 @@ class StepByStepProfileSerializer(serializers.Serializer):
         return {
             'profile': profile,
             'skills_added': skills_added,
-            'interests_added': interests_added
         }
 
 
 class UserProfileSummarySerializer(serializers.ModelSerializer):
-    """Complete user profile with skills and interests."""
+    """Complete user profile summary."""
     
     skills = UserSkillSerializer(many=True, read_only=True)
-    interests = serializers.SerializerMethodField()
     
     class Meta:
         model = UserProfile
@@ -297,17 +255,4 @@ class UserProfileSummarySerializer(serializers.ModelSerializer):
             'bio',
             'profile_source',
             'skills',
-            'interests'
-        ]
-    
-    def get_interests(self, obj):
-        """Get user interests."""
-        user_interests = UserInterest.objects.filter(user=obj.user).select_related('interest')
-        return [
-            {
-                'interest_id': ui.interest.interest_id,
-                'name': ui.interest.name,
-                'category': ui.interest.category
-            }
-            for ui in user_interests
         ]

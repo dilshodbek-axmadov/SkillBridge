@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Zap, TrendingUp, BarChart3, Target } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { getHomePathForUser } from '../utils/authPaths';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, loading, error, clearError, isAuthenticated, user, fetchUser } = useAuthStore();
 
   const [email, setEmail] = useState('');
@@ -21,9 +22,27 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(getHomePathForUser(user), { replace: true });
+      const redirect = searchParams.get('redirect');
+      const redirectPath = redirect && redirect.startsWith('/') ? redirect : null;
+      const home = getHomePathForUser(user);
+
+      // If developer profile is incomplete, force them into profile setup,
+      // but preserve where they wanted to go.
+      if (user.user_type !== 'recruiter' && !user.profile_completed) {
+        const qp = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
+        navigate(`/profile-setup${qp}`, { replace: true });
+        return;
+      }
+
+      // Otherwise, honor explicit redirects (from gated pages).
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
+        return;
+      }
+
+      navigate(home, { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -5,7 +5,6 @@ apps/jobs/admin.py
 
 Admin interfaces for:
 - JobPosting
-- JobPostingTranslation
 - JobSkill
 """
 
@@ -13,7 +12,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
-from .models import JobPosting, JobPostingTranslation, JobSkill
+from .models import JobPosting, JobSkill
 
 
 # ==================== INLINES ====================
@@ -26,23 +25,6 @@ class JobSkillInline(admin.TabularInline):
     fields = ['skill', 'importance']
     verbose_name = _('Required Skill')
     verbose_name_plural = _('Required Skills')
-
-
-class JobPostingTranslationInline(admin.StackedInline):
-    """Inline editor for job translations."""
-    model = JobPostingTranslation
-    extra = 0
-    fields = [
-        'language_code',
-        'job_title',
-        'job_category',
-        'job_description',
-        'translated_by',
-        'translation_quality',
-    ]
-    classes = ['collapse']
-    verbose_name = _('Translation')
-    verbose_name_plural = _('Translations')
 
 
 # ==================== JOB POSTING ADMIN ====================
@@ -60,7 +42,6 @@ class JobPostingAdmin(admin.ModelAdmin):
         'salary_display',
         'location',
         'skill_count',
-        'translation_status',
         'is_active',
         'posted_date',
     ]
@@ -97,7 +78,7 @@ class JobPostingAdmin(admin.ModelAdmin):
     
     date_hierarchy = 'posted_date'
     
-    inlines = [JobSkillInline, JobPostingTranslationInline]
+    inlines = [JobSkillInline]
     
     fieldsets = (
         (_('Basic Information'), {
@@ -159,7 +140,6 @@ class JobPostingAdmin(admin.ModelAdmin):
         'mark_active',
         'mark_inactive',
         'extract_sections',
-        'create_english_translation',
     ]
     
     def salary_display(self, obj):
@@ -203,20 +183,6 @@ class JobPostingAdmin(admin.ModelAdmin):
         )
     skill_count.short_description = _('Skills')
     
-    def translation_status(self, obj):
-        """Show translation availability."""
-        translations = obj.translations.all()
-        if not translations:
-            return format_html('<span style="color: gray;">No translations</span>')
-        
-        langs = []
-        for t in translations:
-            color = '#28a745' if t.translation_quality == 'verified' else '#ffc107'
-            langs.append(f'<span style="color: {color};">{t.language_code.upper()}</span>')
-        
-        return format_html(' '.join(langs))
-    translation_status.short_description = _('Translations')
-    
     def job_url_link(self, obj):
         """Clickable job URL."""
         if obj.job_url:
@@ -257,124 +223,13 @@ class JobPostingAdmin(admin.ModelAdmin):
         )
     extract_sections.short_description = _("🤖 Extract sections (AI)")
     
-    def create_english_translation(self, request, queryset):
-        """Create English translations."""
-        russian_jobs = queryset.filter(original_language='ru').exclude(
-            translations__language_code='en'
-        ).count()
-        
-        uzbek_jobs = queryset.filter(original_language='uz').exclude(
-            translations__language_code='en'
-        ).count()
-        
-        self.message_user(
-            request,
-            _(f'{russian_jobs + uzbek_jobs} jobs need English translation. Feature coming soon!'),
-            level='info'
-        )
-    create_english_translation.short_description = _("🌐 Create English translations")
-    
     def get_queryset(self, request):
         """Optimize queries."""
         qs = super().get_queryset(request)
         return qs.select_related().prefetch_related(
-            'translations',
             'job_skills',
             'job_skills__skill'
         )
-
-
-# ==================== JOB TRANSLATION ADMIN ====================
-
-@admin.register(JobPostingTranslation)
-class JobPostingTranslationAdmin(admin.ModelAdmin):
-    """Admin interface for job translations."""
-    
-    list_display = [
-        'job_posting',
-        'language_code',
-        'translated_by',
-        'translation_quality',
-        'created_at',
-    ]
-    
-    list_filter = [
-        'language_code',
-        'translated_by',
-        'translation_quality',
-        'created_at',
-    ]
-    
-    search_fields = [
-        'job_posting__job_title',
-        'job_title',
-        'job_posting__external_job_id',
-        'job_posting__company_name',
-    ]
-    
-    readonly_fields = [
-        'translation_id',
-        'created_at',
-        'updated_at',
-    ]
-    
-    autocomplete_fields = ['job_posting']
-    
-    date_hierarchy = 'created_at'
-    
-    fieldsets = (
-        (_('Translation Info'), {
-            'fields': (
-                'translation_id',
-                'job_posting',
-                'language_code',
-            )
-        }),
-        (_('Translated Content'), {
-            'fields': (
-                'job_title',
-                'job_category',
-                'job_description',
-            )
-        }),
-        (_('Quality & Source'), {
-            'fields': (
-                'translated_by',
-                'translation_quality',
-            )
-        }),
-        (_('Metadata'), {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    actions = ['mark_reviewed', 'mark_verified']
-    
-    def mark_reviewed(self, request, queryset):
-        """Mark translations as reviewed."""
-        updated = queryset.update(translation_quality='reviewed')
-        self.message_user(
-            request,
-            _(f'{updated} translations marked as reviewed'),
-            level='success'
-        )
-    mark_reviewed.short_description = _("✓ Mark as reviewed")
-    
-    def mark_verified(self, request, queryset):
-        """Mark translations as verified."""
-        updated = queryset.update(translation_quality='verified')
-        self.message_user(
-            request,
-            _(f'{updated} translations marked as verified'),
-            level='success'
-        )
-    mark_verified.short_description = _("✓✓ Mark as verified")
-    
-    def get_queryset(self, request):
-        """Optimize queries."""
-        qs = super().get_queryset(request)
-        return qs.select_related('job_posting')
 
 
 # ==================== JOB SKILL ADMIN ====================

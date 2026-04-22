@@ -187,7 +187,7 @@ export default function MessagesPage() {
               ) : messages.length ? (
                 <div className="space-y-3">
                   {messages.map((m) => {
-                    const mine = m?.sender?.id === me?.id;
+                    const mine = Number(m?.sender?.id) === Number(me?.id);
                     return (
                       <div key={m.message_id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
                         <div

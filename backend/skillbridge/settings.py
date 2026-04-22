@@ -47,7 +47,6 @@ INSTALLED_APPS = [
     'apps.learning',
     'apps.career',
     'apps.analytics',
-    'apps.interests',
     'apps.projects',
     'apps.cv',
     'apps.chatbot',

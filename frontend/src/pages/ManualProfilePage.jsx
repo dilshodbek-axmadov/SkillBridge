@@ -1,8 +1,8 @@
-﻿import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Zap, ArrowLeft, ArrowRight, Check, Loader2, Search,
-  X, ChevronDown, Briefcase, BarChart3, Code2, Heart,
+  X, ChevronDown, Briefcase, BarChart3, Code2,
   AlertCircle,
 } from 'lucide-react';
 import api from '../services/api';
@@ -11,7 +11,6 @@ const STEPS = [
   { id: 1, label: 'Career Goals' },
   { id: 2, label: 'Experience' },
   { id: 3, label: 'Skills' },
-  { id: 4, label: 'Interests' },
 ];
 
 const EXPERIENCE_LEVELS = [
@@ -54,7 +53,7 @@ const PROFICIENCY_OPTIONS = [
   { value: 'expert', label: 'Expert' },
 ];
 
-const STEP_ICONS = [Briefcase, BarChart3, Code2, Heart];
+const STEP_ICONS = [Briefcase, BarChart3, Code2];
 
 // ─── Step 1: Job Position ────────────────────────────────────────
 
@@ -471,136 +470,6 @@ function StepSkills({ selected, onAdd, onRemove, onUpdateProficiency }) {
   );
 }
 
-// ─── Step 4: Interests ───────────────────────────────────────────
-
-function StepInterests({ selected, onToggle }) {
-  const [allInterests, setAllInterests] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchInterests = async () => {
-      try {
-        const [interestsRes, catsRes] = await Promise.all([
-          api.get('/interests/browse/'),
-          api.get('/interests/categories/'),
-        ]);
-        setAllInterests(interestsRes.data.interests || []);
-        setCategories(catsRes.data.categories || []);
-      } catch {
-        // fallback
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInterests();
-  }, []);
-
-  const CATEGORY_ICONS = {
-    tech: '💻',
-    design: '🎨',
-    management: '📊',
-    business: '💰',
-    creative: '✨',
-  };
-
-  const displayInterests = activeCategory
-    ? allInterests.filter((i) => i.category === activeCategory)
-    : allInterests;
-
-  const selectedSet = new Set(selected);
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          What are your interests?
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
-          Optional — helps us suggest career paths that match your passions.
-        </p>
-      </div>
-
-      {/* Category tabs */}
-      {categories.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-              !activeCategory
-                ? 'border-purple-500 bg-purple-50 text-purple-700'
-                : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.code}
-              onClick={() => setActiveCategory(cat.code)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-                activeCategory === cat.code
-                  ? 'border-purple-500 bg-purple-50 text-purple-700'
-                  : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
-              }`}
-            >
-              {CATEGORY_ICONS[cat.code] || '📌'} {cat.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Interest grid */}
-      {loading ? (
-        <div className="flex items-center justify-center py-10">
-          <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {displayInterests.map((interest) => {
-            const isSelected = selectedSet.has(interest.interest_id);
-            return (
-              <button
-                key={interest.interest_id}
-                onClick={() => onToggle(interest.interest_id)}
-                className={`text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                  isSelected
-                    ? 'border-purple-500 bg-purple-50 shadow-sm'
-                    : 'border-gray-200 bg-white hover:border-purple-300'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm font-medium ${isSelected ? 'text-purple-700' : 'text-gray-700'}`}>
-                    {interest.name_en}
-                  </span>
-                  {isSelected && (
-                    <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
-                  )}
-                </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 block capitalize">
-                  {interest.category}
-                </span>
-              </button>
-            );
-          })}
-          {displayInterests.length === 0 && !loading && (
-            <p className="col-span-full text-center text-gray-400 text-sm py-6">
-              No interests available.
-            </p>
-          )}
-        </div>
-      )}
-
-      <p className="text-xs text-gray-400 text-center">
-        {selected.length} interest{selected.length !== 1 ? 's' : ''} selected (optional)
-      </p>
-    </div>
-  );
-}
-
 // ─── Main Page ───────────────────────────────────────────────────
 
 export default function ManualProfilePage() {
@@ -616,20 +485,18 @@ export default function ManualProfilePage() {
   const [desiredRole, setDesiredRole] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('');
   const [skills, setSkills] = useState([]);
-  const [interestIds, setInterestIds] = useState([]);
 
   const canProceed = () => {
     switch (step) {
       case 1: return desiredRole.trim().length > 0;
       case 2: return experienceLevel.length > 0;
       case 3: return skills.length >= 1;
-      case 4: return true; // optional
       default: return false;
     }
   };
 
   const handleNext = () => {
-    if (step < 4) {
+    if (step < 3) {
       setStep(step + 1);
       setError('');
     } else {
@@ -660,7 +527,6 @@ export default function ManualProfilePage() {
           proficiency_level: s.proficiency_level,
           years_of_experience: 0,
         })),
-        interest_ids: interestIds,
       });
 
       navigate(finalRedirect);
@@ -692,15 +558,6 @@ export default function ManualProfilePage() {
       prev.map((s) =>
         s.skill_id === skillId ? { ...s, proficiency_level: proficiency } : s
       )
-    );
-  };
-
-  // Interest handler
-  const handleToggleInterest = (interestId) => {
-    setInterestIds((prev) =>
-      prev.includes(interestId)
-        ? prev.filter((id) => id !== interestId)
-        : [...prev, interestId]
     );
   };
 
@@ -803,12 +660,6 @@ export default function ManualProfilePage() {
                 onUpdateProficiency={handleUpdateProficiency}
               />
             )}
-            {step === 4 && (
-              <StepInterests
-                selected={interestIds}
-                onToggle={handleToggleInterest}
-              />
-            )}
           </div>
 
           {/* Navigation */}
@@ -831,7 +682,7 @@ export default function ManualProfilePage() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Saving...
                 </>
-              ) : step < 4 ? (
+              ) : step < 3 ? (
                 <>
                   Next
                   <ArrowRight className="w-4 h-4" />

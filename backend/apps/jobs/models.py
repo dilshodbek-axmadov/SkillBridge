@@ -190,59 +190,6 @@ class JobApplication(models.Model):
         return f"{self.applicant_id} → job {self.job_posting_id}"
 
 
-# ==================== JOB TRANSLATION ====================
-
-class JobPostingTranslation(models.Model):
-
-    QUALITY_CHOICES = [
-        ('raw', _('Raw AI')),
-        ('reviewed', _('Reviewed')),
-        ('verified', _('Verified')),
-    ]
-
-    translation_id = models.AutoField(primary_key=True)
-
-    job_posting = models.ForeignKey(
-        JobPosting,
-        on_delete=models.CASCADE,
-        related_name='translations'
-    )
-
-    language_code = models.CharField(
-        _('language'),
-        max_length=2
-    )
-
-    job_title = models.CharField(_('job title'), max_length=255)
-    job_category = models.CharField(_('category'), max_length=100, blank=True)
-    job_description = models.TextField(_('description'), blank=True)
-    requirements = models.TextField(_('requirements'), blank=True)
-    responsibilities = models.TextField(_('responsibilities'), blank=True)
-
-    translated_by = models.CharField(
-        _('translated by'),
-        max_length=20,
-        choices=[('ai', _('AI')), ('human', _('Human'))],
-        default='ai'
-    )
-
-    translation_quality = models.CharField(
-        _('quality'),
-        max_length=20,
-        choices=QUALITY_CHOICES,
-        default='raw'
-    )
-
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
-
-    class Meta:
-        db_table = 'job_posting_translations'
-        unique_together = [('job_posting', 'language_code')]
-        verbose_name = _('job translation')
-        verbose_name_plural = _('job translations')
-
-
 # ==================== JOB SKILL ====================
 
 class JobSkill(models.Model):

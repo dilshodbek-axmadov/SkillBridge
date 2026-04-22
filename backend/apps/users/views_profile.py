@@ -413,10 +413,9 @@ class CreateManualProfileView(APIView):
         log_user_activity(
             request.user,
             UserActivity.ActivityType.PROFILE_SETUP,
-            'Profile created with your role, skills, and interests.',
+            'Profile created with your role and skills.',
             metadata={
                 'skills_added': result.get('skills_added', 0),
-                'interests_added': result.get('interests_added', 0),
             },
             link_path='/dashboard',
         )
@@ -426,7 +425,6 @@ class CreateManualProfileView(APIView):
             'profile': profile_serializer.data,
             'stats': {
                 'skills_added': result['skills_added'],
-                'interests_added': result['interests_added']
             },
             'profile_completed': True
         }, status=201)
@@ -454,10 +452,6 @@ class GetProfileSummaryView(APIView):
         has_skills = user_skills.count() >= 1
         has_experience = bool(profile.experience_level)
         profile_completed = has_position and has_skills and has_experience
-        
-        # Get interests
-        from apps.interests.models import UserInterest
-        user_interests = UserInterest.objects.filter(user=user).select_related('interest')
         
         return Response({
             'user': {
@@ -488,14 +482,6 @@ class GetProfileSummaryView(APIView):
                     for skill in user_skills
                 ]
             },
-            'interests': [
-                {
-                    'interest_id': ui.interest.interest_id,
-                    'name': ui.interest.name,
-                    'category': ui.interest.category
-                }
-                for ui in user_interests
-            ],
             'completion': {
                 'profile_completed': profile_completed,
                 'has_position': has_position,

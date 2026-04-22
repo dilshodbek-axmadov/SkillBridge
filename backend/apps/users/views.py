@@ -395,7 +395,6 @@ class ExportUserDataView(APIView):
     def get(self, request):
         user = request.user
         from apps.skills.models import UserSkill
-        from apps.interests.models import UserInterest
 
         try:
             profile = user.profile
@@ -424,12 +423,6 @@ class ExportUserDataView(APIView):
             )
         )
 
-        interests = list(
-            UserInterest.objects.filter(user=user)
-            .select_related('interest')
-            .values('interest__name_en', 'interest__category')
-        )
-
         return Response({
             'user': {
                 'email': user.email,
@@ -442,5 +435,4 @@ class ExportUserDataView(APIView):
             },
             'profile': profile_data,
             'skills': skills,
-            'interests': interests,
         })
