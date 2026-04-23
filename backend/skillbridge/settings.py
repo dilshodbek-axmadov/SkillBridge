@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-hj%p64g7@%qrs^m@sxn_1=as2*ndzha^j6o&&n(b)7k8n)zn!#'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG')
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.cv',
     'apps.chatbot',
     'apps.messaging',
+    'apps.payments',
 ]
 
 # REST Framework configuration
@@ -285,3 +286,12 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=9, minute=0),
     },
 }
+
+# stripe config
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+STRIPE_CV_DOWNLOAD_PRICE_ID = config('STRIPE_CV_DOWNLOAD_PRICE_ID')
+STRIPE_PRO_SUBSCRIPTION_PRICE_ID = config('STRIPE_PRO_SUBSCRIPTION_PRICE_ID')
+FRONTEND_URL = config('FRONTEND_URL')
+BACKEND_URL = config('BACKEND_URL')

@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/v1/jobs/', include('apps.jobs.urls')),
     path('api/v1/recruiters/', include('apps.recruiters.urls')),
     path('api/v1/messages/', include('apps.messaging.urls')),
+    path('api/v1/payments/', include('apps.payments.urls')),
 
     # API Schema & Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
