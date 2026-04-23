@@ -183,10 +183,13 @@ class RecruiterJobPostingSerializer(serializers.ModelSerializer):
             'updated_at',
             'view_count',
             'is_active',
+            # Server sets this on create; clients shouldn't be forced to provide it.
+            'posted_date',
         ]
         extra_kwargs = {
             'job_url': {'required': False, 'allow_blank': True},
             'listing_status': {'required': False},
+            'deadline_date': {'required': False, 'allow_null': True},
         }
 
     def get_application_count(self, obj):
