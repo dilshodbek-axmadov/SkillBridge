@@ -11,6 +11,9 @@ app_name = 'recruiters'
 urlpatterns = [
     path('dashboard/', views.RecruiterDashboardView.as_view(), name='dashboard'),
     path('analytics/', views.RecruiterAnalyticsView.as_view(), name='analytics'),
+    path('access/', views.RecruiterAccessStateView.as_view(), name='access_state'),
+    path('subscribe/', views.RecruiterProSubscribeView.as_view(), name='subscribe'),
+    path('subscribe/verify/', views.RecruiterProSubscribeVerifyView.as_view(), name='subscribe_verify'),
 
     path('candidates/', views.CandidateListView.as_view(), name='candidate_list'),
     path('candidates/<int:candidate_id>/', views.CandidateDetailView.as_view(), name='candidate_detail'),

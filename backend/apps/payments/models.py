@@ -31,12 +31,14 @@ class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
 
     stripe_subscription_id = models.CharField(max_length=255, unique=True)
-    stripe_price_id = models.CharField(max_length=255)
+    stripe_price_id = models.CharField(max_length=255, blank=True, default='')
 
-    status = models.CharField(max_length=50, choices=Status.choices)
+    status = models.CharField(max_length=50, choices=Status.choices, blank=True, default='')
 
-    current_period_start = models.DateTimeField()
-    current_period_end = models.DateTimeField()
+    # Nullable: Stripe's 2024+ API moved these to the item level, and some
+    # subscription lifecycle events arrive before a period is set.
+    current_period_start = models.DateTimeField(null=True, blank=True)
+    current_period_end = models.DateTimeField(null=True, blank=True)
 
     cancel_at_period_end = models.BooleanField(default=False)
 

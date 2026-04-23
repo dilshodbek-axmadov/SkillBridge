@@ -20,6 +20,7 @@ import useAuthStore from '../store/authStore';
 import useRecruiterGate from '../hooks/useRecruiterGate';
 import RecruiterLayout from '../components/layout/RecruiterLayout';
 import api from '../services/api';
+import { startProCheckout } from '../utils/startProCheckout';
 
 function cn(...parts) {
   return parts.filter(Boolean).join(' ');
@@ -83,6 +84,15 @@ export default function RecruiterCandidateDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+
+  const handleUpgrade = async () => {
+    if (upgrading) return;
+    setUpgrading(true);
+    setError('');
+    const ok = await startProCheckout({ onError: (msg) => setError(msg) });
+    if (!ok) setUpgrading(false);
+  };
 
   useEffect(() => {
     const run = async () => {
@@ -381,11 +391,16 @@ export default function RecruiterCandidateDetailPage() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => setError('Upgrade flow not implemented yet.')}
-                            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg border-none cursor-pointer"
+                            onClick={handleUpgrade}
+                            disabled={upgrading}
+                            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 rounded-lg border-none cursor-pointer"
                           >
-                            <Download className="w-4 h-4" />
-                            Upgrade Now
+                            {upgrading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="w-4 h-4" />
+                            )}
+                            {upgrading ? 'Redirecting…' : 'Upgrade Now'}
                           </button>
                         </div>
                       </div>

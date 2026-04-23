@@ -12,9 +12,21 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.conf import settings as django_settings
+
 from apps.cv.models import CV
 from apps.cv.services.cv_export import CVExportService
 from apps.jobs.models import JobPosting
+from apps.payments.recruiter_access import (
+    can_post_job,
+    can_view_analytics,
+    get_developer_visibility_limit,
+    get_recruiter_access_state,
+)
+from apps.payments.services import (
+    create_pro_subscription_checkout_session,
+    verify_and_sync_pro_subscription,
+)
 from apps.recruiters.analytics import get_recruiter_analytics
 from apps.recruiters.models import RecruiterSavedSearch, SavedCandidate
 from apps.recruiters.serializers import (
@@ -64,7 +76,122 @@ class RecruiterDashboardView(RecruiterOnlyMixin, APIView):
                     'plan': request.user.recruiter_plan,
                     'is_pro': request.user.is_recruiter_pro,
                 },
+                'access': get_recruiter_access_state(request.user),
             }
+        )
+
+
+class RecruiterAccessStateView(RecruiterOnlyMixin, APIView):
+    """
+    GET /api/v1/recruiters/access/
+
+    Single source of truth for the frontend to render plan-gated UI state.
+    """
+
+    def get(self, request):
+        denied = self._ensure_recruiter(request)
+        if denied:
+            return denied
+        return Response(get_recruiter_access_state(request.user))
+
+
+class RecruiterProSubscribeView(RecruiterOnlyMixin, APIView):
+    """
+    POST /api/v1/recruiters/subscribe/
+
+    Initiates a Stripe Checkout session for Recruiter Pro. Returns a URL the
+    frontend redirects to; after Stripe success, the subscription webhook sets
+    User.recruiter_plan = PRO and access-state endpoints immediately unlock.
+    """
+
+    def post(self, request):
+        denied = self._ensure_recruiter(request)
+        if denied:
+            return denied
+
+        if request.user.is_recruiter_pro:
+            return Response(
+                {'error': 'You are already on Recruiter Pro.', 'code': 'already_pro'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        frontend_url = getattr(django_settings, 'FRONTEND_URL', '').rstrip('/')
+        success_url = f"{frontend_url}/payment/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{frontend_url}/payment/subscription/failure"
+
+        try:
+            checkout_url = create_pro_subscription_checkout_session(
+                user=request.user,
+                success_url=success_url,
+                cancel_url=cancel_url,
+            )
+        except ValueError as e:
+            return Response(
+                {'error': str(e), 'code': 'subscription_not_configured'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Could not start checkout: {e}', 'code': 'stripe_error'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response({'checkout_url': checkout_url}, status=status.HTTP_200_OK)
+
+
+class RecruiterProSubscribeVerifyView(RecruiterOnlyMixin, APIView):
+    """
+    POST /api/v1/recruiters/subscribe/verify/
+
+    Called by the frontend success page after Stripe redirects back with
+    ?session_id=cs_test_xxx. We retrieve the session from Stripe, validate
+    it belongs to this user and was paid, then upsert the Subscription row
+    and flip User.recruiter_plan to PRO server-side.
+
+    This is webhook-independent; it guarantees access unlocks instantly
+    even when Stripe CLI isn't forwarding events locally.
+    """
+
+    def post(self, request):
+        denied = self._ensure_recruiter(request)
+        if denied:
+            return denied
+
+        session_id = (request.data.get('session_id') or '').strip()
+        if not session_id:
+            return Response(
+                {'error': 'session_id is required.', 'code': 'missing_session_id'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            result = verify_and_sync_pro_subscription(user=request.user, session_id=session_id)
+        except Exception as e:
+            # Don't 500: the plan may have been flipped before the error.
+            # Tell the frontend what the current access state is.
+            import traceback as _tb
+            _tb.print_exc()
+            return Response(
+                {
+                    'error': f'Verification hit an error but your plan state was refreshed: {e}',
+                    'code': 'verify_partial',
+                    'is_pro': request.user.is_recruiter_pro,
+                    'access': get_recruiter_access_state(request.user),
+                },
+                status=status.HTTP_200_OK,
+            )
+        if not result['ok']:
+            return Response(
+                {'error': result['reason'] or 'Could not verify subscription.', 'code': 'verify_failed'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                'is_pro': result['is_pro'],
+                'access': get_recruiter_access_state(request.user),
+            },
+            status=status.HTTP_200_OK,
         )
 
 
@@ -79,11 +206,18 @@ class RecruiterAnalyticsView(RecruiterOnlyMixin, APIView):
         denied = self._ensure_recruiter(request)
         if denied:
             return denied
-        if not request.user.is_recruiter_pro and not request.user.is_staff:
+        access = can_view_analytics(request.user)
+        if not access['allowed']:
             return Response(
                 {
-                    'error': 'Analytics are available on SkillBridge Recruiter Pro.',
-                    'code': 'pro_required',
+                    'error': access['reason'],
+                    'code': access['code'],
+                    'plan': access['plan'],
+                    'upgrade_required': True,
+                    'unlock': {
+                        'target': 'recruiter_pro',
+                        'feature': 'analytics',
+                    },
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -149,7 +283,22 @@ class CandidateListView(RecruiterOnlyMixin, APIView):
             qs = qs.order_by('-created_at')
 
         total = qs.count()
-        rows = qs[offset : offset + limit]
+
+        # Plan-based visibility cap: free recruiters see at most N results total.
+        visibility_limit = get_developer_visibility_limit(request.user)
+        visible_total = total if visibility_limit is None else min(total, visibility_limit)
+
+        effective_limit = limit
+        effective_offset = offset
+        if visibility_limit is not None:
+            # Clamp offset+limit to the visibility window.
+            if effective_offset >= visibility_limit:
+                effective_offset = visibility_limit
+                effective_limit = 0
+            else:
+                effective_limit = min(limit, visibility_limit - effective_offset)
+
+        rows = qs[effective_offset : effective_offset + effective_limit] if effective_limit > 0 else qs.none()
         data = CandidateCardSerializer(rows, many=True).data
 
         # Mark if saved by this recruiter
@@ -161,7 +310,19 @@ class CandidateListView(RecruiterOnlyMixin, APIView):
         for row in data:
             row['is_saved'] = row['id'] in saved_ids
 
-        return Response({'total': total, 'limit': limit, 'offset': offset, 'candidates': data})
+        return Response({
+            'total': visible_total,
+            'total_unfiltered': total,
+            'limit': effective_limit,
+            'offset': effective_offset,
+            'candidates': data,
+            'access': {
+                'plan': 'pro' if request.user.is_recruiter_pro or request.user.is_staff else 'free',
+                'developer_visibility_limit': visibility_limit,
+                'truncated': visibility_limit is not None and total > visibility_limit,
+                'upgrade_required': visibility_limit is not None and total > visibility_limit,
+            },
+        })
 
 
 class CandidateDetailView(RecruiterOnlyMixin, APIView):
@@ -428,6 +589,28 @@ class RecruiterJobListCreateView(RecruiterOnlyMixin, APIView):
         denied = self._ensure_recruiter(request)
         if denied:
             return denied
+
+        # Subscription/plan gating (Free: 1 job per 30d; Pro: unlimited).
+        access = can_post_job(request.user)
+        if not access['allowed']:
+            return Response(
+                {
+                    'error': access['reason'],
+                    'code': access['code'],
+                    'plan': access['plan'],
+                    'used': access['used'],
+                    'limit': access['limit'],
+                    'remaining': access['remaining'],
+                    'window_days': access['window_days'],
+                    'upgrade_required': True,
+                    'unlock': {
+                        'target': 'recruiter_pro',
+                        'feature': 'job_post',
+                    },
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = RecruiterJobPostingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data

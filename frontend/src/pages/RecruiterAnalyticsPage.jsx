@@ -10,11 +10,13 @@ import {
   Search,
   PieChart,
   Filter,
+  Sparkles,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import useRecruiterGate from '../hooks/useRecruiterGate';
 import RecruiterLayout from '../components/layout/RecruiterLayout';
 import api from '../services/api';
+import { startProCheckout } from '../utils/startProCheckout';
 
 function Section({ icon: Icon, title, description, children }) {
   return (
@@ -56,6 +58,17 @@ function BarRow({ label, value, max }) {
 }
 
 function ProGate({ user }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleUpgrade = async () => {
+    setError('');
+    setLoading(true);
+    const ok = await startProCheckout({ onError: setError });
+    if (!ok) setLoading(false);
+    // if ok, browser navigates to Stripe; don't reset state
+  };
+
   return (
     <RecruiterLayout user={user}>
       <div className="max-w-lg mx-auto text-center py-16 px-4">
@@ -68,13 +81,30 @@ function ProGate({ user }) {
           funnel metrics. Upgrade to <strong className="text-gray-800 dark:text-gray-200">SkillBridge Recruiter Pro</strong>{' '}
           to access this workspace.
         </p>
+        {error && (
+          <div className="mb-4 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-lg px-3 py-2">
+            {error}
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            to="/settings"
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold no-underline"
+          <button
+            type="button"
+            onClick={handleUpgrade}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-semibold border-none cursor-pointer"
           >
-            Billing &amp; plan (coming soon)
-          </Link>
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Redirecting to Stripe…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Upgrade to Recruiter Pro
+              </>
+            )}
+          </button>
           <Link
             to="/recruiter/dashboard"
             className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 text-sm font-semibold no-underline"
@@ -83,7 +113,8 @@ function ProGate({ user }) {
           </Link>
         </div>
         <p className="text-xs text-gray-400 mt-8">
-          Pro is enforced by your account&apos;s <code className="text-[11px]">recruiter_plan</code> on the server.
+          Pro is enforced by your account&apos;s <code className="text-[11px]">recruiter_plan</code> on the server,
+          updated automatically after a successful Stripe subscription.
         </p>
       </div>
     </RecruiterLayout>

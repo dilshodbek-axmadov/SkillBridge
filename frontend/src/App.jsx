@@ -32,6 +32,10 @@ import RecruiterJobEditorPage from './pages/RecruiterJobEditorPage';
 import AdminOverviewPage from './pages/AdminOverviewPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
+import CVPaymentSuccessPage from './pages/CVPaymentSuccessPage';
+import CVPaymentFailurePage from './pages/CVPaymentFailurePage';
+import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
+import SubscriptionFailurePage from './pages/SubscriptionFailurePage';
 
 function MarketingLayout() {
   return (
@@ -75,6 +79,10 @@ function AppRoutes() {
       <Route path="/manage-skills" element={<ManageSkillsPage />} />
       <Route path="/roadmap" element={<LearningRoadmapPage />} />
       <Route path="/cv-builder" element={<CVBuilderPage />} />
+      <Route path="/payment/cv/success" element={<CVPaymentSuccessPage />} />
+      <Route path="/payment/cv/failure" element={<CVPaymentFailurePage />} />
+      <Route path="/payment/subscription/success" element={<SubscriptionSuccessPage />} />
+      <Route path="/payment/subscription/failure" element={<SubscriptionFailurePage />} />
       <Route path="/chat" element={<ChatbotPage />} />
       <Route path="/messages" element={<MessagesPage />} />
       <Route path="/project-ideas" element={<ProjectIdeasPage />} />

@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse
+from decimal import Decimal
+from django.conf import settings
 
 from apps.cv.models import CV
 from apps.cv.services.cv_service import CVService
@@ -22,6 +24,9 @@ from apps.cv.serializers import (
     SwitchTemplateRequestSerializer,
     ExportCVRequestSerializer,
 )
+from apps.payments.access import can_download_cv, has_paid_for_cv
+from apps.payments.models import Payment
+from apps.payments.services import create_payment_intent, create_cv_checkout_session
 
 
 def _build_export_response(cv, export_format):
@@ -297,9 +302,123 @@ class ExportCVView(APIView):
             owner_profile = getattr(owner, 'profile', None)
             if owner.is_developer and owner_profile and owner_profile.open_to_recruiters:
                 return _build_export_response(cv, export_format)
+            
+        if can_download_cv(request.user, cv_id=cv_id):
+            return _build_export_response(cv, export_format)
 
-        # Avoid leaking CV existence.
-        return Response({'error': 'CV not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"error": "Payment required to download this CV."},
+            status=403,
+        )
+
+
+class CVPayView(APIView):
+    """
+    POST /api/v1/cv/{cv_id}/pay/
+
+    Initiate a one-time Stripe PaymentIntent for CV download.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cv_id):
+        # Ensure CV exists (and avoid initiating payments for invalid IDs).
+        try:
+            CV.objects.only('cv_id').get(cv_id=cv_id)
+        except CV.DoesNotExist:
+            return Response({'error': 'CV not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # If already paid for this CV, short-circuit.
+        if has_paid_for_cv(request.user, cv_id=cv_id):
+            return Response({"already_paid": True}, status=status.HTTP_200_OK)
+
+        currency = 'usd'
+
+        # Preferred: Stripe Checkout redirect flow.
+        try:
+            frontend = getattr(settings, "FRONTEND_URL", "").rstrip("/")
+            success_url = f"{frontend}/payment/cv/success?cv_id={cv_id}"
+            cancel_url = f"{frontend}/payment/cv/failure?cv_id={cv_id}"
+            checkout_url = create_cv_checkout_session(
+                user=request.user,
+                cv_id=cv_id,
+                success_url=success_url,
+                cancel_url=cancel_url,
+            )
+            return Response(
+                {
+                    "checkout_url": checkout_url,
+                    "currency": currency,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception:
+            # Fallback: PaymentIntent (for environments without Checkout price/session config).
+            amount = Decimal('0.50')
+            intent_data = create_payment_intent(
+                user=request.user,
+                amount=amount,
+                currency=currency,
+                payment_type=Payment.PaymentType.CV_DOWNLOAD,
+                metadata={
+                    "cv_id": str(cv_id),
+                    "user_id": str(request.user.id),
+                    "payment_type": Payment.PaymentType.CV_DOWNLOAD,
+                },
+                return_intent=True,
+            )
+            return Response(
+                {
+                    "client_secret": intent_data["client_secret"],
+                    "payment_intent_id": intent_data["payment_intent_id"],
+                    "amount": float(amount),
+                    "currency": currency,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+
+class CVAccessStatusView(APIView):
+    """
+    GET /api/v1/cv/{cv_id}/access-status/
+
+    Return whether the authenticated user can download this CV, and whether they've paid.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, cv_id):
+        # Avoid leaking CV existence details beyond a simple 404.
+        try:
+            CV.objects.only('cv_id').get(cv_id=cv_id)
+        except CV.DoesNotExist:
+            return Response({'error': 'CV not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        can_download = can_download_cv(request.user, cv_id=cv_id)
+
+        # "paid" is specifically tied to CV_DOWNLOAD payments.
+        paid = False
+        qs = Payment.objects.filter(
+            user=request.user,
+            payment_type=Payment.PaymentType.CV_DOWNLOAD,
+            status=Payment.Status.SUCCEEDED,
+        ).only('metadata')
+        for p in qs:
+            meta = p.metadata or {}
+            if 'cv_id' not in meta:
+                paid = True
+                break
+            if str(meta.get('cv_id')) == str(cv_id):
+                paid = True
+                break
+
+        return Response(
+            {
+                "can_download": bool(can_download),
+                "paid": bool(paid),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 

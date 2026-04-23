@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Loader2, UserPlus, Check } from 'lucide-react';
+import { Search, Loader2, UserPlus, Check, Lock, Sparkles } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import useRecruiterGate from '../hooks/useRecruiterGate';
 import RecruiterLayout from '../components/layout/RecruiterLayout';
 import api from '../services/api';
+import { startProCheckout } from '../utils/startProCheckout';
 
 export default function RecruiterCandidatesPage() {
   useRecruiterGate();
@@ -16,8 +17,19 @@ export default function RecruiterCandidatesPage() {
   const [skill, setSkill] = useState('');
   const [candidates, setCandidates] = useState([]);
   const [total, setTotal] = useState(0);
+  const [totalUnfiltered, setTotalUnfiltered] = useState(0);
+  const [accessInfo, setAccessInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
+  const [upgradeBusy, setUpgradeBusy] = useState(false);
+  const [upgradeError, setUpgradeError] = useState('');
+
+  const handleUpgrade = async () => {
+    setUpgradeError('');
+    setUpgradeBusy(true);
+    const ok = await startProCheckout({ onError: setUpgradeError });
+    if (!ok) setUpgradeBusy(false);
+  };
 
   const load = async (overrides) => {
     const qv = overrides?.q ?? q;
@@ -34,9 +46,13 @@ export default function RecruiterCandidatesPage() {
       const { data } = await api.get(path);
       setCandidates(data.candidates || []);
       setTotal(data.total ?? 0);
+      setTotalUnfiltered(data.total_unfiltered ?? data.total ?? 0);
+      setAccessInfo(data.access || null);
     } catch {
       setCandidates([]);
       setTotal(0);
+      setTotalUnfiltered(0);
+      setAccessInfo(null);
     } finally {
       setLoading(false);
     }
@@ -115,10 +131,55 @@ export default function RecruiterCandidatesPage() {
         </div>
         {!loading && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {total} {total === 1 ? 'profile' : 'profiles'} match
+            {accessInfo?.truncated ? (
+              <>
+                Showing <strong>{total}</strong> of <strong>{totalUnfiltered}</strong>{' '}
+                {totalUnfiltered === 1 ? 'profile' : 'profiles'} (Free plan preview)
+              </>
+            ) : (
+              <>
+                {total} {total === 1 ? 'profile' : 'profiles'} match
+              </>
+            )}
           </p>
         )}
       </form>
+
+      {accessInfo?.truncated && (
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 shrink-0" />
+            <span>
+              Free plan shows only the first <strong>{accessInfo.developer_visibility_limit}</strong> candidates of{' '}
+              <strong>{totalUnfiltered}</strong>. Upgrade to Recruiter Pro to unlock all results and contact details.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleUpgrade}
+            disabled={upgradeBusy}
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-xs font-semibold border-none cursor-pointer shrink-0"
+          >
+            {upgradeBusy ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Redirecting…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" />
+                Upgrade to Pro
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {upgradeError && (
+        <div className="mb-4 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-lg px-3 py-2">
+          {upgradeError}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16">

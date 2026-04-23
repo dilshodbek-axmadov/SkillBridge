@@ -154,11 +154,19 @@ export default function RecruiterJobEditorPage() {
         navigate('/recruiter/jobs');
       }
     } catch (e) {
-      const msg =
-        e.response?.data?.detail ||
-        (typeof e.response?.data === 'object' && Object.values(e.response.data).flat()?.[0]) ||
-        'Save failed.';
-      setError(String(msg));
+      const body = e.response?.data;
+      if (e.response?.status === 403 && body?.code === 'free_plan_job_limit') {
+        setError(
+          `${body.error || 'Free plan limit reached.'} Used ${body.used}/${body.limit} in last ${body.window_days} days. Upgrade to Recruiter Pro for unlimited postings.`
+        );
+      } else {
+        const msg =
+          body?.error ||
+          body?.detail ||
+          (typeof body === 'object' && Object.values(body).flat()?.[0]) ||
+          'Save failed.';
+        setError(String(msg));
+      }
     } finally {
       setSaving(false);
     }

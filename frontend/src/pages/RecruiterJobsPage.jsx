@@ -11,11 +11,15 @@ import {
   Archive,
   Send,
   FileEdit,
+  Lock,
+  Sparkles,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import useRecruiterGate from '../hooks/useRecruiterGate';
+import useRecruiterAccess from '../hooks/useRecruiterAccess';
 import RecruiterLayout from '../components/layout/RecruiterLayout';
 import api from '../services/api';
+import { startProCheckout } from '../utils/startProCheckout';
 
 const TABS = [
   { id: 'active', label: 'Active' },
@@ -41,6 +45,7 @@ function PerfCard({ label, value, icon: Icon, sub }) {
 export default function RecruiterJobsPage() {
   useRecruiterGate();
   const user = useAuthStore((s) => s.user);
+  const { access, refresh: refreshAccess } = useRecruiterAccess();
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,12 +93,31 @@ export default function RecruiterJobsPage() {
     try {
       await api.patch(`/recruiters/jobs/${jobId}/`, body);
       await load();
+      refreshAccess();
     } catch {
       /* store toast */
     } finally {
       setActionId(null);
     }
   };
+
+  const jobsAccess = access?.jobs;
+  const canPost = jobsAccess ? jobsAccess.allowed : true;
+  const isFree = access ? !access.is_pro : false;
+  const [upgradeBusy, setUpgradeBusy] = useState(false);
+  const [upgradeError, setUpgradeError] = useState('');
+
+  const handleUpgrade = async () => {
+    setUpgradeError('');
+    setUpgradeBusy(true);
+    const ok = await startProCheckout({ onError: setUpgradeError });
+    if (!ok) setUpgradeBusy(false);
+  };
+  const tooltip = !canPost
+    ? jobsAccess?.reason || 'Free plan limit reached. Upgrade to Recruiter Pro for unlimited postings.'
+    : isFree && jobsAccess?.limit != null
+      ? `Free plan: ${jobsAccess.used}/${jobsAccess.limit} posting${jobsAccess.limit === 1 ? '' : 's'} used in last ${jobsAccess.window_days} days`
+      : '';
 
   return (
     <RecruiterLayout user={user}>
@@ -105,14 +129,72 @@ export default function RecruiterJobsPage() {
             jobs.
           </p>
         </div>
-        <Link
-          to="/recruiter/jobs/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold no-underline shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Create job
-        </Link>
+        {canPost ? (
+          <Link
+            to="/recruiter/jobs/new"
+            title={tooltip}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold no-underline shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            Create job
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            title={tooltip}
+            aria-disabled="true"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-500 text-sm font-semibold border-none cursor-not-allowed shrink-0"
+          >
+            <Lock className="w-4 h-4" />
+            Create job
+          </button>
+        )}
       </div>
+
+      {isFree && jobsAccess?.limit != null && (
+        <div
+          className={`mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${
+            canPost
+              ? 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200'
+              : 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span>
+              Free plan — <strong>{jobsAccess.used}/{jobsAccess.limit}</strong> job{jobsAccess.limit === 1 ? '' : 's'}{' '}
+              posted in the last {jobsAccess.window_days} days.{' '}
+              {canPost
+                ? 'You can post one more; upgrade for unlimited.'
+                : 'You have reached the free plan limit. Upgrade to keep posting.'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleUpgrade}
+            disabled={upgradeBusy}
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-xs font-semibold border-none cursor-pointer shrink-0"
+          >
+            {upgradeBusy ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Redirecting…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" />
+                Upgrade to Pro
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      {upgradeError && (
+        <div className="mb-4 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-lg px-3 py-2">
+          {upgradeError}
+        </div>
+      )}
 
       {/* Job performance */}
       <section className="mb-8">

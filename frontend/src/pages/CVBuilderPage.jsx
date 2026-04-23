@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import useAuthStore from '../store/authStore';
@@ -11,6 +11,7 @@ import {
   Trophy, AlignLeft, Mail, Phone, MapPin, Github, Linkedin, Globe,
   Pen, Save, AlertCircle,
   RefreshCw,
+  Lock,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════
@@ -55,6 +56,8 @@ export default function CVBuilderPage() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedCvId = searchParams.get('cv_id');
 
   const [cv, setCv] = useState(null);
   const [sections, setSections] = useState([]);
@@ -74,7 +77,23 @@ export default function CVBuilderPage() {
 
   // download
   const [showDownload, setShowDownload] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [access, setAccess] = useState({ can_download: true, paid: true, loading: true });
+
+  const cvId = useMemo(() => (cv?.cv_id ? String(cv.cv_id) : null), [cv]);
+
+  const refreshAccess = useCallback(async (id) => {
+    if (!id) return;
+    setAccess((prev) => ({ ...prev, loading: true }));
+    try {
+      const { data } = await api.get(`/cv/${id}/access-status/`);
+      setAccess({ can_download: !!data?.can_download, paid: !!data?.paid, loading: false });
+    } catch {
+      // If access-status errors, keep download locked to be safe.
+      setAccess({ can_download: false, paid: false, loading: false });
+    }
+  }, []);
 
   /* ─── load ──────────────────────────── */
   useEffect(() => {
@@ -82,14 +101,15 @@ export default function CVBuilderPage() {
       try {
         const { data } = await api.get('/cv/');
         if (data.cvs && data.cvs.length > 0) {
-          const latest = data.cvs[0];
-          const detail = await api.get(`/cv/${latest.cv_id}/`);
+          const targetId = requestedCvId || data.cvs[0].cv_id;
+          const detail = await api.get(`/cv/${targetId}/`);
           setCv(detail.data);
           setSections(detail.data.sections || []);
           setTemplate(detail.data.template_type || 'modern');
           if (detail.data.sections?.length > 0) {
             setActiveSection(detail.data.sections[0].section_type);
           }
+          await refreshAccess(String(targetId));
         }
       } catch (err) {
         if (err.response?.status === 401) {
@@ -102,7 +122,15 @@ export default function CVBuilderPage() {
       }
     };
     load();
-  }, []);
+  }, [requestedCvId, refreshAccess]);
+
+  // When the tab regains focus (e.g. after Stripe redirect), refresh access status.
+  useEffect(() => {
+    if (!cvId) return;
+    const onFocus = () => refreshAccess(cvId);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [cvId, refreshAccess]);
 
   /* ─── auto-save ─────────────────────── */
   const scheduleSave = useCallback(() => {
@@ -198,6 +226,12 @@ export default function CVBuilderPage() {
   /* ─── download ──────────────────────── */
   const handleDownload = async (format) => {
     if (!cv) return;
+    // Enforce frontend gating: never hit export if locked.
+    if (!access?.can_download) {
+      setShowDownload(false);
+      setShowPaywall(true);
+      return;
+    }
     try {
       // Use export_format (not format) — DRF reserves ?format= for content negotiation
       const response = await api.get(`/cv/${cv.cv_id}/export/`, {
@@ -216,6 +250,27 @@ export default function CVBuilderPage() {
       setShowDownload(false);
     } catch {
       setError(t('cvBuilder.errors.download'));
+    }
+  };
+
+  const handleInitiatePayment = async () => {
+    if (!cv) return;
+    setError('');
+    try {
+      const { data } = await api.post(`/cv/${cv.cv_id}/pay/`);
+      if (data?.already_paid) {
+        setShowPaywall(false);
+        await refreshAccess(String(cv.cv_id));
+        return;
+      }
+      if (data?.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+      // PaymentIntent fallback not handled in this UX (requires Stripe Elements).
+      setError('Payment flow is not fully configured. Please contact support.');
+    } catch {
+      setError('Unable to start payment. Please try again.');
     }
   };
 
@@ -298,7 +353,12 @@ export default function CVBuilderPage() {
           onTemplateSwitch={handleTemplateSwitch}
           onRefresh={handleRefresh}
           refreshing={refreshing}
-          onDownload={() => setShowDownload(true)}
+          locked={!access?.can_download}
+          accessLoading={access?.loading}
+          onDownload={() => {
+            if (access?.can_download) setShowDownload(true);
+            else setShowPaywall(true);
+          }}
         />
 
         {/* Mobile tabs */}
@@ -373,6 +433,14 @@ export default function CVBuilderPage() {
           onClose={() => setShowDownload(false)}
         />
       )}
+
+      {/* Payment modal */}
+      {showPaywall && (
+        <PaymentRequiredModal
+          onClose={() => setShowPaywall(false)}
+          onPay={handleInitiatePayment}
+        />
+      )}
     </DashboardLayout>
   );
 }
@@ -435,7 +503,11 @@ function EmptyState({ onAutoFill, populating, error, template, onTemplateChange 
    Top Bar
    ═══════════════════════════════════════════ */
 
-function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onRefresh, refreshing, onDownload }) {
+function TopBar({
+  cv, template, saving, lastSaved,
+  onTemplateSwitch, onRefresh, refreshing, onDownload,
+  locked, accessLoading,
+}) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
@@ -474,9 +546,28 @@ function TopBar({ cv, template, saving, lastSaved, onTemplateSwitch, onRefresh, 
           {refreshing ? t('cvBuilder.topbar.refreshing') : t('cvBuilder.topbar.refresh')}
         </button>
 
-        <button onClick={onDownload} className={btnPrimary}>
-          <Download className="w-4 h-4" />{t('cvBuilder.topbar.download')}
-        </button>
+        <div className="relative">
+          <button
+            onClick={onDownload}
+            className={btnPrimary + (locked ? ' opacity-75' : '')}
+            aria-disabled={locked ? 'true' : 'false'}
+            title={locked ? 'Payment required' : undefined}
+          >
+            {accessLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : locked ? (
+              <Lock className="w-4 h-4" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            {t('cvBuilder.topbar.download')}
+          </button>
+          {locked && !accessLoading && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-lg bg-black/10" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1330,6 +1421,45 @@ function DownloadModal({ cv, onDownload, onClose }) {
           <button onClick={handleDownload} disabled={downloading} className={btnPrimary + ' flex-1 justify-center'}>
             {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {downloading ? t('cvBuilder.download.downloading') : t('cvBuilder.download.download')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaymentRequiredModal({ onClose, onPay }) {
+  const [paying, setPaying] = useState(false);
+
+  const handlePay = async () => {
+    setPaying(true);
+    await onPay();
+    setPaying(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl max-w-md w-full mx-4 p-6">
+        <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 bg-transparent border-none cursor-pointer">
+          <X className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+        </button>
+
+        <div className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <Lock className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+        </div>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-center mb-2">
+          Payment required
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+          You need to complete payment to download this CV.
+        </p>
+
+        <div className="flex gap-3">
+          <button onClick={onClose} className={btnOutline + ' flex-1 justify-center'}>Cancel</button>
+          <button onClick={handlePay} disabled={paying} className={btnPrimary + ' flex-1 justify-center'}>
+            {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+            {paying ? 'Redirecting…' : 'Pay'}
           </button>
         </div>
       </div>
