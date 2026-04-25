@@ -1,4 +1,661 @@
 """
+Consolidated HH job scraping service.
+
+This module merges the jobs app scraping pipeline components into a single,
+project-level service module while preserving existing behavior.
+
+Merged from:
+  - backend/apps/jobs/extraction_service.py
+  - backend/apps/jobs/scrapers/data_transformer.py
+  - backend/apps/jobs/scrapers/enhanced_skill_extractor.py
+  - backend/apps/jobs/utils/db_loader.py
+"""
+
+import logging
+from datetime import date, timedelta
+
+from django.db import transaction, IntegrityError
+from django.utils import timezone
+
+from apps.jobs.models import ExtractionRun, JobPosting
+from services.hh_api_client import HHAPIClient
+
+logger = logging.getLogger(__name__)
+
+
+class ExtractionService:
+    """
+    Orchestrates a single extraction run with tracking and atomicity.
+    """
+
+    def __init__(self, source='hh.uz'):
+        self.source = source
+
+    def run(self, run_date: date = None, trigger: str = 'scheduled',
+            full: bool = False) -> ExtractionRun:
+        """
+        Execute a full extraction for the given date.
+
+        1. Claim the run via unique constraint (source, run_date).
+        2. Search HH API for jobs posted since the last successful run.
+        3. Process and load all vacancies in a single atomic block.
+        4. Bulk-deactivate DB jobs no longer listed on API.
+        5. Update ExtractionRun with stats.
+
+        Args:
+            full: If True, use period=None to fetch ALL open vacancies
+                  (backfill mode). Otherwise, use incremental period.
+        """
+        run_date = run_date or timezone.localdate()
+
+        # Step 1: Claim the run (duplicate guard)
+        extraction_run = self._claim_run(run_date, trigger)
+        if extraction_run is None:
+            logger.info(f"Run already exists for {self.source}/{run_date}, skipping.")
+            return ExtractionRun.objects.get(
+                source=self.source, run_date=run_date
+            )
+
+        try:
+            extraction_run.status = 'running'
+            extraction_run.started_at = timezone.now()
+            extraction_run.save(update_fields=['status', 'started_at'])
+
+            # Step 2: Determine search period
+            if full:
+                period = None
+                logger.info(
+                    f"Starting FULL extraction for {self.source}/{run_date} "
+                    f"(no period filter — all open vacancies)"
+                )
+            else:
+                date_from = self._get_date_from(run_date)
+                period = max((run_date - date_from).days, 1)
+                logger.info(
+                    f"Starting extraction for {self.source}/{run_date}, "
+                    f"period={period} days (since {date_from})"
+                )
+
+            # Step 3: Search, process, load (atomic)
+            stats = self._execute_pipeline(period=period)
+
+            # Step 4: Bulk deactivation — compare API listing vs DB
+            deactivated = self._bulk_deactivate_missing_jobs()
+
+            # Step 5: Record success
+            extraction_run.status = 'success'
+            extraction_run.finished_at = timezone.now()
+            extraction_run.jobs_created = stats.get('jobs_created', 0)
+            extraction_run.jobs_updated = stats.get('jobs_updated', 0)
+            extraction_run.jobs_skipped = stats.get('jobs_skipped', 0)
+            extraction_run.jobs_deactivated = deactivated
+            extraction_run.aliases_created = stats.get('aliases_created', 0)
+            extraction_run.errors_count = stats.get('errors', 0)
+            extraction_run.save()
+
+            logger.info(
+                f"Extraction success: created={stats.get('jobs_created', 0)}, "
+                f"updated={stats.get('jobs_updated', 0)}, "
+                f"deactivated={deactivated}"
+            )
+            return extraction_run
+
+        except Exception as exc:
+            extraction_run.status = 'failed'
+            extraction_run.finished_at = timezone.now()
+            extraction_run.error_message = str(exc)[:2000]
+            extraction_run.save()
+            logger.exception(f"Extraction failed for {run_date}")
+            raise
+
+    def _claim_run(self, run_date, trigger):
+        """
+        Attempt to create an ExtractionRun row.
+        Returns the instance on success, None if duplicate.
+        """
+        try:
+            return ExtractionRun.objects.create(
+                source=self.source,
+                run_date=run_date,
+                status='pending',
+                trigger=trigger,
+            )
+        except IntegrityError:
+            return None
+
+    def _get_date_from(self, run_date):
+        """
+        Find the date of the last successful extraction.
+        Falls back to (run_date - 1 day) for daily runs.
+        """
+        last_success = (
+            ExtractionRun.objects
+            .filter(source=self.source, status='success', run_date__lt=run_date)
+            .order_by('-run_date')
+            .values_list('run_date', flat=True)
+            .first()
+        )
+        if last_success:
+            return last_success
+        return run_date - timedelta(days=1)
+
+    def _execute_pipeline(self, period: int) -> dict:
+        """
+        Run the scraping pipeline inside a single atomic transaction.
+        Re-uses existing components.
+        """
+        api_client = HHAPIClient(host='hh.uz')
+        skill_extractor = EnhancedSkillExtractor(use_ollama=False)
+        data_transformer = DataTransformer()
+        db_loader = DatabaseLoader()
+
+        # Search all IT roles (bypass 2000-result limit)
+        vacancy_items = self._search_all_roles(api_client, period)
+
+        if not vacancy_items:
+            logger.info("No vacancy items found.")
+            return db_loader.get_stats()
+
+        logger.info(f"Found {len(vacancy_items)} unique vacancy items.")
+
+        # Process vacancies (fetch details + extract skills)
+        vacancies_with_skills = self._process_vacancies(
+            api_client, skill_extractor, data_transformer, vacancy_items
+        )
+
+        logger.info(f"Processed {len(vacancies_with_skills)} valid vacancies.")
+
+        if not vacancies_with_skills:
+            return db_loader.get_stats()
+
+        # Load entire batch atomically
+        with transaction.atomic():
+            stats = db_loader.load_batch(vacancies_with_skills)
+
+        return stats
+
+    def _search_all_roles(self, api_client, period):
+        """Search each IT role separately (bypass 2000-result limit)."""
+        all_items = {}
+        roles = api_client.IT_PROFESSIONAL_ROLES
+
+        for i, role_id in enumerate(roles, 1):
+            try:
+                items = api_client.search_all_pages(
+                    professional_role=[role_id],
+                    period=period,
+                )
+                for item in items:
+                    all_items[item['id']] = item
+
+                if items:
+                    logger.debug(
+                        f"Role [{i}/{len(roles)}] {role_id}: "
+                        f"{len(items)} items (total unique: {len(all_items)})"
+                    )
+            except Exception as e:
+                logger.error(f"Error searching role {role_id}: {e}")
+                continue
+
+        return list(all_items.values())
+
+    def _process_vacancies(self, api_client, skill_extractor,
+                           data_transformer, vacancy_items):
+        """Fetch full details, extract skills, transform."""
+        results = []
+
+        for i, item in enumerate(vacancy_items, 1):
+            try:
+                full = api_client.get_vacancy(item['id'])
+
+                if not api_client.is_it_role(full.get('professional_roles', [])):
+                    continue
+
+                skills = skill_extractor.extract_skills_from_vacancy(full)
+                for s in skills:
+                    skill_extractor.track_skill_frequency(s['skill_text'])
+
+                data = data_transformer.transform_vacancy(full)
+                if not data_transformer.validate_vacancy_data(data):
+                    continue
+
+                data['skills'] = skills
+                results.append(data)
+
+                if i % 50 == 0:
+                    logger.info(f"Processed {i}/{len(vacancy_items)} vacancies...")
+
+            except Exception as e:
+                logger.error(f"Error processing vacancy {item['id']}: {e}")
+                continue
+
+        return results
+
+    def _bulk_deactivate_missing_jobs(self) -> int:
+        """
+        Efficient deactivation: fetch ALL active job IDs from the API
+        via paginated search (NO period filter = all open jobs), then
+        compare with the DB. Jobs in DB but not in API → deactivate.
+        Jobs in API with archived=true → also deactivate.
+
+        Returns:
+            Number of jobs deactivated.
+        """
+        api_client = HHAPIClient(host='hh.uz')
+
+        # 1. Fetch all currently listed IT job IDs from the API
+        #    period=None → no date filter → returns ALL open vacancies
+        logger.info("Fetching all active job IDs from API for deactivation check...")
+        api_active_ids = set()
+        api_archived_ids = set()
+
+        for role_id in api_client.IT_PROFESSIONAL_ROLES:
+            try:
+                items = api_client.search_all_pages(
+                    professional_role=[role_id],
+                    period=None,  # No period filter — get ALL open jobs
+                )
+                for item in items:
+                    job_id = str(item['id'])
+                    if item.get('archived', False):
+                        api_archived_ids.add(job_id)
+                    else:
+                        api_active_ids.add(job_id)
+            except Exception as e:
+                logger.error(f"Error fetching role {role_id} for deactivation: {e}")
+                continue
+
+        if not api_active_ids:
+            logger.warning("Got 0 job IDs from API — skipping deactivation to be safe.")
+            return 0
+
+        logger.info(
+            f"API returned {len(api_active_ids)} active + "
+            f"{len(api_archived_ids)} archived job IDs."
+        )
+
+        # 2. Get all active job external IDs from the DB
+        db_active = set(
+            JobPosting.objects.filter(
+                source=self.source,
+                is_active=True,
+            ).values_list('external_job_id', flat=True)
+        )
+
+        logger.info(f"DB has {len(db_active)} active jobs for source '{self.source}'.")
+
+        # 3. Jobs to deactivate:
+        #    a) In DB but NOT in API at all (removed/closed)
+        #    b) In DB AND in API but archived=true
+        not_in_api = db_active - api_active_ids - api_archived_ids
+        archived_in_api = db_active & api_archived_ids
+        to_deactivate = not_in_api | archived_in_api
+
+        if to_deactivate:
+            logger.info(
+                f"Deactivating {len(to_deactivate)} jobs "
+                f"({len(not_in_api)} not in API, {len(archived_in_api)} archived)."
+            )
+
+        if not to_deactivate:
+            logger.info("All DB jobs are still active on the API.")
+            return 0
+
+        # 4. Bulk update in one query
+        deactivated = JobPosting.objects.filter(
+            source=self.source,
+            external_job_id__in=to_deactivate,
+        ).update(is_active=False, listing_status=JobPosting.ListingStatus.ARCHIVED)
+
+        logger.info(f"Deactivated {deactivated} jobs no longer listed on API.")
+        return deactivated
+
+    @staticmethod
+    def can_retry(run_date: date, source: str = 'hh.uz') -> bool:
+        """Check if a failed run exists that can be retried."""
+        return ExtractionRun.objects.filter(
+            source=source, run_date=run_date, status='failed'
+        ).exists()
+
+    @staticmethod
+    def retry(run_date: date, source: str = 'hh.uz', full: bool = False):
+        """
+        Delete the failed run and re-execute.
+        Clears the unique constraint so run() can proceed.
+        """
+        ExtractionRun.objects.filter(
+            source=source, run_date=run_date, status='failed'
+        ).delete()
+        service = ExtractionService(source=source)
+        return service.run(run_date=run_date, trigger='manual', full=full)
+
+
+"""
+Data Transformer (SIMPLIFIED - No Section Extraction)
+=====================================================
+backend/apps/jobs/scrapers/data_transformer.py
+
+Transforms HH.uz API responses to database format.
+Requirements/responsibilities stay in job_description.
+"""
+
+import re
+import html
+from typing import Dict, Optional
+from datetime import datetime
+from decimal import Decimal
+
+
+class DataTransformer:
+    """Transforms API data to database model format."""
+
+    def transform_vacancy(self, api_data: Dict) -> Dict:
+        """
+        Transform API vacancy to JobPosting model format.
+
+        Args:
+            api_data: Full vacancy dict from HH API
+
+        Returns:
+            Dict ready for JobPosting.objects.create()
+        """
+
+        # Detect language
+        original_language = self._detect_language(api_data.get('name', ''))
+
+        # Basic fields
+        transformed = {
+            'external_job_id': str(api_data['id']),
+            'source': 'hh.uz',
+            'original_language': original_language,
+
+            # Job info
+            'job_title': api_data.get('name', '').strip(),
+            'company_name': self._get_company_name(api_data),
+            'job_category': self._get_job_category(api_data),
+
+            # Description (keep as-is, no extraction)
+            'job_description': self._clean_description(api_data.get('description', '')),
+
+            # Experience & employment
+            'experience_required': self._map_experience(api_data.get('experience')),
+            'employment_type': self._map_employment(api_data.get('employment')),
+
+            # Salary
+            'salary_min': self._get_salary_min(api_data.get('salary')),
+            'salary_max': self._get_salary_max(api_data.get('salary')),
+            'salary_currency': self._get_salary_currency(api_data.get('salary')),
+
+            # Location
+            'location': self._get_location(api_data.get('area')),
+            'is_remote': self._is_remote(api_data),
+
+            # Dates
+            'posted_date': self._parse_date(api_data.get('published_at')),
+            'deadline_date': None,  # HH doesn't provide this
+
+            # Meta
+            'job_url': api_data.get('alternate_url', ''),
+            'is_active': (
+                is_live := (
+                    not api_data.get('closed_for_applicants', False)
+                    and not api_data.get('archived', False)
+                )
+            ),
+            'listing_status': 'active' if is_live else 'archived',
+        }
+
+        return transformed
+
+    def _get_company_name(self, api_data: Dict) -> str:
+        """Extract company name."""
+        employer = api_data.get('employer', {})
+        if employer:
+            return employer.get('name', '').strip()
+        return ''
+
+    def _get_job_category(self, api_data: Dict) -> str:
+        """Extract job category from professional_roles."""
+        roles = api_data.get('professional_roles', [])
+        if roles:
+            return roles[0].get('name', '').strip()
+        return ''
+
+    def _map_experience(self, experience: Optional[Dict]) -> str:
+        """
+        Map HH experience to our choices.
+
+        HH values: noExperience, between1And3, between3And6, moreThan6
+        Our values: no_experience, junior, mid, senior
+        """
+        if not experience:
+            return ''
+
+        exp_id = experience.get('id', '')
+
+        mapping = {
+            'noExperience': 'no_experience',
+            'between1And3': 'junior',
+            'between3And6': 'mid',
+            'moreThan6': 'senior',
+        }
+
+        return mapping.get(exp_id, '')
+
+    def _map_employment(self, employment: Optional[Dict]) -> str:
+        """
+        Map HH employment to our choices (FIXED).
+
+        HH values: full, part, project, volunteer, probation
+        Our values: full_time, part_time, contract, project
+        """
+        if not employment:
+            logger.debug("No employment field, defaulting to full_time")
+            return 'full_time'
+
+        emp_id = employment.get('id', '')
+
+        if not emp_id:
+            logger.debug("Empty employment id, defaulting to full_time")
+            return 'full_time'
+
+        # Mapping according to HH.uz API documentation
+        mapping = {
+            'full': 'full_time',        # Полная занятость
+            'part': 'part_time',        # Частичная занятость
+            'project': 'project',       # Проектная работа
+            'volunteer': 'part_time',   # Волонтерство → part_time
+            'probation': 'full_time',   # Стажировка → full_time
+        }
+
+        result = mapping.get(emp_id, 'full_time')
+        logger.debug(f"Mapped employment '{emp_id}' → '{result}'")
+
+        return result
+
+    def _get_salary_min(self, salary: Optional[Dict]) -> Optional[Decimal]:
+        """Extract minimum salary."""
+        if not salary:
+            return None
+
+        salary_from = salary.get('from')
+        if salary_from:
+            return Decimal(str(salary_from))
+
+        return None
+
+    def _get_salary_max(self, salary: Optional[Dict]) -> Optional[Decimal]:
+        """Extract maximum salary."""
+        if not salary:
+            return None
+
+        salary_to = salary.get('to')
+        if salary_to:
+            return Decimal(str(salary_to))
+
+        return None
+
+    def _get_salary_currency(self, salary: Optional[Dict]) -> str:
+        """Extract salary currency."""
+        if not salary:
+            return 'UZS'
+
+        return salary.get('currency', 'UZS')
+
+    def _get_location(self, area: Optional[Dict]) -> str:
+        """Extract location/city name."""
+        if not area:
+            return ''
+
+        return area.get('name', '').strip()
+
+    def _is_remote(self, api_data: Dict) -> bool:
+        """Check if job is remote."""
+        # Check schedule field
+        schedule = api_data.get('schedule', {})
+        if schedule:
+            schedule_id = schedule.get('id', '')
+            if schedule_id in ['remote', 'flexible']:
+                return True
+
+        # Check address
+        address = api_data.get('address')
+        if address is None:
+            return True
+
+        return False
+
+    def _parse_date(self, date_str: Optional[str]) -> Optional[datetime]:
+        """
+        Parse ISO 8601 date string.
+
+        Example: "2026-01-21T17:39:52+0300"
+        """
+        if not date_str:
+            return None
+
+        try:
+            # Remove timezone info for simplicity
+            date_str = date_str.split('+')[0].split('T')
+            date_part = date_str[0]
+            time_part = date_str[1] if len(date_str) > 1 else "00:00:00"
+
+            return datetime.strptime(
+                f"{date_part} {time_part}",
+                "%Y-%m-%d %H:%M:%S"
+            )
+        except Exception as e:
+            logger.error(f"Date parse error: {e}")
+            return None
+
+    def _detect_language(self, text: str) -> str:
+        """
+        Detect language from text.
+
+        Returns:
+            'ru', 'uz', or 'en'
+        """
+        if not text:
+            return 'ru'  # Default for HH.uz
+
+        # Check for Cyrillic
+        cyrillic_count = sum(1 for c in text if 0x0400 <= ord(c) <= 0x04FF)
+
+        if cyrillic_count > 0:
+            return 'ru'  # Most HH.uz jobs are in Russian
+
+        return 'en'
+
+    def _clean_description(self, html_text: str) -> str:
+        """
+        Clean HTML description to pure readable text.
+
+        Properly handles:
+        1. Unicode escapes (\u003C → <)
+        2. HTML entities (&lt; → <)
+        3. HTML tags removal
+        4. Formatting preservation
+        """
+        if not html_text:
+            return ""
+
+        # Step 1: Decode unicode escapes (\u003C → <, \u003E → >)
+        # Use regex to only decode \uXXXX patterns, preserving Cyrillic text
+        def decode_unicode_escape(match):
+            try:
+                return chr(int(match.group(1), 16))
+            except ValueError:
+                return match.group(0)
+
+        html_text = re.sub(r'\\u([0-9a-fA-F]{4})', decode_unicode_escape, html_text)
+
+        # Step 2: Decode HTML entities (&lt; → <, &gt; → >, &nbsp; → space)
+        html_text = html.unescape(html_text)
+
+        # Step 3: Replace block-level tags with newlines for readability
+        # Paragraphs
+        html_text = re.sub(r'<p[^>]*>', '\n', html_text, flags=re.IGNORECASE)
+        html_text = re.sub(r'</p>', '\n', html_text, flags=re.IGNORECASE)
+
+        # Line breaks
+        html_text = re.sub(r'<br\\s*/?>', '\n', html_text, flags=re.IGNORECASE)
+
+        # List items
+        html_text = re.sub(r'<li[^>]*>', '\n• ', html_text, flags=re.IGNORECASE)
+        html_text = re.sub(r'</li>', '', html_text, flags=re.IGNORECASE)
+
+        # Headings (add extra newline before)
+        html_text = re.sub(r'<h[1-6][^>]*>', '\n\n', html_text, flags=re.IGNORECASE)
+        html_text = re.sub(r'</h[1-6]>', '\n', html_text, flags=re.IGNORECASE)
+
+        # Step 4: Remove ALL remaining HTML tags
+        html_text = re.sub(r'<[^>]+>', '', html_text)
+
+        # Step 5: Clean up whitespace
+        # Replace multiple spaces with single space
+        html_text = re.sub(r' +', ' ', html_text)
+
+        # Split into lines and clean each
+        lines = []
+        for line in html_text.split('\n'):
+            line = line.strip()
+            if line:  # Only keep non-empty lines
+                lines.append(line)
+
+        # Join with single newlines
+        clean_text = '\n'.join(lines)
+
+        # Limit consecutive newlines to max 2
+        clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
+
+        return clean_text.strip()
+
+    def validate_vacancy_data(self, data: Dict) -> bool:
+        """
+        Validate required fields are present.
+
+        Args:
+            data: Transformed vacancy data
+
+        Returns:
+            True if valid, False otherwise
+        """
+        required_fields = [
+            'external_job_id',
+            'job_title',
+            'posted_date',
+            'job_url',
+        ]
+
+        for field in required_fields:
+            if not data.get(field):
+                logger.warning(f"Missing required field: {field}")
+                return False
+
+        return True
+
+
+"""
 Enhanced Skill Extractor
 ========================
 backend/apps/jobs/scrapers/enhanced_skill_extractor.py
@@ -7,13 +664,9 @@ Extracts skills from job postings with hybrid approach.
 Creates canonical skills and aliases automatically.
 """
 
-import re
 import json
-import logging
 from typing import List, Dict
 from collections import Counter
-
-logger = logging.getLogger(__name__)
 
 
 class EnhancedSkillExtractor:
@@ -23,17 +676,17 @@ class EnhancedSkillExtractor:
     2. If empty, extract from description using LLM or regex
     3. Return skill data ready for Skill/SkillAlias creation
     """
-    
+
     def __init__(self, use_ollama: bool = False):
         """
         Initialize extractor.
-        
+
         Args:
             use_ollama: Whether to use Ollama for extraction
         """
         self.use_ollama = use_ollama
         self.skill_frequency = Counter()
-        
+
         # Common IT skills patterns for regex fallback
         self.skill_patterns = {
             'programming': r'\b(Python|Java|JavaScript|TypeScript|C\+\+|C#|PHP|Ruby|Go|Rust|Swift|Kotlin|Scala)\b',
@@ -43,11 +696,11 @@ class EnhancedSkillExtractor:
             'cloud': r'\b(AWS|Azure|GCP|DigitalOcean|Heroku|Docker|Kubernetes)\b',
             'tools': r'\b(Git|Linux|Nginx|RabbitMQ|Celery|Kafka|Airflow|Jenkins)\b',
         }
-    
+
     def extract_skills_from_vacancy(self, vacancy_data: Dict) -> List[Dict]:
         """
         Main extraction method - hybrid approach.
-        
+
         Returns list of dicts ready for database:
         [
             {
@@ -59,29 +712,29 @@ class EnhancedSkillExtractor:
             ...
         ]
         """
-        
+
         # Step 1: Try key_skills field
         key_skills = self._extract_from_key_skills(vacancy_data)
-        
+
         # Step 2: If empty, extract from description
         if not key_skills:
             logger.debug(f"key_skills empty for {vacancy_data.get('id')}, using description")
             return self._extract_from_description(vacancy_data)
-        
+
         # Step 3: If key_skills is minimal, combine both
         elif len(key_skills) < 3:
             description_skills = self._extract_from_description(vacancy_data)
             return self._merge_skills(key_skills, description_skills)
-        
+
         return key_skills
-    
+
     def _extract_from_key_skills(self, vacancy_data: Dict) -> List[Dict]:
         """Extract from key_skills field (official)."""
         key_skills = vacancy_data.get('key_skills', [])
-        
+
         if not key_skills:
             return []
-        
+
         extracted = []
         for skill_obj in key_skills:
             skill_name = skill_obj.get('name', '').strip()
@@ -92,27 +745,27 @@ class EnhancedSkillExtractor:
                     'importance': 'core',
                     'source': 'key_skills',
                 })
-        
+
         logger.debug(f"Extracted {len(extracted)} skills from key_skills")
         return extracted
-    
+
     def _extract_from_description(self, vacancy_data: Dict) -> List[Dict]:
         """Extract from description using LLM or regex."""
         # Combine text fields
         text_parts = []
-        
+
         if vacancy_data.get('name'):
             text_parts.append(vacancy_data['name'])
-        
+
         if vacancy_data.get('description'):
             desc = self._strip_html(vacancy_data['description'])
             text_parts.append(desc)
-        
+
         full_text = ' '.join(text_parts)
-        
+
         if not full_text.strip():
             return []
-        
+
         # Try LLM extraction
         if self.use_ollama:
             try:
@@ -121,44 +774,23 @@ class EnhancedSkillExtractor:
                     return skills
             except Exception as e:
                 logger.warning(f"LLM extraction failed: {e}, falling back to regex")
-        
+
         # Fallback: regex extraction
         return self._extract_with_regex(full_text)
-    
+
     def _extract_with_llm(self, text: str) -> List[Dict]:
         """Extract skills using Ollama LLM."""
-        from core.ai.ollama_client import OllamaClient
-        
-        ollama = OllamaClient()
-        
-        # Use the extract_skills method
-        skill_names = ollama.extract_skills(text)
-        
-        if not skill_names:
-            return []
-        
-        # Format results
-        extracted = []
-        for skill_name in skill_names:
-            if skill_name and isinstance(skill_name, str):
-                extracted.append({
-                    'skill_text': skill_name.strip(),
-                    'language_code': self._detect_language(skill_name),
-                    'importance': 'secondary',
-                    'source': 'description_llm',
-                })
-        
-        logger.debug(f"LLM extracted {len(extracted)} skills")
-        return extracted
-    
+        logger.debug("LLM extraction disabled")
+        return []
+
     def _extract_with_regex(self, text: str) -> List[Dict]:
         """Extract skills using regex patterns (fallback)."""
         found_skills = set()
-        
+
         for _, pattern in self.skill_patterns.items():
             matches = re.findall(pattern, text, re.IGNORECASE)
             found_skills.update(match.strip() for match in matches)
-        
+
         extracted = []
         for skill in found_skills:
             extracted.append({
@@ -167,43 +799,43 @@ class EnhancedSkillExtractor:
                 'importance': 'secondary',
                 'source': 'description_regex',
             })
-        
+
         logger.debug(f"Regex extracted {len(extracted)} skills")
         return extracted
-    
+
     def _merge_skills(self, skills1: List[Dict], skills2: List[Dict]) -> List[Dict]:
         """Merge two skill lists, removing duplicates."""
         seen = set()
         merged = []
-        
+
         # Add all skills, deduplicating by normalized text
         for skill in skills1 + skills2:
             normalized = skill['skill_text'].lower().strip()
             if normalized not in seen:
                 seen.add(normalized)
                 merged.append(skill)
-        
+
         return merged
-    
+
     def _detect_language(self, text: str) -> str:
         """
         Detect language from text.
-        
+
         Returns:
             'ru', 'uz', or 'en'
         """
         if not text:
             return 'en'
-        
+
         # Check for Cyrillic characters
         cyrillic_count = sum(1 for c in text if 0x0400 <= ord(c) <= 0x04FF)
-        
+
         if cyrillic_count > 0:
             # Could be Russian or Uzbek, default to Russian
             return 'ru'
-        
+
         return 'en'
-    
+
     def _strip_html(self, html_text: str) -> str:
         """Remove HTML tags."""
         if not html_text:
@@ -211,12 +843,12 @@ class EnhancedSkillExtractor:
         text = re.sub(r'<[^>]+>', ' ', html_text)
         text = re.sub(r'\s+', ' ', text)
         return text.strip()
-    
+
     def track_skill_frequency(self, skill_text: str):
         """Track skill frequency for demand analysis."""
         normalized = skill_text.lower().strip()
         self.skill_frequency[normalized] += 1
-    
+
     def get_skill_stats(self) -> Dict:
         """Get skill extraction statistics."""
         return {
@@ -721,3 +1353,273 @@ def get_category_display_name(category: str) -> str:
         'other': 'Other'
     }
     return display_names.get(category, 'Other')
+
+
+"""
+Database Loader (UPDATED - Phase A: Ingestion)
+===============================================
+backend/apps/jobs/utils/db_loader.py
+
+Phase A: Raw skill extraction and storage
+- Extract skills from jobs
+- Store in skill_aliases with status='unresolved'
+- Track job-alias mapping in job_skill_extractions
+- Do NOT create canonical skills yet
+"""
+
+from typing import Tuple
+from apps.skills.models import SkillAlias
+from apps.jobs.models import JobSkillExtraction
+
+
+class DatabaseLoader:
+    """
+    Phase A: Loads job postings and raw skill aliases.
+
+    Workflow:
+    1. Load job posting
+    2. Extract raw skills → SkillAlias (unresolved)
+    3. Track job-alias mapping → JobSkillExtraction
+    4. Skills table remains untouched (resolution happens later)
+    """
+
+    def __init__(self):
+        self.stats = {
+            'jobs_created': 0,
+            'jobs_updated': 0,
+            'jobs_skipped': 0,
+            'aliases_created': 0,
+            'aliases_reused': 0,
+            'extractions_created': 0,
+            'errors': 0,
+        }
+
+    def load_vacancy(self, vacancy_data: Dict, skills_data: List[Dict]) -> Tuple[JobPosting, Dict]:
+        """
+        Load single vacancy with raw skill aliases.
+
+        Args:
+            vacancy_data: Transformed job data
+            skills_data: List of skill dicts from extractor:
+                [
+                    {
+                        'skill_text': 'Python',
+                        'language_code': 'en',
+                        'importance': 'core',
+                        'source': 'key_skills'
+                    },
+                    ...
+                ]
+
+        Returns:
+            (JobPosting instance, stats dict)
+        """
+        stats = {
+            'created': False,
+            'updated': False,
+            'aliases_created': 0,
+            'aliases_reused': 0,
+            'extractions_created': 0,
+        }
+
+        try:
+            with transaction.atomic():
+                # Step 1: Get or create job posting
+                job, created = JobPosting.objects.update_or_create(
+                    external_job_id=vacancy_data['external_job_id'],
+                    defaults=vacancy_data
+                )
+
+                if created:
+                    stats['created'] = True
+                    logger.debug(f"✓ Created job: {job.job_title}")
+                else:
+                    stats['updated'] = True
+                    logger.debug(f"↻ Updated job: {job.job_title}")
+
+                # Step 2: Load raw skill aliases
+                if skills_data:
+                    alias_stats = self._ingest_raw_skills(job, skills_data)
+                    stats.update(alias_stats)
+
+                return job, stats
+
+        except Exception as e:
+            logger.error(f"Error loading vacancy {vacancy_data.get('external_job_id')}: {e}")
+            raise
+
+    def _ingest_raw_skills(self, job: JobPosting, skills_data: List[Dict]) -> Dict:
+        """
+        Phase A: Ingest raw skills into skill_aliases.
+
+        DO NOT create canonical skills here!
+        Just store raw strings with status='unresolved'.
+
+        Args:
+            job: JobPosting instance
+            skills_data: List of extracted skills
+
+        Returns:
+            Stats dict
+        """
+        stats = {
+            'aliases_created': 0,
+            'aliases_reused': 0,
+            'extractions_created': 0,
+        }
+
+        for skill_data in skills_data:
+            try:
+                skill_text = skill_data['skill_text'].strip()
+                language_code = skill_data.get('language_code', 'en')
+                importance = skill_data.get('importance', 'secondary')
+                source = skill_data.get('source', 'hh.uz')
+
+                if not skill_text:
+                    continue
+
+                # Get or create skill alias (unresolved)
+                alias, alias_created = self._get_or_create_alias(
+                    skill_text=skill_text,
+                    language_code=language_code,
+                    source=source
+                )
+
+                if alias_created:
+                    stats['aliases_created'] += 1
+                    logger.debug(f"  + New alias: {skill_text} ({language_code})")
+                else:
+                    stats['aliases_reused'] += 1
+                    logger.debug(f"  ↻ Reused alias: {skill_text} ({language_code})")
+
+                # Track job-alias mapping
+                extraction, extraction_created = JobSkillExtraction.objects.get_or_create(
+                    job_posting=job,
+                    alias=alias,
+                    defaults={'importance': importance}
+                )
+
+                if extraction_created:
+                    stats['extractions_created'] += 1
+
+            except Exception as e:
+                logger.error(f"Error ingesting skill '{skill_data.get('skill_text')}': {e}")
+                continue
+
+        return stats
+
+    def _get_or_create_alias(
+        self,
+        skill_text: str,
+        language_code: str,
+        source: str
+    ) -> Tuple[SkillAlias, bool]:
+        """
+        Get or create SkillAlias (unresolved).
+
+        Key points:
+        - skill_id = NULL (not resolved yet)
+        - status = 'unresolved'
+        - If alias exists, increment usage_count
+
+        Args:
+            skill_text: Raw skill text
+            language_code: 'en', 'ru', or 'uz'
+            source: Where skill came from
+
+        Returns:
+            (SkillAlias instance, created)
+        """
+
+        # Try to find existing alias
+        alias = SkillAlias.objects.filter(
+            alias_text=skill_text,
+            language_code=language_code,
+            source=source
+        ).first()
+
+        if alias:
+            # Increment usage count
+            alias.usage_count += 1
+            alias.save(update_fields=['usage_count'])
+            return alias, False
+
+        # Create new alias (unresolved)
+        alias = SkillAlias.objects.create(
+            skill=None,  # ← KEY: Not resolved yet
+            alias_text=skill_text,
+            language_code=language_code,
+            source=source,
+            status='unresolved',
+            usage_count=1
+        )
+
+        return alias, True
+
+    def load_batch(self, vacancies: List[Dict]) -> Dict:
+        """
+        Load batch of vacancies.
+
+        Args:
+            vacancies: List of vacancy dicts, each with 'skills' key
+
+        Returns:
+            Overall statistics dict
+        """
+        for vacancy_data in vacancies:
+            try:
+                # Extract skills from vacancy_data
+                skills_data = vacancy_data.pop('skills', [])
+
+                # Load job with skills
+                job, job_stats = self.load_vacancy(vacancy_data, skills_data)
+
+                # Update overall stats
+                if job_stats['created']:
+                    self.stats['jobs_created'] += 1
+                elif job_stats['updated']:
+                    self.stats['jobs_updated'] += 1
+                else:
+                    self.stats['jobs_skipped'] += 1
+
+                self.stats['aliases_created'] += job_stats['aliases_created']
+                self.stats['aliases_reused'] += job_stats['aliases_reused']
+                self.stats['extractions_created'] += job_stats['extractions_created']
+
+            except Exception as e:
+                logger.error(f"Error in batch: {e}")
+                self.stats['errors'] += 1
+
+        return self.stats
+
+    def get_stats(self) -> Dict:
+        """Get loading statistics."""
+        return self.stats.copy()
+
+    def print_stats(self):
+        """Print loading statistics in readable format."""
+        print("\n" + "="*60)
+        print("PHASE A: INGESTION COMPLETE")
+        print("="*60)
+        print(f"\n📊 JOB POSTINGS:")
+        print(f"  Jobs created:    {self.stats['jobs_created']:>6}")
+        print(f"  Jobs updated:    {self.stats['jobs_updated']:>6}")
+        print(f"  Jobs skipped:    {self.stats['jobs_skipped']:>6}")
+
+        print(f"\n🏷️  SKILL ALIASES (Raw):")
+        print(f"  New aliases:     {self.stats['aliases_created']:>6}")
+        print(f"  Reused aliases:  {self.stats['aliases_reused']:>6}")
+        print(f"  Total unique:    {self.stats['aliases_created']:>6}")
+
+        print(f"\n🔗 JOB-ALIAS MAPPINGS:")
+        print(f"  Extractions:     {self.stats['extractions_created']:>6}")
+
+        if self.stats['errors'] > 0:
+            print(f"\n⚠️  ERRORS:")
+            print(f"  Errors:          {self.stats['errors']:>6}")
+
+        print("\n" + "="*60)
+        print("NEXT STEP: Run skill resolver to create canonical skills")
+        print("Command: python manage.py resolve_skills")
+        print("="*60 + "\n")
+

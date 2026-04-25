@@ -8,7 +8,7 @@ Usage:
 
 from django.core.management.base import BaseCommand
 from apps.skills.models import Skill
-from apps.jobs.scrapers.enhanced_skill_extractor import categorize_skill
+from services.job_scraper_service import categorize_skill
 
 
 class Command(BaseCommand):

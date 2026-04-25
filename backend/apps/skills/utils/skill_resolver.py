@@ -21,7 +21,7 @@ from django.db import transaction
 from fuzzywuzzy import fuzz  # or use rapidfuzz
 from apps.skills.models import Skill, SkillAlias
 from apps.skills.utils.translation_helper import TranslationHelper
-from apps.jobs.scrapers.enhanced_skill_extractor import categorize_skill
+from services.job_scraper_service import categorize_skill
 
 logger = logging.getLogger(__name__)
 

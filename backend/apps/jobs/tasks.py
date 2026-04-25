@@ -26,7 +26,7 @@ def run_daily_extraction(self, run_date_iso=None, trigger='scheduled'):
                       Defaults to today in the server's local timezone.
         trigger: 'scheduled', 'manual', or 'startup'
     """
-    from apps.jobs.extraction_service import ExtractionService
+    from services.job_scraper_service import ExtractionService
     from datetime import date
 
     run_date = date.fromisoformat(run_date_iso) if run_date_iso else timezone.localdate()
@@ -57,7 +57,7 @@ def retry_failed_extraction(run_date_iso, source='hh.uz'):
     Retry a previously failed extraction run.
     Called from the admin API endpoint.
     """
-    from apps.jobs.extraction_service import ExtractionService
+    from services.job_scraper_service import ExtractionService
     from datetime import date
 
     run_date = date.fromisoformat(run_date_iso)

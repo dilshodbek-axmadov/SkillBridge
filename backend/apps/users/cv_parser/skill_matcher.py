@@ -206,7 +206,7 @@ class SkillMatcher:
         to ensure consistent categorization across the application.
         """
         try:
-            from apps.jobs.scrapers.enhanced_skill_extractor import categorize_skill
+            from services.job_scraper_service import categorize_skill
             return categorize_skill(skill_name)
         except ImportError:
             # Fallback if import fails

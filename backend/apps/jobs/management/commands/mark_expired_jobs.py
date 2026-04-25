@@ -1,21 +1,12 @@
 """
-Management command to deactivate jobs no longer listed on HH API.
-
-Strategy (efficient):
-  1. Fetch ALL active IT job IDs from HH API via paginated search
-     (NO period filter → returns all open vacancies)
-  2. Compare with DB active job IDs
-  3. Jobs in DB but NOT in API → mark is_active=False (single bulk query)
-  4. Jobs in API with archived=true → also mark is_active=False
-
+Mark expired/closed jobs as inactive.
 Usage:
-    python manage.py deactivate_closed_jobs
-    python manage.py deactivate_closed_jobs --dry-run   # preview only
+    python manage.py mark_expired_jobs
 """
 
 from django.core.management.base import BaseCommand
 from apps.jobs.models import JobPosting
-from apps.jobs.scrapers.hh_api_client import HHAPIClient
+from services.hh_api_client import HHAPIClient
 
 
 class Command(BaseCommand):
@@ -125,3 +116,4 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(
                 f"\nDeactivated {updated} jobs."
             ))
+

@@ -300,3 +300,7 @@ BACKEND_URL = config('BACKEND_URL')
 # Used only by the frontend via VITE_GOOGLE_CLIENT_ID; kept here for reference
 # and in case we later switch to a server-side ID-token verification flow.
 GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')
+
+# HH OAuth2 (client credentials)
+HH_CLIENT_ID = config('HH_CLIENT_ID')
+HH_CLIENT_SECRET = config('HH_CLIENT_SECRET')
