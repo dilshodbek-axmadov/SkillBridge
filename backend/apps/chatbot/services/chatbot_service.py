@@ -1,28 +1,16 @@
-"""
-Chatbot Service with RAG
-========================
-AI-powered chatbot using local LLM (qwen2.5:7b) with RAG for contextualized responses.
-
-Features:
-- Retrieves relevant job data, market trends, user profile
-- Provides career guidance, skill advice, job market insights
-- Stores conversation history for context
+﻿"""
+Chatbot Service with lightweight RAG.
 """
 
-import json
 import logging
-import re
 from typing import Dict, List, Any, Optional
 
-from django.db.models import Q, Count, Avg
 from django.utils import timezone
 
 from apps.chatbot.models import ChatbotConversation, ChatbotMessage
-from apps.jobs.models import JobPosting, JobSkill
-from apps.skills.models import Skill, UserSkill, SkillGap, MarketTrend
-from apps.learning.models import LearningRoadmap, RoadmapItem, LearningResource
+from apps.chatbot.rag_indexer import RAGIndexer
+from apps.skills.models import UserSkill
 from apps.users.models import User, UserProfile
-from apps.analytics.models import SkillDemandSnapshot, SalarySnapshot
 from core.ai.ollama_client import OllamaClient
 
 logger = logging.getLogger(__name__)
@@ -35,8 +23,8 @@ class ChatbotService:
     Workflow:
     1. Receive user message
     2. Analyze intent and extract entities
-    3. Retrieve relevant context from database
-    4. Generate response using LLM with context
+    3. Retrieve relevant context from vector index + lightweight profile data
+    4. Generate response using LLM with compact context
     5. Store message and response
     """
 
@@ -147,62 +135,30 @@ class ChatbotService:
         """Generate context-appropriate greeting."""
 
         user_name = self.user.first_name or self.user.username
+
         if language == 'ru':
             greetings = {
-                'onboarding': f"Привет, {user_name}! Я помогу вам начать. "
-                             f"Расскажите о своем опыте и карьерных целях, "
-                             f"и я предложу персональный план обучения.",
-                'roadmap': f"Здравствуйте, {user_name}! Я помогу с вашей дорожной картой. "
-                          f"Спросите про навыки, ресурсы или ваш прогресс.",
-                'career': f"Привет, {user_name}! Я ваш карьерный консультант. "
-                         f"Могу подсказать по трендам рынка, зарплатам, "
-                         f"востребованным навыкам и карьерным возможностям.",
-                'help': f"Здравствуйте, {user_name}! Я готов помочь. "
-                       f"Вы можете спросить о:\n"
-                       f"• трендах рынка и зарплатах\n"
-                       f"• востребованных навыках\n"
-                       f"• учебных ресурсах\n"
-                       f"• карьерных рекомендациях\n"
-                       f"Чем могу помочь?",
+                'onboarding': f"Privet, {user_name}! Ya pomogu vam nachat. Rasskazhite o svoem opyte i celyakh.",
+                'roadmap': f"Zdravstvuyte, {user_name}! Ya pomogu s vashey dorozhnoy kartoy i navykami.",
+                'career': f"Privet, {user_name}! Ya vash karernyy konsultant po rynku truda v IT.",
+                'help': f"Zdravstvuyte, {user_name}! Sprashivayte o rynku, navykakh, resursakh i karere.",
             }
             return greetings.get(context_type, greetings['help'])
 
         if language == 'uz':
             greetings = {
-                'onboarding': f"Salom, {user_name}! Boshlashingizga yordam beraman. "
-                             f"Tajriba va karyera maqsadlaringizni ayting, "
-                             f"men sizga shaxsiy o'quv yo'lini taklif qilaman.",
-                'roadmap': f"Salom, {user_name}! O'quv yo'l xaritangiz bo'yicha yordam bera olaman. "
-                          f"Ko'nikmalar, resurslar yoki progress haqida so'rang.",
-                'career': f"Salom, {user_name}! Men sizning karyera maslahatchingizman. "
-                         f"Mehnat bozori trendlari, maoshlar, talab yuqori ko'nikmalar "
-                         f"va karyera imkoniyatlari haqida ma'lumot bera olaman.",
-                'help': f"Salom, {user_name}! Yordam berishga tayyorman. "
-                       f"Quyidagilar haqida so'rashingiz mumkin:\n"
-                       f"• bozor trendlari va maoshlar\n"
-                       f"• talab yuqori ko'nikmalar\n"
-                       f"• o'quv resurslari\n"
-                       f"• karyera yo'l-yo'riqlari\n"
-                       f"Nimadan boshlaymiz?",
+                'onboarding': f"Salom, {user_name}! Boshlashingizga yordam beraman.",
+                'roadmap': f"Salom, {user_name}! Roadmap, konikmalar va resurslar boyicha yordam beraman.",
+                'career': f"Salom, {user_name}! Men sizning IT karyera maslahatchingizman.",
+                'help': f"Salom, {user_name}! Bozor, maosh, konikmalar va karyera haqida sorashingiz mumkin.",
             }
             return greetings.get(context_type, greetings['help'])
 
         greetings = {
-            'onboarding': f"Hi {user_name}! I'm here to help you get started. "
-                         f"Tell me about your background and career goals, "
-                         f"and I'll help you create a personalized learning path.",
-            'roadmap': f"Hello {user_name}! I can help you with your learning roadmap. "
-                      f"Ask me about skills to learn, resources, or your progress.",
-            'career': f"Hi {user_name}! I'm your career advisor. "
-                     f"I can provide insights about job market trends, salary data, "
-                     f"in-demand skills, and career opportunities.",
-            'help': f"Hello {user_name}! I'm here to help. "
-                   f"You can ask me about:\n"
-                   f"• Job market trends and salaries\n"
-                   f"• Skills in demand\n"
-                   f"• Learning resources\n"
-                   f"• Career guidance\n"
-                   f"How can I assist you today?",
+            'onboarding': f"Hi {user_name}! I am here to help you get started. Tell me your background and goals.",
+            'roadmap': f"Hello {user_name}! I can help with your learning roadmap and skill plan.",
+            'career': f"Hi {user_name}! I am your career advisor for IT market insights and next steps.",
+            'help': f"Hello {user_name}! Ask me about job trends, salaries, skills, and learning resources.",
         }
         return greetings.get(context_type, greetings['help'])
 
@@ -240,7 +196,7 @@ class ChatbotService:
         intent_data = self._analyze_intent(message)
 
         # Store user message
-        user_msg = ChatbotMessage.objects.create(
+        ChatbotMessage.objects.create(
             conversation=conversation,
             sender_type='user',
             message_text=message,
@@ -295,11 +251,11 @@ class ChatbotService:
             intent = 'skill_inquiry'
 
         # Salary/market intents
-        elif any(kw in message_lower for kw in ['salary', 'pay', 'earn', 'money', 'зарплата']):
+        elif any(kw in message_lower for kw in ['salary', 'pay', 'earn', 'money', 'zarplata']):
             intent = 'salary_inquiry'
 
         # Job intents
-        elif any(kw in message_lower for kw in ['job', 'work', 'position', 'vacancy', 'career', 'вакансия']):
+        elif any(kw in message_lower for kw in ['job', 'work', 'position', 'vacancy', 'career', 'vakansiya']):
             intent = 'job_inquiry'
 
         # Resource/learning intents
@@ -311,7 +267,7 @@ class ChatbotService:
             intent = 'roadmap_inquiry'
 
         # Trend intents
-        elif any(kw in message_lower for kw in ['trend', 'demand', 'popular', 'hot', 'востребован']):
+        elif any(kw in message_lower for kw in ['trend', 'demand', 'popular', 'hot', 'vostrebovan']):
             intent = 'trend_inquiry'
 
         return {
@@ -326,15 +282,14 @@ class ChatbotService:
         intent: Optional[str],
         conversation: ChatbotConversation
     ) -> Dict[str, Any]:
-        """
-        Retrieve relevant context using RAG approach.
-        """
+        """Retrieve lightweight RAG context for the current message."""
 
         context = {
             'user_profile': None,
             'user_skills': [],
-            'market_data': {},
-            'job_data': {},
+            'relevant_jobs': [],
+            'relevant_skills': [],
+            'market_summary': '',
             'conversation_history': [],
         }
 
@@ -349,177 +304,71 @@ class ChatbotService:
         # User skills
         context['user_skills'] = self.user_skills
 
-        # Get conversation history
+        # Last 6 conversation messages
         recent_messages = ChatbotMessage.objects.filter(
             conversation=conversation
-        ).order_by('-timestamp')[:self.MAX_CONTEXT_MESSAGES]
+        ).order_by('-timestamp')[:6]
 
         context['conversation_history'] = [
             {
                 'role': 'user' if m.sender_type == 'user' else 'assistant',
-                'content': m.message_text[:500],  # Truncate for context
+                'content': m.message_text[:500],
             }
             for m in reversed(list(recent_messages))
         ]
 
-        # Retrieve data based on intent
-        if intent == 'skill_inquiry' or intent == 'trend_inquiry':
-            context['market_data'] = self._get_skill_market_data()
-
-        elif intent == 'salary_inquiry':
-            context['market_data'] = self._get_salary_data()
-
-        elif intent == 'job_inquiry':
-            context['job_data'] = self._get_job_data()
-
-        elif intent == 'resource_inquiry':
-            context['resources'] = self._get_learning_resources()
-
-        elif intent == 'roadmap_inquiry':
-            context['roadmap'] = self._get_user_roadmap()
+        # Semantic retrieval (non-critical)
+        try:
+            indexer = RAGIndexer()
+            context['relevant_jobs'] = indexer.search_jobs(message, top_k=5)
+            context['relevant_skills'] = indexer.search_skills(message, top_k=8)
+            context['market_summary'] = indexer.get_market_summary()
+        except Exception as e:
+            logger.warning("RAG retrieval failed (non-critical): %s", e)
+            context['relevant_jobs'] = []
+            context['relevant_skills'] = []
+            context['market_summary'] = ''
 
         return context
 
-    def _get_skill_market_data(self) -> Dict[str, Any]:
-        """Get top skills and market trends."""
+    def _format_jobs_compact(self, jobs: List[Dict]) -> str:
+        if not jobs:
+            return "- No closely relevant jobs found."
 
-        # Top skills from market trends
-        top_skills = MarketTrend.objects.filter(
-            period='30d'
-        ).select_related('skill').order_by('-demand_score')[:10]
+        lines = []
+        for job in jobs[:5]:
+            summary = (job.get('summary') or '').strip()
+            if summary:
+                lines.append(f"- {summary}")
+            else:
+                title = job.get('job_title') or 'Unknown role'
+                company = job.get('company_name') or 'Unknown company'
+                lines.append(f"- {title} at {company}.")
+        return "\n".join(lines)
 
-        return {
-            'top_skills': [
-                {
-                    'name': t.skill.name_en,
-                    'demand_score': t.demand_score,
-                    'job_count': t.job_count,
-                    'growth_rate': t.growth_rate,
-                }
-                for t in top_skills
-            ],
-            'total_skills_tracked': Skill.objects.count(),
-        }
+    def _format_skills_compact(self, skills: List[Dict]) -> str:
+        if not skills:
+            return "- No closely relevant skills found."
 
-    def _get_salary_data(self) -> Dict[str, Any]:
-        """Get salary information."""
+        lines = []
+        for skill in skills[:8]:
+            name = skill.get('name_en') or 'Unknown'
+            category = skill.get('category') or 'other'
+            similarity = float(skill.get('similarity') or 0.0)
+            lines.append(f"- {name} ({category}, similarity: {similarity:.2f})")
+        return "\n".join(lines)
 
-        # Get from salary snapshots or compute
-        salaries = SalarySnapshot.objects.filter(
-            experience_level='all'
-        ).order_by('-salary_avg')[:10]
+    def _format_history(self, history: List[Dict]) -> str:
+        if not history:
+            return "- No previous conversation."
 
-        if salaries.exists():
-            return {
-                'salaries': [
-                    {
-                        'job_title': s.job_title_normalized,
-                        'salary_avg': float(s.salary_avg) if s.salary_avg else None,
-                        'salary_min': float(s.salary_min) if s.salary_min else None,
-                        'salary_max': float(s.salary_max) if s.salary_max else None,
-                        'currency': s.currency,
-                    }
-                    for s in salaries
-                ]
-            }
-
-        # Fallback to direct query
-        salaries = JobPosting.objects.filter(
-            is_active=True,
-            salary_min__isnull=False
-        ).values('job_title').annotate(
-            avg_salary=Avg('salary_min'),
-            job_count=Count('job_id')
-        ).order_by('-avg_salary')[:10]
-
-        return {
-            'salaries': [
-                {
-                    'job_title': s['job_title'],
-                    'salary_avg': float(s['avg_salary']) if s['avg_salary'] else None,
-                    'job_count': s['job_count'],
-                }
-                for s in salaries
-            ]
-        }
-
-    def _get_job_data(self) -> Dict[str, Any]:
-        """Get job market data."""
-
-        # Active jobs summary
-        jobs = JobPosting.objects.filter(is_active=True)
-        total_jobs = jobs.count()
-
-        # By category
-        categories = jobs.values('job_category').annotate(
-            count=Count('job_id')
-        ).order_by('-count')[:5]
-
-        # By experience
-        experience = jobs.values('experience_required').annotate(
-            count=Count('job_id')
-        )
-
-        return {
-            'total_active_jobs': total_jobs,
-            'top_categories': [
-                {'category': c['job_category'] or 'Other', 'count': c['count']}
-                for c in categories
-            ],
-            'by_experience': {e['experience_required']: e['count'] for e in experience},
-            'remote_jobs': jobs.filter(is_remote=True).count(),
-        }
-
-    def _get_learning_resources(self) -> List[Dict]:
-        """Get recommended learning resources."""
-
-        # Get resources based on user's skill gaps
-        gap_skill_ids = SkillGap.objects.filter(
-            user=self.user,
-            status__in=['pending', 'learning']
-        ).values_list('skill_id', flat=True)[:5]
-
-        resources = LearningResource.objects.filter(
-            skill_id__in=gap_skill_ids,
-            is_free=True
-        ).select_related('skill')[:5]
-
-        return [
-            {
-                'title': r.title,
-                'skill': r.skill.name_en,
-                'type': r.resource_type,
-                'url': r.url,
-                'platform': r.platform,
-            }
-            for r in resources
-        ]
-
-    def _get_user_roadmap(self) -> Optional[Dict]:
-        """Get user's active roadmap."""
-
-        roadmap = LearningRoadmap.objects.filter(
-            user=self.user,
-            is_active=True
-        ).prefetch_related('items__skill').first()
-
-        if not roadmap:
-            return None
-
-        items = roadmap.items.all()
-        completed = items.filter(status='completed').count()
-        total = items.count()
-
-        return {
-            'title': roadmap.title,
-            'target_role': roadmap.target_role,
-            'completion': f"{completed}/{total}",
-            'percentage': roadmap.completion_percentage,
-            'next_skills': [
-                item.skill.name_en
-                for item in items.filter(status='pending')[:3]
-            ],
-        }
+        lines = []
+        for item in history:
+            role = "User" if item.get('role') == 'user' else "Assistant"
+            content = (item.get('content') or '').strip()
+            if content:
+                lines.append(f"{role}: {content}")
+        return "\n".join(lines) if lines else "- No previous conversation."
 
     def _generate_response(
         self,
@@ -530,69 +379,42 @@ class ChatbotService:
         language: str = 'en'
     ) -> tuple[str, Dict]:
         """
-        Generate response using LLM with context.
+        Generate response using LLM with compact context.
         """
 
         language_instruction = {
             'en': 'Respond in English.',
-            'ru': 'Respond in Russian (Русский).',
-            'uz': "Respond in Uzbek (O'zbek tili).",
+            'ru': 'Respond in Russian.',
+            'uz': "Respond in Uzbek.",
         }.get(language, 'Respond in English.')
 
-        # Build system prompt
-        system_prompt = f"""You are a helpful career advisor chatbot for SkillBridge platform.
-Your role is to help users with career guidance, skill development, and job market insights.
+        compact_profile = context.get('user_profile') or {}
+        skill_names = [s.get('name') for s in context.get('user_skills', []) if s.get('name')]
 
-USER PROFILE:
-{json.dumps(context.get('user_profile') or {}, indent=2)}
-
-USER'S CURRENT SKILLS:
-{json.dumps(context.get('user_skills', []), indent=2)}
-
+        system_prompt = f"""You are a career advisor for SkillBridge, a platform for IT job seekers in Uzbekistan.
+Be concise, helpful, and specific. Use the provided data to answer questions.
 {language_instruction}
 
-Guidelines:
-- Be helpful, friendly, and encouraging
-- Provide specific, actionable advice
-- Reference the data provided when relevant
-- Keep responses concise but informative
-- If you don't have specific data, give general guidance
-"""
+User profile: {compact_profile}
+User skills: {', '.join(skill_names) if skill_names else 'None'}"""
 
-        # Build context for the message
-        context_text = ""
+        user_prompt = f"""Market data:
+{context.get('market_summary', '')}
 
-        if context.get('market_data'):
-            context_text += f"\nMARKET DATA:\n{json.dumps(context['market_data'], indent=2)}\n"
+Relevant jobs found:
+{self._format_jobs_compact(context.get('relevant_jobs', []))}
 
-        if context.get('job_data'):
-            context_text += f"\nJOB MARKET DATA:\n{json.dumps(context['job_data'], indent=2)}\n"
+Relevant skills:
+{self._format_skills_compact(context.get('relevant_skills', []))}
 
-        if context.get('resources'):
-            context_text += f"\nLEARNING RESOURCES:\n{json.dumps(context['resources'], indent=2)}\n"
+Recent conversation:
+{self._format_history(context.get('conversation_history', [])[-4:])}
 
-        if context.get('roadmap'):
-            context_text += f"\nUSER'S ROADMAP:\n{json.dumps(context['roadmap'], indent=2)}\n"
-
-        # Build conversation history for context
-        history_text = ""
-        for msg in context.get('conversation_history', [])[-6:]:  # Last 3 exchanges
-            role = "User" if msg['role'] == 'user' else "Assistant"
-            history_text += f"{role}: {msg['content']}\n"
-
-        prompt = f"""Previous conversation:
-{history_text}
-
-Relevant context:
-{context_text}
-
-User's question: {message}
-
-Provide a helpful response:"""
+User question: {message}"""
 
         try:
             response = self.ollama.generate(
-                prompt=prompt,
+                prompt=user_prompt,
                 system=system_prompt,
                 temperature=0.7,
                 max_tokens=800
@@ -616,44 +438,14 @@ Provide a helpful response:"""
 
         return response_text, response_data
 
-    def _fallback_response(self, intent: Optional[str], context: Dict, language: str = 'en') -> str:
-        """Generate fallback response when LLM is unavailable."""
-
-        if intent == 'skill_inquiry':
-            skills = context.get('market_data', {}).get('top_skills', [])
-            if skills:
-                top_names = [s['name'] for s in skills[:5]]
-                if language == 'ru':
-                    return f"По текущим данным рынка самые востребованные навыки: {', '.join(top_names)}. Хотите узнать подробнее о каком-то из них?"
-                if language == 'uz':
-                    return f"Hozirgi bozor ma'lumotlariga ko'ra eng talabgir ko'nikmalar: {', '.join(top_names)}. Shulardan birortasi haqida batafsil ma'lumot beraymi?"
-                return f"Based on current market data, the most in-demand skills are: {', '.join(top_names)}. Would you like to learn more about any of these?"
-
-        elif intent == 'salary_inquiry':
-            salaries = context.get('market_data', {}).get('salaries', [])
-            if salaries:
-                top_role = salaries[0]['job_title'] if salaries else 'various tech roles'
-                if language == 'ru':
-                    return f"Вот краткая информация по зарплатам с рынка. Среди самых высокооплачиваемых ролей есть позиции вроде {top_role}."
-                if language == 'uz':
-                    return f"Bozor ma'lumotlari asosida maosh bo'yicha qisqa tahlil: eng yuqori maoshli rollar orasida {top_role} kabi lavozimlar bor."
-                return f"Here are some salary insights from our job market data. The highest paying roles include positions like {top_role}."
-
-        elif intent == 'job_inquiry':
-            job_data = context.get('job_data', {})
-            if job_data:
-                job_count = job_data.get('total_active_jobs', 'many')
-                if language == 'ru':
-                    return f"Сейчас в нашей базе {job_count} активных вакансий. Какая роль или направление вам интересны?"
-                if language == 'uz':
-                    return f"Hozir bazamizda {job_count} ta faol vakansiya bor. Qaysi rol yoki yo'nalish sizni qiziqtiradi?"
-                return f"Currently there are {job_count} active job postings in our database. What specific role or industry interests you?"
-
+    def _fallback_response(self, intent: Optional[str], context: Dict, language: str = 'en'):
+        """Fallback response when LLM is unavailable."""
+        summary = context.get('market_summary', '')
         if language == 'ru':
-            return "Я помогаю с карьерными рекомендациями и аналитикой рынка труда. Переформулируйте вопрос или спросите о конкретных навыках, вакансиях и карьерных направлениях."
+            return f"Servis vremenno nedostupen. Kratkaya informatsiya o rynke:\n{summary}"
         if language == 'uz':
-            return "Men karyera yo'l-yo'riqlari va ish bozori tahlili bo'yicha yordam beraman. Savolingizni boshqacha yozing yoki aniq ko'nikmalar, ishlar yoki karyera yo'nalishlari haqida so'rang."
-        return "I'm here to help with career guidance and job market insights. Could you please rephrase your question or ask about specific skills, jobs, or career paths?"
+            return f"Xizmat vaqtincha ishlamayapti. Bozor boyicha qisqa malumot:\n{summary}"
+        return f"Service temporarily unavailable. Market snapshot:\n{summary}"
 
     def get_conversation_history(
         self,

@@ -10,6 +10,7 @@ Stores conversation history and context.
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from pgvector.django import VectorField
 
 
 class ChatbotConversation(models.Model):
@@ -163,6 +164,50 @@ class ChatbotMessage(models.Model):
     def is_from_bot(self):
         """Check if message is from bot."""
         return self.sender_type == 'bot'
+
+
+class SkillVector(models.Model):
+    """
+    Vector embedding for semantic skill search.
+    Separate from Skill model to avoid touching skills migrations.
+    """
+
+    skill = models.OneToOneField(
+        'skills.Skill',
+        on_delete=models.CASCADE,
+        related_name='vector',
+        primary_key=True,
+    )
+    embedding = VectorField(dimensions=384)  # all-MiniLM-L6-v2 output size
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'skill_vectors'
+
+
+class JobVector(models.Model):
+    """
+    Vector embedding for semantic job search.
+    Stores compressed summary + embedding for RAG retrieval.
+    """
+
+    job = models.OneToOneField(
+        'jobs.JobPosting',
+        on_delete=models.CASCADE,
+        related_name='vector',
+        primary_key=True,
+    )
+    embedding = VectorField(dimensions=384)
+
+    # Pre-computed compact summary (what gets sent to LLM, not raw description)
+    summary = models.TextField(
+        help_text="Compact summary: title, company, skills, salary, experience"
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'job_vectors'
 
 
 """

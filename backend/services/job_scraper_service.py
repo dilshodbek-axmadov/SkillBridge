@@ -139,6 +139,18 @@ class ExtractionService:
                 f"updated={stats.get('jobs_updated', 0)}, "
                 f"deactivated={deactivated}"
             )
+
+            try:
+                from apps.chatbot.rag_indexer import RAGIndexer
+
+                RAGIndexer().invalidate_cache()
+                # Also trigger incremental re-index for new jobs
+                indexer = RAGIndexer()
+                result = indexer.build_job_index()
+                logger.info(f"RAG index updated: {result}")
+            except Exception as e:
+                logger.warning(f"RAG index update failed (non-critical): {e}")
+
             return extraction_run
 
         except Exception as exc:

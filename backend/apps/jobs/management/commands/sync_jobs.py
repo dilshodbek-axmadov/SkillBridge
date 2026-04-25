@@ -143,6 +143,8 @@ class Command(BaseCommand):
         self.stdout.write(f"  aliases_created:  {run.aliases_created}")
         self.stdout.write("")
         self.stdout.write("  Phases B & C (resolve + link) ran automatically.")
+        self.stdout.write("  RAG index:        updated automatically")
+        self.stdout.write("  To rebuild fully: python manage.py build_rag_index --full")
         self.stdout.write("  Check logs for resolution and linking details.")
         self.stdout.write("  To recategorize skills: python manage.py recategorize_skills")
         self.stdout.write("  To recalculate trends:  python manage.py calculate_market_trends")

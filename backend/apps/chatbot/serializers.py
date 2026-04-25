@@ -81,12 +81,28 @@ class StartConversationRequestSerializer(serializers.Serializer):
         max_length=2000,
         help_text="Optional initial message to send."
     )
-    language = serializers.ChoiceField(
-        choices=['en', 'ru', 'uz'],
+    language = serializers.CharField(
         default='en',
         required=False,
+        allow_blank=True,
         help_text="Greeting language."
     )
+
+    def validate_language(self, value):
+        """
+        Accept i18n variants like 'en-US', 'ru-RU', 'uz-Latn-UZ'
+        and normalize to supported base language codes.
+        """
+        if not value:
+            return 'en'
+
+        normalized = str(value).strip().lower().replace('_', '-')
+        base = normalized.split('-')[0]
+
+        if base in {'en', 'ru', 'uz'}:
+            return base
+
+        raise serializers.ValidationError("Language must be one of: en, ru, uz.")
 
 
 class SendMessageRequestSerializer(serializers.Serializer):
@@ -96,12 +112,24 @@ class SendMessageRequestSerializer(serializers.Serializer):
         max_length=2000,
         help_text="Message text to send."
     )
-    language = serializers.ChoiceField(
-        choices=['en', 'ru', 'uz'],
+    language = serializers.CharField(
         default='en',
         required=False,
+        allow_blank=True,
         help_text="Response language."
     )
+
+    def validate_language(self, value):
+        if not value:
+            return 'en'
+
+        normalized = str(value).strip().lower().replace('_', '-')
+        base = normalized.split('-')[0]
+
+        if base in {'en', 'ru', 'uz'}:
+            return base
+
+        raise serializers.ValidationError("Language must be one of: en, ru, uz.")
 
 
 # Response Serializers
