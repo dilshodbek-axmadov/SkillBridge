@@ -295,3 +295,8 @@ STRIPE_CV_DOWNLOAD_PRICE_ID = config('STRIPE_CV_DOWNLOAD_PRICE_ID')
 STRIPE_PRO_SUBSCRIPTION_PRICE_ID = config('STRIPE_PRO_SUBSCRIPTION_PRICE_ID')
 FRONTEND_URL = config('FRONTEND_URL')
 BACKEND_URL = config('BACKEND_URL')
+
+# Google OAuth (Sign in with Google)
+# Used only by the frontend via VITE_GOOGLE_CLIENT_ID; kept here for reference
+# and in case we later switch to a server-side ID-token verification flow.
+GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')

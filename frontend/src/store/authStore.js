@@ -61,6 +61,30 @@ const useAuthStore = create((set) => ({
     }
   },
 
+  loginWithGoogle: async (accessToken, userType) => {
+    set({ loading: true, error: null });
+    try {
+      const body = { access_token: accessToken };
+      if (userType) body.user_type = userType;
+      const { data } = await api.post('/users/auth/google/', body);
+      safeSetItem('access_token', data.tokens.access);
+      safeSetItem('refresh_token', data.tokens.refresh);
+      if (data.user?.preferred_language) {
+        i18n.changeLanguage(data.user.preferred_language);
+      }
+      set({ user: data.user, isAuthenticated: true, loading: false });
+      return data;
+    } catch (error) {
+      const body = error.response?.data;
+      const msg =
+        body?.error ||
+        body?.detail ||
+        'Could not sign in with Google. Please try again.';
+      set({ error: String(msg), loading: false });
+      throw error;
+    }
+  },
+
   logout: async () => {
     try {
       const refresh = safeGetItem('refresh_token');

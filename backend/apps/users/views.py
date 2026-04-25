@@ -4,6 +4,9 @@ Users App Views - Part 1: Authentication
 API endpoints for user authentication.
 """
 
+import secrets
+
+import requests
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import transaction
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
@@ -166,6 +170,147 @@ class LogoutView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class GoogleAuthView(APIView):
+    """
+    Sign in / sign up with Google.
+
+    POST /api/v1/users/auth/google/
+    body: {
+        "access_token": "<Google OAuth 2.0 access token from GIS>",
+        "user_type": "developer" | "recruiter"   # optional, only used on new sign-up
+    }
+
+    We verify the access token by calling Google's userinfo endpoint over HTTPS;
+    a 200 response from accounts.google.com / googleapis.com is proof that the
+    token is valid and Google has verified the email.
+
+    Behaviour:
+      - Existing user (matched by email): log them in. user_type is NOT changed.
+      - New user: create account with a random unusable-style password, set
+        user_type from the request (default: developer), create blank profile.
+    Returns the same shape as the regular /login/ endpoint.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
+
+    def post(self, request):
+        access_token = (request.data.get('access_token') or '').strip()
+        if not access_token:
+            return Response(
+                {'error': 'access_token is required.', 'code': 'missing_access_token'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            resp = requests.get(
+                self.USERINFO_URL,
+                headers={'Authorization': f'Bearer {access_token}'},
+                timeout=10,
+            )
+        except requests.RequestException as e:
+            return Response(
+                {'error': f'Could not reach Google: {e}', 'code': 'google_unreachable'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        if resp.status_code != 200:
+            return Response(
+                {'error': 'Invalid Google access token.', 'code': 'invalid_google_token'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        info = resp.json() or {}
+        email = (info.get('email') or '').strip().lower()
+        email_verified = info.get('email_verified') in (True, 'true', 'True', 1)
+        google_sub = info.get('sub')
+        given_name = info.get('given_name') or ''
+        family_name = info.get('family_name') or ''
+
+        if not email or not google_sub:
+            return Response(
+                {'error': 'Google did not return an email.', 'code': 'google_no_email'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not email_verified:
+            return Response(
+                {
+                    'error': 'Your Google email is not verified. Please verify it with Google first.',
+                    'code': 'google_email_unverified',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        requested_type = (request.data.get('user_type') or '').strip()
+        if requested_type not in (User.UserType.DEVELOPER, User.UserType.RECRUITER):
+            requested_type = User.UserType.DEVELOPER
+
+        created = False
+        with transaction.atomic():
+            user = User.objects.filter(email__iexact=email).first()
+            if user is None:
+                username = self._pick_unique_username(email)
+                user = User.objects.create_user(
+                    email=email,
+                    username=username,
+                    password=secrets.token_urlsafe(32),
+                    first_name=given_name,
+                    last_name=family_name,
+                    user_type=requested_type,
+                    recruiter_plan=User.RecruiterPlan.FREE,
+                )
+                UserProfile.objects.get_or_create(user=user)
+                created = True
+
+                home_path = (
+                    '/recruiter/dashboard'
+                    if user.user_type == User.UserType.RECRUITER
+                    else '/dashboard'
+                )
+                log_user_activity(
+                    user,
+                    UserActivity.ActivityType.ACCOUNT_CREATED,
+                    'Welcome! Your SkillBridge account is ready.',
+                    link_path=home_path,
+                )
+            else:
+                UserProfile.objects.get_or_create(user=user)
+
+        from django.utils import timezone
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                'message': 'Signed up with Google.' if created else 'Logged in with Google.',
+                'created': created,
+                'user': UserSerializer(user).data,
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                },
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    def _pick_unique_username(email):
+        base = (email.split('@')[0] or 'user').lower()
+        base = ''.join(ch for ch in base if ch.isalnum() or ch in '._-')[:24] or 'user'
+        candidate = base
+        suffix = 0
+        while User.objects.filter(username=candidate).exists():
+            suffix += 1
+            candidate = f'{base}{suffix}'
+            if suffix > 9999:
+                candidate = f'{base}{secrets.token_hex(3)}'
+                break
+        return candidate
 
 
 class PasswordResetRequestView(APIView):
