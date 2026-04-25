@@ -220,13 +220,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # default user models
 AUTH_USER_MODEL = "users.User"
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'  # Or your SMTP server
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@gmail.com'  # Replace
-# EMAIL_HOST_PASSWORD = 'your-app-password'  # Replace
-# DEFAULT_FROM_EMAIL = 'SkillBridge <noreply@skillbridge.com>'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('SMTP_HOST', default='sandbox.smtp.mailtrap.io')
+EMAIL_PORT = config('SMTP_PORT', default=587, cast=int)
+EMAIL_HOST_USER = config('SMTP_USER', default='')
+EMAIL_HOST_PASSWORD = config('SMTP_PASS', default='')
+EMAIL_USE_TLS = config('SMTP_USE_TLS', default=True, cast=bool)
+DEFAULT_FROM_EMAIL = config('SMTP_FROM_EMAIL', default='SkillBridge <noreply@skillbridge.com>')
 
 
 # Maximum file upload size (5MB)

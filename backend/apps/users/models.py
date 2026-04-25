@@ -11,6 +11,8 @@ Tables:
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.contrib.auth.hashers import make_password, check_password
 
 
 class User(AbstractUser):
@@ -317,3 +319,41 @@ class UserActivity(models.Model):
 
     def __str__(self):
         return f'{self.user_id} {self.activity_type} @ {self.created_at}'
+
+
+class PasswordResetCode(models.Model):
+    """
+    One-time 6-digit reset code with 15-minute expiry.
+
+    We store a hash (not the raw code) so the database doesn't contain plaintext OTPs.
+    """
+
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_codes")
+    code_hash = models.CharField(max_length=255)
+    expires_at = models.DateTimeField(db_index=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "password_reset_codes"
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"PasswordResetCode(user={self.user_id}, expires_at={self.expires_at}, used={bool(self.used_at)})"
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() >= self.expires_at
+
+    @property
+    def is_used(self) -> bool:
+        return self.used_at is not None
+
+    def set_code(self, raw_code: str) -> None:
+        self.code_hash = make_password(str(raw_code))
+
+    def check_code(self, raw_code: str) -> bool:
+        return check_password(str(raw_code), self.code_hash)

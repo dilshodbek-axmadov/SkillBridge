@@ -7,6 +7,7 @@ API endpoints for user authentication.
 import secrets
 
 import requests
+from datetime import timedelta
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,12 +16,14 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 
-from .models import User, UserProfile, UserActivity
+from .models import User, UserProfile, UserActivity, PasswordResetCode
 from .activity_log import log_user_activity
+from .email_service import EmailService
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
@@ -170,6 +173,123 @@ class LogoutView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class PasswordResetOTPRequestView(APIView):
+    """
+    Request a 6-digit OTP code via email.
+
+    POST /api/v1/users/auth/password-reset-otp/
+    body: { "email": "user@example.com" }
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = (request.data.get("email") or "").strip().lower()
+        if not email:
+            return Response(
+                {"error": "Email is required.", "code": "missing_email"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(email__iexact=email).first()
+        if not user:
+            return Response(
+                {"error": "No user found with this email.", "code": "email_not_found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Invalidate previous unused codes (optional but keeps DB clean and UX predictable).
+        PasswordResetCode.objects.filter(user=user, used_at__isnull=True, expires_at__gt=timezone.now()).update(
+            expires_at=timezone.now()
+        )
+
+        code = f"{secrets.randbelow(1000000):06d}"
+        expires_at = timezone.now() + timedelta(minutes=15)
+
+        prc = PasswordResetCode(user=user, expires_at=expires_at)
+        prc.set_code(code)
+        prc.save()
+
+        try:
+            EmailService().send_otp(to_email=user.email, code=code)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to send email: {e}", "code": "email_send_failed"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(
+            {"message": "OTP code sent to your email.", "expires_in_seconds": 15 * 60},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetOTPConfirmView(APIView):
+    """
+    Confirm OTP and set a new password.
+
+    POST /api/v1/users/auth/password-reset-otp/confirm/
+    body: { "email": "...", "code": "123456", "new_password": "...", "new_password_confirm": "..." }
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = (request.data.get("email") or "").strip().lower()
+        code = (request.data.get("code") or "").strip()
+        new_password = request.data.get("new_password") or ""
+        new_password_confirm = request.data.get("new_password_confirm") or ""
+
+        if not email or not code:
+            return Response(
+                {"error": "Email and code are required.", "code": "missing_fields"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if new_password != new_password_confirm:
+            return Response(
+                {"error": "Password fields didn't match.", "code": "password_mismatch"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(email__iexact=email).first()
+        if not user:
+            return Response(
+                {"error": "No user found with this email.", "code": "email_not_found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Use latest unused code
+        prc = (
+            PasswordResetCode.objects.filter(user=user, used_at__isnull=True)
+            .order_by("-created_at")
+            .first()
+        )
+        if not prc:
+            return Response(
+                {"error": "No reset code found. Request a new one.", "code": "code_missing"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if prc.is_expired:
+            return Response(
+                {"error": "Code expired. Request a new one.", "code": "code_expired"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not prc.check_code(code):
+            return Response(
+                {"error": "Invalid code.", "code": "code_invalid"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Mark used + set password atomically
+        with transaction.atomic():
+            prc.used_at = timezone.now()
+            prc.save(update_fields=["used_at"])
+            user.set_password(new_password)
+            user.save(update_fields=["password", "updated_at"])
+
+        return Response({"message": "Password updated successfully."}, status=status.HTTP_200_OK)
 
 
 class GoogleAuthView(APIView):

@@ -14,6 +14,8 @@ from .views import (
     LoginView,
     LogoutView,
     GoogleAuthView,
+    PasswordResetOTPRequestView,
+    PasswordResetOTPConfirmView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
     CurrentUserView,
@@ -65,6 +67,8 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/google/', GoogleAuthView.as_view(), name='google_auth'),
+    path('auth/password-reset-otp/', PasswordResetOTPRequestView.as_view(), name='password_reset_otp'),
+    path('auth/password-reset-otp/confirm/', PasswordResetOTPConfirmView.as_view(), name='password_reset_otp_confirm'),
     
     # JWT token refresh
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
