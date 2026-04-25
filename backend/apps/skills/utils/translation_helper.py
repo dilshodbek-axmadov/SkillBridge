@@ -85,6 +85,79 @@ SKILL_TRANSLATION_DICT = {
         'узбекский язык': 'uzbek',
         'опыт работы': 'work experience',
         'высшее образование': 'higher education',
+
+        # Analytics & BI
+        'анализ данных': 'data analysis',
+        'визуализация данных': 'data visualization',
+        'бизнес аналитика': 'business intelligence',
+        'отчетность': 'reporting',
+        'дашборд': 'dashboard',
+        'сводные таблицы': 'pivot tables',
+        'статистический анализ': 'statistical analysis',
+        'прогнозирование': 'forecasting',
+
+        # Data Engineering
+        'обработка данных': 'data processing',
+        'хранилище данных': 'data warehouse',
+        'конвейер данных': 'data pipeline',
+        'качество данных': 'data quality',
+        'машинное обучение': 'machine learning',
+        'глубокое обучение': 'deep learning',
+        'нейронные сети': 'neural networks',
+
+        # Development
+        'разработка': 'software development',
+        'бэкенд разработка': 'backend development',
+        'фронтенд разработка': 'frontend development',
+        'фулстек разработка': 'fullstack development',
+        'мобильная разработка': 'mobile development',
+        'веб разработка': 'web development',
+        'тестирование': 'testing',
+        'автоматизация тестирования': 'test automation',
+
+        # Tools & Methods
+        'контроль версий': 'version control',
+        'управление версиями': 'version control',
+        'непрерывная интеграция': 'continuous integration',
+        'микросервисы': 'microservices',
+        'объектно ориентированное программирование': 'object-oriented programming',
+        'проектирование баз данных': 'database design',
+        'администрирование баз данных': 'database administration',
+        'оптимизация запросов': 'query optimization',
+
+        # Soft Skills (keep these - they are valid skills for categorization)
+        'аналитическое мышление': 'analytical thinking',
+        'критическое мышление': 'critical thinking',
+        'решение проблем': 'problem solving',
+        'управление временем': 'time management',
+        'внимание к деталям': 'attention to detail',
+        'многозадачность': 'multitasking',
+        'стратегическое мышление': 'strategic thinking',
+        'навыки презентации': 'presentation skills',
+        'навыки коммуникации': 'communication skills',
+
+        # Business & PM
+        'управление проектами': 'project management',
+        'управление продуктом': 'product management',
+        'бизнес анализ': 'business analysis',
+        'сбор требований': 'requirements gathering',
+        'постановка задач': 'task management',
+        'работа с заказчиком': 'client management',
+        'управление командой': 'team management',
+
+        # Finance/Banking domain (common in Uzbekistan)
+        'кредитный риск': 'credit risk',
+        'управление рисками': 'risk management',
+        'финансовый анализ': 'financial analysis',
+        'банковские продукты': 'banking products',
+        'розничный банкинг': 'retail banking',
+        'взыскание': 'debt collection',
+        'скоринг': 'scoring',
+
+        # Languages
+        'английский язык': 'english',
+        'русский язык': 'russian',
+        'узбекский язык': 'uzbek',
     },
     'uz': {
         # Uzbek translations (Latin script)

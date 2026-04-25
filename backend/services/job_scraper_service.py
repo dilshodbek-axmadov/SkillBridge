@@ -77,10 +77,51 @@ class ExtractionService:
                 )
 
             # Step 3: Search, process, load (atomic)
-            stats = self._execute_pipeline(period=period)
+            stats = self._execute_pipeline(period=period) or {}
 
             # Step 4: Bulk deactivation — compare API listing vs DB
             deactivated = self._bulk_deactivate_missing_jobs()
+
+            # Phase B: Resolve aliases -> canonical skills
+            resolution_stats = {}
+            try:
+                logger.info("Starting Phase B: Skill resolution...")
+                from apps.skills.utils.skill_resolver import SkillResolver
+
+                resolver = SkillResolver(
+                    auto_resolve_threshold=0.95,
+                    fuzzy_match_threshold=0.85,
+                    use_ai_translation=False,  # AI disabled; dictionary only
+                )
+                resolution_stats = resolver.resolve_all_unresolved()
+                logger.info(
+                    f"Resolution complete: auto_resolved={resolution_stats.get('auto_resolved', 0)}, "
+                    f"new_skills={resolution_stats.get('new_skills_created', 0)}, "
+                    f"needs_review={resolution_stats.get('needs_review', 0)}"
+                )
+            except Exception as e:
+                # Do not fail Phase A run if Phase B fails.
+                logger.exception(f"Phase B failed (continuing): {e}")
+
+            # Phase C: Link jobs -> canonical skills
+            linking_stats = {}
+            try:
+                logger.info("Starting Phase C: Job-skill linking...")
+                from apps.skills.utils.job_skill_linker import JobSkillLinker
+
+                linker = JobSkillLinker()
+                linking_stats = linker.link_all_jobs()
+                logger.info(
+                    f"Linking complete: jobs_processed={linking_stats.get('jobs_processed', 0)}, "
+                    f"links_created={linking_stats.get('job_skills_created', 0)}"
+                )
+            except Exception as e:
+                # Do not fail Phase A run if Phase C fails.
+                logger.exception(f"Phase C failed (continuing): {e}")
+
+            # Store combined stats for logging/observability.
+            stats['resolution_stats'] = resolution_stats
+            stats['linking_stats'] = linking_stats
 
             # Step 5: Record success
             extraction_run.status = 'success'
@@ -687,15 +728,29 @@ class EnhancedSkillExtractor:
         self.use_ollama = use_ollama
         self.skill_frequency = Counter()
 
-        # Common IT skills patterns for regex fallback
-        self.skill_patterns = {
-            'programming': r'\b(Python|Java|JavaScript|TypeScript|C\+\+|C#|PHP|Ruby|Go|Rust|Swift|Kotlin|Scala)\b',
-            'frameworks': r'\b(React|Vue|Angular|Django|Flask|FastAPI|Spring|Laravel|Express|Node\.?js|Next\.?js)\b',
-            'databases': r'\b(SQL|PostgreSQL|MySQL|MongoDB|Redis|Elasticsearch|Oracle|MS SQL|SQLite)\b',
-            'bi_tools': r'\b(Power BI|Tableau|Superset|MetaBase|Looker|QlikView|GA4|Firebase)\b',
-            'cloud': r'\b(AWS|Azure|GCP|DigitalOcean|Heroku|Docker|Kubernetes)\b',
-            'tools': r'\b(Git|Linux|Nginx|RabbitMQ|Celery|Kafka|Airflow|Jenkins)\b',
-        }
+        # Expanded multilingual skill patterns for regex fallback.
+        self.skill_patterns = [
+            # English tech terms - exact word boundary matches
+            r'\b(Python|Java(?:Script)?|TypeScript|C\+\+|C#|PHP|Ruby|Go|Rust|Swift|Kotlin|Scala|R|Dart|Bash|Shell|PowerShell)\b',
+            r'\b(React(?:\.js)?|Vue(?:\.js)?|Angular|Django|Flask|FastAPI|Spring(?:\s?Boot)?|Laravel|Express(?:\.js)?|Next\.js|Node\.js|NestJS|Flutter)\b',
+            r'\b(PostgreSQL|MySQL|MongoDB|Redis|Elasticsearch|Oracle|MS\s?SQL|SQLite|ClickHouse|Cassandra|DynamoDB|Firebase)\b',
+            r'\b(Power\s?BI|Tableau|Metabase|Superset|Looker|Qlik(?:View|Sense)?|Google\s?Analytics|GA4|Grafana)\b',
+            r'\b(AWS|Azure|GCP|Google\s?Cloud|Docker|Kubernetes|K8s|Terraform|Ansible|Jenkins|GitLab\s?CI|GitHub\s?Actions)\b',
+            r'\b(Git|Linux|Nginx|RabbitMQ|Celery|Kafka|Airflow|Spark|Hadoop|dbt|Pandas|NumPy|Scikit[\-\s]?learn|TensorFlow|PyTorch)\b',
+            r'\b(SQL|HTML|CSS|SASS|GraphQL|REST(?:\s?API)?|gRPC|JSON|XML|YAML)\b',
+            r'\b(Figma|Sketch|Adobe\s?XD|Photoshop|Illustrator|Jira|Confluence|Trello|Notion|Slack|Excel|Word)\b',
+            r'\b(Agile|Scrum|Kanban|DevOps|CI/?CD|TDD|BDD|OOP|SOLID|MVC|MVVM|Microservices)\b',
+            r'\b(Postman|Swagger|DBeaver|DataGrip|VS\s?Code|PyCharm|IntelliJ|Android\s?Studio|Xcode)\b',
+            r'\b(SSRS|Report\s?Builder|Power\s?Query|Power\s?Automate|Tableau|1C)\b',
+            r'\b(A/B[\s\-]?тест(?:ирование)?|A/B[\s\-]?test(?:ing)?)\b',
+
+            # Russian skill patterns - match Cyrillic skill names from job descriptions
+            r'\b(SQL|BI|API|REST|Git|Linux|Docker|Excel|Power\s?BI)\b',  # mixed-language terms common in RU text
+            r'(?:знание|опыт работы с|владение|навыки?|использование)\s+([A-Za-z][A-Za-z0-9\s\.\+\#]{1,30})',  # "знание Python", "опыт работы с Docker"
+            r'\b(аналитик(?:а|и)?(?:\s+данных)?|визуализаци(?:я|и)\s+данных|анализ\s+данных|бизнес[\-\s]анализ)\b',
+            r'\b(машинное\s+обучение|глубокое\s+обучение|нейронн(?:ые|ая)\s+сет(?:и|ь)|обработка\s+данных)\b',
+            r'\b(управление\s+проектами|управление\s+продуктом|постановка\s+задач|технические\s+требования)\b',
+        ]
 
     def extract_skills_from_vacancy(self, vacancy_data: Dict) -> List[Dict]:
         """
@@ -707,7 +762,7 @@ class EnhancedSkillExtractor:
                 'skill_text': 'Python',
                 'language_code': 'en',
                 'importance': 'core',
-                'source': 'key_skills'
+                'source': 'hh.uz'
             },
             ...
         ]
@@ -743,7 +798,7 @@ class EnhancedSkillExtractor:
                     'skill_text': skill_name,
                     'language_code': self._detect_language(skill_name),
                     'importance': 'core',
-                    'source': 'key_skills',
+                    'source': 'hh.uz',
                 })
 
         logger.debug(f"Extracted {len(extracted)} skills from key_skills")
@@ -785,19 +840,31 @@ class EnhancedSkillExtractor:
 
     def _extract_with_regex(self, text: str) -> List[Dict]:
         """Extract skills using regex patterns (fallback)."""
-        found_skills = set()
+        found_skills = {}  # normalized_lower -> original_text (preserve best casing)
 
-        for _, pattern in self.skill_patterns.items():
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            found_skills.update(match.strip() for match in matches)
+        for pattern in self.skill_patterns:
+            try:
+                matches = re.findall(pattern, text, re.IGNORECASE | re.UNICODE)
+                for match in matches:
+                    # re.findall returns strings or tuples depending on groups
+                    skill_text = match if isinstance(match, str) else match[-1]
+                    skill_text = skill_text.strip()
+                    if len(skill_text) < 2:
+                        continue
+                    key = skill_text.lower()
+                    if key not in found_skills:
+                        found_skills[key] = skill_text
+            except re.error:
+                continue
 
         extracted = []
-        for skill in found_skills:
+        for key, original in found_skills.items():
+            lang = self._detect_language(original)
             extracted.append({
-                'skill_text': skill,
-                'language_code': self._detect_language(skill),
+                'skill_text': original,
+                'language_code': lang,
                 'importance': 'secondary',
-                'source': 'description_regex',
+                'source': 'hh.uz',
             })
 
         logger.debug(f"Regex extracted {len(extracted)} skills")
@@ -1406,7 +1473,7 @@ class DatabaseLoader:
                         'skill_text': 'Python',
                         'language_code': 'en',
                         'importance': 'core',
-                        'source': 'key_skills'
+                        'source': 'hh.uz'
                     },
                     ...
                 ]
@@ -1619,7 +1686,9 @@ class DatabaseLoader:
             print(f"  Errors:          {self.stats['errors']:>6}")
 
         print("\n" + "="*60)
-        print("NEXT STEP: Run skill resolver to create canonical skills")
-        print("Command: python manage.py resolve_skills")
+        print("NEXT STEP: Phases B and C run automatically in sync_jobs")
+        print("Optional admin tasks:")
+        print("  python manage.py recategorize_skills")
+        print("  python manage.py calculate_market_trends")
         print("="*60 + "\n")
 

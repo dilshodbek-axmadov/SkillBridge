@@ -328,20 +328,29 @@ class SkillResolver:
         Generic terms should be rejected.
         """
         generic_terms = {
-            'communication',
-            'teamwork',
-            'leadership',
-            'work',
-            'experience',
-            'education',
-            'knowledge',
-            'understanding',
-            'skills',
-            'abilities',
-            'good',
-            'strong',
-            'excellent',
-            'other',
+            # Too vague to be a skill
+            'work', 'experience', 'education', 'knowledge', 'understanding',
+            'skills', 'abilities', 'skill', 'ability', 'competency', 'competencies',
+            'good', 'strong', 'excellent', 'high', 'advanced', 'basic', 'deep',
+            'other', 'various', 'different', 'general', 'technical', 'professional',
+
+            # Generic action words
+            'analysis', 'development', 'management', 'implementation', 'support',
+            'planning', 'design', 'testing', 'maintenance', 'integration',
+            'optimization', 'monitoring', 'reporting', 'documentation',
+
+            # Generic nouns
+            'system', 'systems', 'process', 'processes', 'solution', 'solutions',
+            'technology', 'technologies', 'platform', 'platforms', 'tool', 'tools',
+            'language', 'languages', 'framework', 'frameworks', 'database', 'databases',
+            'application', 'applications', 'service', 'services', 'data', 'information',
+
+            # Russian generic terms (normalized form after translation)
+            'programming',  # too vague without language
+            'higher_education', 'work_experience', 'russian', 'uzbek',
+
+            # Single characters or too short
+            'a', 'b', 'c', 'it', 'is', 'or', 'in', 'of', 'to', 'and',
         }
         
         return normalized in generic_terms
