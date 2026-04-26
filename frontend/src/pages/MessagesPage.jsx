@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, Send, MessageSquare, User } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -11,8 +12,9 @@ function cn(...parts) {
 }
 
 function ThreadTitle({ me, thread }) {
+  const { t } = useTranslation();
   const other = me?.user_type === 'recruiter' ? thread?.developer : thread?.recruiter;
-  const name = other?.full_name || other?.email || 'Conversation';
+  const name = other?.full_name || other?.email || t('messages.conversation');
   return (
     <div className="min-w-0">
       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{name}</p>
@@ -22,6 +24,7 @@ function ThreadTitle({ me, thread }) {
 }
 
 export default function MessagesPage() {
+  const { t } = useTranslation();
   const me = useAuthStore((s) => s.user);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedThreadId = Number(searchParams.get('thread') || '') || null;
@@ -51,7 +54,7 @@ export default function MessagesPage() {
       const { data } = await api.get('/messages/threads/');
       setThreads(data?.threads || []);
     } catch {
-      setThreadsError('Could not load conversations.');
+      setThreadsError(t('messages.couldNotLoadConversations'));
     } finally {
       setThreadsLoading(false);
     }
@@ -67,7 +70,7 @@ export default function MessagesPage() {
       // Backend marks unread as read when opened; refresh badges.
       loadThreads();
     } catch {
-      setMessagesError('Could not load messages.');
+      setMessagesError(t('messages.couldNotLoadMessages'));
       setMessages([]);
     } finally {
       setMessagesLoading(false);
@@ -101,7 +104,7 @@ export default function MessagesPage() {
       setDraft('');
       loadThreads();
     } catch {
-      setMessagesError('Could not send message.');
+      setMessagesError(t('messages.couldNotSendMessage'));
     } finally {
       setSending(false);
     }
@@ -112,8 +115,8 @@ export default function MessagesPage() {
       <div className="max-w-6xl">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Messages</h1>
-            <p className="text-sm text-gray-500 mt-1">Your conversations with recruiters and candidates.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('messages.title')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t('messages.subtitle')}</p>
           </div>
         </div>
 
@@ -121,7 +124,7 @@ export default function MessagesPage() {
           <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-gray-500" />
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conversations</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('messages.conversations')}</p>
             </div>
             {threadsLoading ? (
               <div className="py-14 flex justify-center">
@@ -164,14 +167,14 @@ export default function MessagesPage() {
                 })}
               </div>
             ) : (
-              <div className="p-6 text-sm text-gray-500">No conversations yet.</div>
+              <div className="p-6 text-sm text-gray-500">{t('messages.noConversationsYet')}</div>
             )}
           </section>
 
           <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden flex flex-col min-h-[520px]">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {selectedThread ? <ThreadTitle me={me} thread={selectedThread} /> : 'Select a conversation'}
+                {selectedThread ? <ThreadTitle me={me} thread={selectedThread} /> : t('messages.selectConversation')}
               </p>
             </div>
 
@@ -183,7 +186,7 @@ export default function MessagesPage() {
               ) : messagesError ? (
                 <div className="text-sm text-red-600">{messagesError}</div>
               ) : !selectedThreadId ? (
-                <div className="text-sm text-gray-500">Pick a conversation to view messages.</div>
+                <div className="text-sm text-gray-500">{t('messages.pickConversation')}</div>
               ) : messages.length ? (
                 <div className="space-y-3">
                   {messages.map((m) => {
@@ -208,7 +211,7 @@ export default function MessagesPage() {
                   })}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">No messages yet.</div>
+                <div className="text-sm text-gray-500">{t('messages.noMessagesYet')}</div>
               )}
             </div>
 
@@ -219,7 +222,7 @@ export default function MessagesPage() {
                   onChange={(e) => setDraft(e.target.value)}
                   rows={2}
                   disabled={!selectedThreadId || sending}
-                  placeholder={selectedThreadId ? 'Write a message…' : 'Select a conversation first'}
+                  placeholder={selectedThreadId ? t('messages.writeMessage') : t('messages.selectConversationFirst')}
                   className="flex-1 resize-none px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 disabled:opacity-60"
                 />
                 <button
@@ -229,7 +232,7 @@ export default function MessagesPage() {
                   className="h-11 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold border-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  Send
+                  {t('messages.send')}
                 </button>
               </div>
             </div>

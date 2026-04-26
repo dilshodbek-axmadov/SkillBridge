@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Loader2,
   Plus,
@@ -21,12 +22,6 @@ import RecruiterLayout from '../components/layout/RecruiterLayout';
 import api from '../services/api';
 import { startProCheckout } from '../utils/startProCheckout';
 
-const TABS = [
-  { id: 'active', label: 'Active' },
-  { id: 'draft', label: 'Drafts' },
-  { id: 'archived', label: 'Archived' },
-];
-
 function PerfCard({ label, value, icon: Icon, sub }) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex gap-3 shadow-sm">
@@ -43,6 +38,7 @@ function PerfCard({ label, value, icon: Icon, sub }) {
 }
 
 export default function RecruiterJobsPage() {
+  const { t } = useTranslation();
   useRecruiterGate();
   const user = useAuthStore((s) => s.user);
   const { access, refresh: refreshAccess } = useRecruiterAccess();
@@ -51,6 +47,12 @@ export default function RecruiterJobsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('active');
   const [actionId, setActionId] = useState(null);
+
+  const TABS = [
+    { id: 'active', label: t('recruiter.active') },
+    { id: 'draft', label: t('recruiter.drafts') },
+    { id: 'archived', label: t('recruiter.archived') },
+  ];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -114,19 +116,23 @@ export default function RecruiterJobsPage() {
     if (!ok) setUpgradeBusy(false);
   };
   const tooltip = !canPost
-    ? jobsAccess?.reason || 'Free plan limit reached. Upgrade to Recruiter Pro for unlimited postings.'
+    ? jobsAccess?.reason || t('recruiter.freePlanLimitReached')
     : isFree && jobsAccess?.limit != null
-      ? `Free plan: ${jobsAccess.used}/${jobsAccess.limit} posting${jobsAccess.limit === 1 ? '' : 's'} used in last ${jobsAccess.window_days} days`
+      ? t('recruiter.freePlanUsage', {
+          used: jobsAccess.used,
+          limit: jobsAccess.limit,
+          plural: jobsAccess.limit === 1 ? '' : 's',
+          days: jobsAccess.window_days
+        })
       : '';
 
   return (
     <RecruiterLayout user={user}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My job postings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('recruiter.myJobPostings')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Manage drafts, live roles, and archived listings. Performance reflects views and applications on active
-            jobs.
+            {t('recruiter.myJobPostingsDesc')}
           </p>
         </div>
         {canPost ? (
@@ -136,7 +142,7 @@ export default function RecruiterJobsPage() {
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold no-underline shrink-0"
           >
             <Plus className="w-4 h-4" />
-            Create job
+            {t('recruiter.createJob')}
           </Link>
         ) : (
           <button
@@ -147,7 +153,7 @@ export default function RecruiterJobsPage() {
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-500 text-sm font-semibold border-none cursor-not-allowed shrink-0"
           >
             <Lock className="w-4 h-4" />
-            Create job
+            {t('recruiter.createJob')}
           </button>
         )}
       </div>
@@ -163,11 +169,15 @@ export default function RecruiterJobsPage() {
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 shrink-0" />
             <span>
-              Free plan — <strong>{jobsAccess.used}/{jobsAccess.limit}</strong> job{jobsAccess.limit === 1 ? '' : 's'}{' '}
-              posted in the last {jobsAccess.window_days} days.{' '}
+              {t('recruiter.freePlanInfo', {
+                used: jobsAccess.used,
+                limit: jobsAccess.limit,
+                plural: jobsAccess.limit === 1 ? '' : 's',
+                days: jobsAccess.window_days
+              })}{' '}
               {canPost
-                ? 'You can post one more; upgrade for unlimited.'
-                : 'You have reached the free plan limit. Upgrade to keep posting.'}
+                ? t('recruiter.canPostOneMore')
+                : t('recruiter.reachedFreeLimit')}
             </span>
           </div>
           <button
@@ -179,12 +189,12 @@ export default function RecruiterJobsPage() {
             {upgradeBusy ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Redirecting…
+                {t('recruiter.redirecting')}
               </>
             ) : (
               <>
                 <Sparkles className="w-3.5 h-3.5" />
-                Upgrade to Pro
+                {t('recruiter.upgradeToPro')}
               </>
             )}
           </button>
@@ -200,26 +210,26 @@ export default function RecruiterJobsPage() {
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-primary-600" />
-          Job performance (active listings)
+          {t('recruiter.jobPerformance')}
         </h2>
         <div className="grid sm:grid-cols-3 gap-4">
           <PerfCard
-            label="Profile views"
+            label={t('recruiter.profileViews')}
             value={loading ? '—' : performance.totalViews.toLocaleString()}
             icon={Eye}
-            sub="Counted when candidates open the job detail page"
+            sub={t('recruiter.profileViewsSub')}
           />
           <PerfCard
-            label="Applications"
+            label={t('recruiter.applications')}
             value={loading ? '—' : performance.totalApplications.toLocaleString()}
             icon={Users}
-            sub="Developers who clicked apply on your live posts"
+            sub={t('recruiter.applicationsSub')}
           />
           <PerfCard
-            label="Active jobs"
+            label={t('recruiter.activeJobsCount')}
             value={loading ? '—' : performance.activeCount}
             icon={Briefcase}
-            sub="Published and visible in search"
+            sub={t('recruiter.activeJobsSub')}
           />
         </div>
       </section>
@@ -264,23 +274,23 @@ export default function RecruiterJobsPage() {
         <div className="text-center py-16 text-gray-500 dark:text-gray-400 text-sm border border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
           {tab === 'draft' && (
             <>
-              No drafts yet.{' '}
+              {t('recruiter.noDraftsYet')}{' '}
               <Link to="/recruiter/jobs/new" className="text-primary-600 font-medium no-underline">
-                Create a job
+                {t('recruiter.createJobAndSave')}
               </Link>{' '}
-              and save as draft.
+              {t('recruiter.saveAsDraft')}
             </>
           )}
           {tab === 'active' && (
             <>
-              No active postings. Publish a draft or{' '}
+              {t('recruiter.noActivePostings')}{' '}
               <Link to="/recruiter/jobs/new" className="text-primary-600 font-medium no-underline">
-                create one
+                {t('recruiter.createOne')}
               </Link>
               .
             </>
           )}
-          {tab === 'archived' && 'No archived jobs.'}
+          {tab === 'archived' && t('recruiter.noArchivedJobs')}
         </div>
       ) : (
         <ul className="space-y-3">
@@ -315,11 +325,11 @@ export default function RecruiterJobsPage() {
                     <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
                       <span className="inline-flex items-center gap-1">
                         <Eye className="w-3.5 h-3.5" />
-                        {Number(job.view_count) || 0} views
+                        {Number(job.view_count) || 0} {t('recruiter.views')}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Users className="w-3.5 h-3.5" />
-                        {Number(job.application_count) || 0} applications
+                        {Number(job.application_count) || 0} {t('recruiter.applications')}
                       </span>
                     </div>
                     {job.job_description && (
@@ -333,7 +343,7 @@ export default function RecruiterJobsPage() {
                       className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 text-xs font-semibold no-underline hover:bg-primary-100 dark:hover:bg-primary-900/30"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      Edit
+                      {t('recruiter.edit')}
                     </Link>
                     {status === 'draft' && (
                       <button
@@ -343,7 +353,7 @@ export default function RecruiterJobsPage() {
                         className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-semibold bg-transparent cursor-pointer disabled:opacity-50"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        Publish
+                        {t('recruiter.publish')}
                       </button>
                     )}
                     {status === 'active' && (
@@ -354,7 +364,7 @@ export default function RecruiterJobsPage() {
                         className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold bg-transparent cursor-pointer disabled:opacity-50"
                       >
                         <Archive className="w-3.5 h-3.5" />
-                        Archive
+                        {t('recruiter.archive')}
                       </button>
                     )}
                     {status === 'archived' && (
@@ -365,7 +375,7 @@ export default function RecruiterJobsPage() {
                         className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold bg-transparent cursor-pointer disabled:opacity-50"
                       >
                         <FileEdit className="w-3.5 h-3.5" />
-                        Restore to draft
+                        {t('recruiter.restoreToDraft')}
                       </button>
                     )}
                   </div>

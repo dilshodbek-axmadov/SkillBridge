@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Sparkles, AlertTriangle, Target, BookOpen,
   ArrowRight, RefreshCw, CheckCircle2, XCircle, Clock,
@@ -34,15 +35,16 @@ const PROFICIENCY_COLORS = {
 };
 
 /* ─── loading messages ──────────────────────────────── */
-const LOADING_STEPS = [
-  { icon: Brain,       text: 'Reviewing your skills...',          color: 'text-purple-500' },
-  { icon: TrendingUp,  text: 'Analyzing market demand...',        color: 'text-blue-500' },
-  { icon: Target,      text: 'Identifying skill gaps...',         color: 'text-amber-500' },
-  { icon: Sparkles,    text: 'Generating recommendations...',     color: 'text-emerald-500' },
+const getLoadingSteps = (t) => [
+  { icon: Brain,       text: t('skillGap.reviewingYourSkills'),          color: 'text-purple-500' },
+  { icon: TrendingUp,  text: t('skillGap.analyzingMarketDemand'),        color: 'text-blue-500' },
+  { icon: Target,      text: t('skillGap.identifyingSkillGaps'),         color: 'text-amber-500' },
+  { icon: Sparkles,    text: t('skillGap.generatingRecommendations'),     color: 'text-emerald-500' },
 ];
 
 /* ─── main page ──────────────────────────────────────── */
 export default function SkillGapPage() {
+  const { t } = useTranslation();
   const { user, fetchUser } = useAuthStore();
 
   // data
@@ -66,6 +68,8 @@ export default function SkillGapPage() {
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterImportance, setFilterImportance] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+
+  const LOADING_STEPS = getLoadingSteps(t);
 
   /* ─── initial load ─────────────────────────── */
   useEffect(() => {
@@ -105,13 +109,13 @@ export default function SkillGapPage() {
           window.location.href = '/login?redirect=/skills-gap';
           return;
         }
-        setError('Failed to load data.');
+        setError(t('skillGap.failedToLoadData'));
       } finally {
         setPageLoading(false);
       }
     };
     load();
-  }, []);
+  }, [user, fetchUser, t]);
 
   /* ─── loading step animation ──────────────── */
   const stepInterval = useRef(null);
@@ -123,7 +127,7 @@ export default function SkillGapPage() {
       }, 2500);
     }
     return () => clearInterval(stepInterval.current);
-  }, [phase]);
+  }, [phase, LOADING_STEPS]);
 
   /* ─── run analysis ─────────────────────────── */
   const runAnalysis = async () => {
@@ -140,7 +144,7 @@ export default function SkillGapPage() {
 
       setPhase('results');
     } catch (err) {
-      setError(err.response?.data?.error || 'Analysis failed. Please try again.');
+      setError(err.response?.data?.error || t('skillGap.analysisFailed'));
       setPhase('confirm');
     }
   };
@@ -200,7 +204,7 @@ export default function SkillGapPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{t('skillGap.loading')}</p>
         </div>
       </div>
     );
@@ -212,7 +216,7 @@ export default function SkillGapPage() {
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
           <p className="text-gray-600 dark:text-gray-300">{error}</p>
           <button onClick={() => window.location.reload()} className="mt-4 px-5 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors">
-            Retry
+            {t('skillGap.retry')}
           </button>
         </div>
       </div>
@@ -267,9 +271,9 @@ export default function SkillGapPage() {
             <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-6 h-6 text-amber-500" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-center mb-2">Re-analyze Skills?</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-center mb-2">{t('skillGap.reanalyzeConfirm')}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-              This will clear your current gap analysis results. You will need to run a new analysis to see updated recommendations.
+              {t('skillGap.reanalyzeDesc')}
             </p>
             <div className="flex gap-3">
               <button
@@ -277,7 +281,7 @@ export default function SkillGapPage() {
                 disabled={clearing}
                 className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold border-none cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
               >
-                Cancel
+                {t('skillGap.cancel')}
               </button>
               <button
                 onClick={handleReanalyzeConfirm}
@@ -285,7 +289,7 @@ export default function SkillGapPage() {
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
                 {clearing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                {clearing ? 'Clearing...' : 'Yes, Re-analyze'}
+                {clearing ? t('skillGap.clearing') : t('skillGap.yesReanalyze')}
               </button>
             </div>
           </div>
@@ -299,6 +303,7 @@ export default function SkillGapPage() {
    Phase 1 — Confirm Skills
    ═════════════════════════════════════════════════════ */
 function ConfirmPhase({ skills, profile, error, onConfirm }) {
+  const { t } = useTranslation();
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-4">
       {/* header */}
@@ -306,10 +311,9 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
         <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/20">
           <BarChart3 className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Skill Gap Analysis</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('skillGap.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
-          Our AI will analyze your current skills against market demand and identify gaps
-          to help you grow your career.
+          {t('skillGap.confirmDesc')}
         </p>
       </div>
 
@@ -323,12 +327,12 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
       {/* profile summary */}
       {profile && (profile.desired_role || profile.experience_level) && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Your Profile</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('skillGap.yourProfile')}</h3>
           <div className="flex flex-wrap gap-3">
             {profile.desired_role && (
               <div className="flex items-center gap-2 bg-primary-50 text-primary-700 px-3 py-1.5 rounded-lg text-sm font-medium">
                 <Target className="w-3.5 h-3.5" />
-                Target: {profile.desired_role}
+                {t('skillGap.targetLabel')}: {profile.desired_role}
               </div>
             )}
             {profile.experience_level && (
@@ -345,25 +349,25 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Your Current Skills ({skills.length})
+            {t('skillGap.yourCurrentSkills')} ({skills.length})
           </h3>
           <Link
             to="/manage-skills"
             className="text-xs text-primary-600 font-medium no-underline hover:underline flex items-center gap-1"
           >
-            Edit skills <ArrowRight className="w-3 h-3" />
+            {t('skillGap.editSkills')} <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
 
         {skills.length === 0 ? (
           <div className="text-center py-8">
             <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">No skills found. Add your skills first for a better analysis.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('skillGap.noSkillsFound')}</p>
             <Link
               to="/manage-skills"
               className="inline-block mt-3 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold no-underline hover:bg-primary-700 transition-colors"
             >
-              Add Skills
+              {t('skillGap.addSkills')}
             </Link>
           </div>
         ) : (
@@ -390,10 +394,9 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
       <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
         <Sparkles className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
         <div>
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Before we begin</p>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">{t('skillGap.beforeWeBegin')}</p>
           <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-            The analysis is based on your current skills listed above. Make sure they are
-            up to date for the most accurate results.
+            {t('skillGap.analysisBasedOnSkills')}
           </p>
         </div>
       </div>
@@ -406,13 +409,13 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
           className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-primary-600 text-white rounded-xl text-sm font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed shadow-sm"
         >
           <Sparkles className="w-4 h-4" />
-          My skills are up to date — Analyze
+          {t('skillGap.mySkillsUpToDate')}
         </button>
         <Link
           to="/manage-skills"
           className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-semibold no-underline hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
         >
-          Update my skills first
+          {t('skillGap.updateSkillsFirst')}
         </Link>
       </div>
     </div>
@@ -423,6 +426,8 @@ function ConfirmPhase({ skills, profile, error, onConfirm }) {
    Phase 2 — AI Analyzing
    ═════════════════════════════════════════════════════ */
 function AnalyzingPhase({ step }) {
+  const { t } = useTranslation();
+  const LOADING_STEPS = getLoadingSteps(t);
   return (
     <div className="max-w-lg mx-auto py-16">
       <div className="text-center space-y-8">
@@ -442,8 +447,8 @@ function AnalyzingPhase({ step }) {
         </div>
 
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Analyzing your skills</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">This may take a moment...</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('skillGap.analyzingYourSkills')}</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('skillGap.mayTakeMoment')}</p>
         </div>
 
         {/* progress steps */}
@@ -500,6 +505,7 @@ function ResultsPhase({
   onUpdateStatus,
   onReanalyze,
 }) {
+  const { t } = useTranslation();
   const totalGaps = allGaps.length;
   const coreCount = allGaps.filter((g) => g.importance === 'core').length;
   const highCount = allGaps.filter((g) => g.priority === 'high').length;
@@ -509,10 +515,10 @@ function ResultsPhase({
   const recommendations = analysisResult?.recommendations || [];
 
   const stats = [
-    { label: 'Total Gaps', value: totalGaps, icon: Target, bg: 'bg-red-50', iconBg: 'bg-red-100', color: 'text-red-600', iconColor: 'text-red-500' },
-    { label: 'Core Skills', value: coreCount, icon: Shield, bg: 'bg-purple-50', iconBg: 'bg-purple-100', color: 'text-purple-600', iconColor: 'text-purple-500' },
-    { label: 'High Priority', value: highCount, icon: AlertTriangle, bg: 'bg-amber-50', iconBg: 'bg-amber-100', color: 'text-amber-600', iconColor: 'text-amber-500' },
-    { label: 'Completed', value: completedCount, icon: CheckCircle2, bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', color: 'text-emerald-600', iconColor: 'text-emerald-500' },
+    { label: t('skillGap.totalGaps'), value: totalGaps, icon: Target, bg: 'bg-red-50', iconBg: 'bg-red-100', color: 'text-red-600', iconColor: 'text-red-500' },
+    { label: t('skillGap.coreSkills'), value: coreCount, icon: Shield, bg: 'bg-purple-50', iconBg: 'bg-purple-100', color: 'text-purple-600', iconColor: 'text-purple-500' },
+    { label: t('skillGap.highPriority'), value: highCount, icon: AlertTriangle, bg: 'bg-amber-50', iconBg: 'bg-amber-100', color: 'text-amber-600', iconColor: 'text-amber-500' },
+    { label: t('skillGap.completed'), value: completedCount, icon: CheckCircle2, bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', color: 'text-emerald-600', iconColor: 'text-emerald-500' },
   ];
 
   return (
@@ -520,9 +526,9 @@ function ResultsPhase({
       {/* header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Skill Gap Analysis</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('skillGap.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {totalGaps} skill{totalGaps !== 1 ? 's' : ''} identified to boost your career
+            {totalGaps} {totalGaps !== 1 ? t('skillGap.skillsIdentified_plural') : t('skillGap.skillsIdentified')}
           </p>
         </div>
         <button
@@ -530,7 +536,7 @@ function ResultsPhase({
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
-          Re-analyze
+          {t('skillGap.reAnalyze')}
         </button>
       </div>
 
@@ -555,13 +561,13 @@ function ResultsPhase({
         <div className="bg-gradient-to-r from-purple-50 to-primary-50 rounded-2xl border border-purple-100 p-6">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-bold text-purple-700">AI Analysis Summary</span>
+            <span className="text-sm font-bold text-purple-700">{t('skillGap.aiAnalysisSummary')}</span>
           </div>
           <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{summary}</p>
 
           {recommendations.length > 0 && (
             <div className="mt-4 pt-4 border-t border-purple-100">
-              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">Recommendations</p>
+              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">{t('skillGap.recommendations')}</p>
               <ul className="space-y-2">
                 {recommendations.map((r, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
@@ -579,39 +585,39 @@ function ResultsPhase({
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filters</span>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('skillGap.filters')}</span>
         </div>
         <div className="flex flex-wrap gap-3">
           <FilterSelect
-            label="Priority"
+            label={t('skillGap.priority')}
             value={filterPriority}
             onChange={onFilterPriority}
             options={[
-              { value: 'all', label: 'All Priorities' },
-              { value: 'high', label: 'High' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'low', label: 'Low' },
+              { value: 'all', label: t('skillGap.allPriorities') },
+              { value: 'high', label: t('skillGap.high') },
+              { value: 'medium', label: t('skillGap.medium') },
+              { value: 'low', label: t('skillGap.low') },
             ]}
           />
           <FilterSelect
-            label="Importance"
+            label={t('skillGap.importance')}
             value={filterImportance}
             onChange={onFilterImportance}
             options={[
-              { value: 'all', label: 'All' },
-              { value: 'core', label: 'Core' },
-              { value: 'secondary', label: 'Secondary' },
+              { value: 'all', label: t('skillGap.all') },
+              { value: 'core', label: t('skillGap.core') },
+              { value: 'secondary', label: t('skillGap.secondary') },
             ]}
           />
           <FilterSelect
-            label="Status"
+            label={t('skillGap.status')}
             value={filterStatus}
             onChange={onFilterStatus}
             options={[
-              { value: 'all', label: 'All Statuses' },
-              { value: 'pending', label: 'Pending' },
-              { value: 'learning', label: 'Learning' },
-              { value: 'completed', label: 'Completed' },
+              { value: 'all', label: t('skillGap.allStatuses') },
+              { value: 'pending', label: t('skillGap.pending') },
+              { value: 'learning', label: t('skillGap.learning') },
+              { value: 'completed', label: t('skillGap.completed') },
             ]}
           />
         </div>
@@ -621,7 +627,7 @@ function ResultsPhase({
       {gaps.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
           <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">No skill gaps match the current filters.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('skillGap.noSkillGapsMatchFilters')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -654,16 +660,17 @@ function FilterSelect({ label, value, onChange, options }) {
 
 /* ─── gap card ──────────────────────────────────── */
 function GapCard({ gap, onUpdateStatus }) {
+  const { t } = useTranslation();
   const pri = PRIORITY[gap.priority] || PRIORITY.medium;
   const imp = IMPORTANCE[gap.importance] || IMPORTANCE.secondary;
   const ImpIcon = imp.icon;
   const StIcon = STATUS_ICON[gap.status] || Clock;
 
   const statusLabel = {
-    pending: 'Pending',
-    learning: 'Learning',
-    completed: 'Completed',
-    skipped: 'Skipped',
+    pending: t('skillGap.pending'),
+    learning: t('skillGap.learning'),
+    completed: t('skillGap.completed'),
+    skipped: t('skillGap.skipped'),
   };
 
   return (
@@ -672,7 +679,7 @@ function GapCard({ gap, onUpdateStatus }) {
         {/* content */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{gap.skill_name || gap.skill?.name_en || 'Unknown Skill'}</h3>
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{gap.skill_name || gap.skill?.name_en || t('skillGap.unknownSkill')}</h3>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${pri.badge}`}>
               {gap.priority}
             </span>
@@ -702,14 +709,14 @@ function GapCard({ gap, onUpdateStatus }) {
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 text-white rounded-lg text-xs font-semibold border-none cursor-pointer hover:bg-primary-700 transition-colors"
               >
                 <Play className="w-3 h-3" />
-                Start Learning
+                {t('skillGap.startLearning')}
               </button>
               <button
                 onClick={() => onUpdateStatus(gap.gap_id, 'skipped')}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 rounded-lg text-xs font-semibold border-none cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 <SkipForward className="w-3 h-3" />
-                Skip
+                {t('skillGap.skip')}
               </button>
             </>
           )}
@@ -719,7 +726,7 @@ function GapCard({ gap, onUpdateStatus }) {
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold border-none cursor-pointer hover:bg-emerald-700 transition-colors"
             >
               <CheckCircle2 className="w-3 h-3" />
-              Mark Complete
+              {t('skillGap.markComplete')}
             </button>
           )}
           {gap.status === 'skipped' && (
@@ -728,13 +735,13 @@ function GapCard({ gap, onUpdateStatus }) {
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-semibold border-none cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               <RefreshCw className="w-3 h-3" />
-              Restore
+              {t('skillGap.restore')}
             </button>
           )}
           {gap.status === 'completed' && (
             <span className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300 rounded-lg text-xs font-semibold">
               <CheckCircle2 className="w-3 h-3" />
-              Done
+              {t('skillGap.done')}
             </span>
           )}
         </div>

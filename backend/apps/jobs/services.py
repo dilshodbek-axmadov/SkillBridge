@@ -4,12 +4,13 @@ Jobs App Services
 Job listing, filtering, and skill-based recommendation logic.
 """
 
+import re
 from datetime import timedelta
 
-from django.db.models import Q, Count, Case, When, IntegerField, Value, F
+from django.db.models import Q, Case, When, IntegerField, Value, F
 from django.utils import timezone
 
-from apps.jobs.models import JobPosting, JobSkill
+from apps.jobs.models import JobPosting
 from apps.skills.models import UserSkill
 
 # Only show jobs posted within the last 6 months
@@ -47,9 +48,9 @@ class JobService:
         q = filters.get('q', '').strip()
         if q:
             qs = qs.filter(
-                Q(job_title__icontains=q) |
-                Q(company_name__icontains=q) |
-                Q(job_description__icontains=q)
+                Q(job_title__icontains=q)
+                | Q(company_name__icontains=q)
+                | Q(job_description__icontains=q)
             )
 
         category = filters.get('category')
@@ -120,67 +121,138 @@ class JobService:
         data['view_count'] = job.view_count
         return data
 
-    def recommend_jobs(self, user, limit: int = 20):
-        """
-        Recommend jobs based on user's skills.
+    def _get_user_skill_ids(self, user):
+        return set(UserSkill.objects.filter(user=user).values_list('skill_id', flat=True))
 
-        Algorithm:
-        1. Get user's skill IDs.
-        2. For each active job, count how many of its required skills
-           the user possesses (matched) vs total required.
-        3. Compute match_percentage = matched / total_required * 100.
-        4. Return jobs sorted by match_percentage desc, then posted_date desc.
-        """
+    def _get_current_job_position(self, user) -> str:
+        try:
+            profile = user.profile
+        except Exception:
+            return ''
+        return (profile.current_job_position or '').strip()
 
-        user_skill_ids = set(
-            UserSkill.objects.filter(user=user)
-            .values_list('skill_id', flat=True)
+    def _recommend_by_position(self, position: str, user_skill_ids: set, limit: int = 20):
+        tokens = [token for token in re.split(r'[\s,./()_-]+', position) if len(token) >= 3][:5]
+
+        position_filter = (
+            Q(job_title__icontains=position)
+            | Q(job_category__icontains=position)
+            | Q(job_description__icontains=position)
+        )
+        for token in tokens:
+            position_filter |= Q(job_title__icontains=token)
+            position_filter |= Q(job_category__icontains=token)
+            position_filter |= Q(job_description__icontains=token)
+
+        base_qs = self._fresh_active_jobs().filter(position_filter).distinct()
+        total = base_qs.count()
+
+        candidates = (
+            base_qs
+            .annotate(
+                exact_title_match=Case(
+                    When(job_title__iexact=position, then=Value(100)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+                title_contains_match=Case(
+                    When(job_title__icontains=position, then=Value(40)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+                category_contains_match=Case(
+                    When(job_category__icontains=position, then=Value(20)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+                description_contains_match=Case(
+                    When(job_description__icontains=position, then=Value(10)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+            )
+            .prefetch_related('job_skills__skill')
+            .order_by(
+                '-exact_title_match',
+                '-title_contains_match',
+                '-category_contains_match',
+                '-description_contains_match',
+                '-posted_date',
+            )[:max(limit * 5, 60)]
         )
 
-        if not user_skill_ids:
-            # No skills — fall back to recent jobs
-            return self.list_jobs({}, limit=limit)
+        jobs = []
+        for job in candidates:
+            data = self._serialize_job(job)
 
-        # Get jobs that have at least one skill in common
-        jobs_with_match = (
+            if user_skill_ids:
+                required_skills = list(job.job_skills.all())
+                total_required = len(required_skills)
+                if total_required > 0:
+                    matched = [js.skill.name_en for js in required_skills if js.skill_id in user_skill_ids]
+                    missing = [js.skill.name_en for js in required_skills if js.skill_id not in user_skill_ids]
+                    data['match_percentage'] = round(len(matched) / total_required * 100)
+                    data['matched_skills'] = matched
+                    data['missing_skills'] = missing
+
+            jobs.append(data)
+            if len(jobs) >= limit:
+                break
+
+        return {'total': total, 'jobs': jobs}
+
+    def _recommend_by_skills(self, user_skill_ids: set, limit: int = 20):
+        if not user_skill_ids:
+            return {'total': 0, 'jobs': []}
+
+        candidates = (
             self._fresh_active_jobs()
             .filter(job_skills__skill_id__in=user_skill_ids)
             .distinct()
             .prefetch_related('job_skills__skill')
-            .order_by('-posted_date')[:200]  # pool
+            .order_by('-posted_date')[:200]
         )
 
         scored = []
-        for job in jobs_with_match:
+        for job in candidates:
             required_skills = list(job.job_skills.all())
-            total = len(required_skills)
-            if total == 0:
+            total_required = len(required_skills)
+            if total_required == 0:
                 continue
 
-            matched_ids = []
-            missing = []
-            for js in required_skills:
-                if js.skill_id in user_skill_ids:
-                    matched_ids.append(js.skill.name_en)
-                else:
-                    missing.append(js.skill.name_en)
-
-            match_pct = round(len(matched_ids) / total * 100)
+            matched = [js.skill.name_en for js in required_skills if js.skill_id in user_skill_ids]
+            missing = [js.skill.name_en for js in required_skills if js.skill_id not in user_skill_ids]
 
             data = self._serialize_job(job)
-            data['match_percentage'] = match_pct
-            data['matched_skills'] = matched_ids
+            data['match_percentage'] = round(len(matched) / total_required * 100)
+            data['matched_skills'] = matched
             data['missing_skills'] = missing
-
             scored.append(data)
 
-        # Sort by match%, then by most recent
         scored.sort(key=lambda x: (-x['match_percentage'], x.get('posted_date', '')))
+        return {'total': len(scored), 'jobs': scored[:limit]}
 
-        return {
-            'total': len(scored),
-            'jobs': scored[:limit],
-        }
+    def recommend_jobs(self, user, limit: int = 20):
+        """
+        Dynamic recommendation priority:
+        1) current_job_position
+        2) user skills
+        3) empty list
+        """
+        user_skill_ids = self._get_user_skill_ids(user)
+        current_position = self._get_current_job_position(user)
+
+        if current_position:
+            return self._recommend_by_position(
+                position=current_position,
+                user_skill_ids=user_skill_ids,
+                limit=limit,
+            )
+
+        if user_skill_ids:
+            return self._recommend_by_skills(user_skill_ids=user_skill_ids, limit=limit)
+
+        return {'total': 0, 'jobs': []}
 
     def get_filter_options(self):
         """Get available filter values from active jobs."""

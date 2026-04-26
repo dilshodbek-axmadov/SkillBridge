@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import useRecruiterGate from '../hooks/useRecruiterGate';
@@ -7,6 +8,7 @@ import RecruiterLayout from '../components/layout/RecruiterLayout';
 import api from '../services/api';
 
 export default function RecruiterSavedCandidatesPage() {
+  const { t } = useTranslation();
   useRecruiterGate();
   const user = useAuthStore((s) => s.user);
 
@@ -30,9 +32,9 @@ export default function RecruiterSavedCandidatesPage() {
   return (
     <RecruiterLayout user={user}>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Saved candidates</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('recruiter.savedCandidatesTitle')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Your shortlist of developers. Open a profile to review skills and add notes from the API or future editor.
+          {t('recruiter.savedCandidatesDesc')}
         </p>
       </div>
 
@@ -42,9 +44,9 @@ export default function RecruiterSavedCandidatesPage() {
         </div>
       ) : rows.length === 0 ? (
         <div className="text-center py-16 text-gray-500 dark:text-gray-400 text-sm border border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
-          No saved candidates yet.{' '}
+          {t('recruiter.noSavedCandidates')}{' '}
           <Link to="/recruiter/candidates" className="text-primary-600 font-medium no-underline">
-            Search talent
+            {t('recruiter.searchTalent')}
           </Link>
         </div>
       ) : (
@@ -74,7 +76,7 @@ export default function RecruiterSavedCandidatesPage() {
                   to={`/recruiter/candidates/${c?.id}`}
                   className="text-xs font-semibold text-primary-600 no-underline whitespace-nowrap"
                 >
-                  View profile →
+                  {t('recruiter.viewProfile')}
                 </Link>
               </li>
             );
