@@ -7,8 +7,9 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from decouple import config
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(config('ADMIN_URL', 'admin/'), admin.site.urls),
 
     # API endpoints
     path('api/v1/users/', include('apps.users.urls')),

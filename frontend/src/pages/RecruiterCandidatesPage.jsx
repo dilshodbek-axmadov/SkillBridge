@@ -215,7 +215,7 @@ export default function RecruiterCandidatesPage() {
                   {c.full_name || t('recruiter.developer')}
                 </Link>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
-                  {[c.desired_role || c.current_job_position, c.experience_level, c.location]
+                  {[c.current_job_position || c.desired_role, c.experience_level, c.location]
                     .filter(Boolean)
                     .join(' · ')}
                 </p>

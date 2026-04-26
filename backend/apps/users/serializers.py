@@ -211,6 +211,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'github_url',
             'linkedin_url',
             'portfolio_url',
+            'open_to_recruiters',
             'created_at',
             'updated_at'
         ]
@@ -232,7 +233,8 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             'location',
             'github_url',
             'linkedin_url',
-            'portfolio_url'
+            'portfolio_url',
+            'open_to_recruiters',
         ]
 
 

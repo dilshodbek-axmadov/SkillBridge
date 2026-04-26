@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -58,6 +58,30 @@ function proficiencyColor(level) {
   if (v.includes('intermediate')) return 'bg-amber-500';
   if (v.includes('beginner')) return 'bg-gray-400';
   return 'bg-gray-500';
+}
+
+const BIO_PREVIEW_CHARS = 180;
+
+function truncateBio(text, max = BIO_PREVIEW_CHARS) {
+  if (!text) return '';
+  const trimmed = String(text).trim();
+  if (trimmed.length <= max) return trimmed;
+  // Prefer cutting at end of a sentence within the limit; fall back to last space.
+  const slice = trimmed.slice(0, max);
+  const lastSentence = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '));
+  let cut = lastSentence > 60 ? lastSentence + 1 : slice.lastIndexOf(' ');
+  if (cut < 60) cut = max;
+  return trimmed.slice(0, cut).trimEnd();
+}
+
+function BioBlock({ text }) {
+  const isLong = (text || '').length > BIO_PREVIEW_CHARS;
+  const preview = useMemo(() => truncateBio(text), [text]);
+  return (
+    <p className="mt-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+      {isLong ? `${preview}…` : text}
+    </p>
+  );
 }
 
 function pickDefaultCvId(cvs) {
@@ -169,7 +193,7 @@ export default function RecruiterCandidateDetailPage() {
     ? Math.round(data.skills.reduce((sum, s) => sum + (Number(s?.years_of_experience) || 0), 0) * 10) / 10
     : 0;
   const defaultCvId = pickDefaultCvId(data?.cvs);
-  const heroTitle = profile.desired_role || profile.current_job_position || 'Developer';
+  const heroTitle = profile.current_job_position || profile.desired_role || 'Developer';
   const initials = String(data?.full_name || 'U')
     .split(' ')
     .filter(Boolean)
@@ -241,11 +265,7 @@ export default function RecruiterCandidateDetailPage() {
                         )}
                         {profile.experience_level && <span>{profile.experience_level}</span>}
                       </div>
-                      {profile.bio && (
-                        <p className="mt-4 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                          {profile.bio}
-                        </p>
-                      )}
+                      {profile.bio && <BioBlock text={profile.bio} />}
                     </div>
                   </div>
 

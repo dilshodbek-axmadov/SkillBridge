@@ -23,6 +23,7 @@ import useRecruiterGate from '../hooks/useRecruiterGate';
 import useAuthStore from '../store/authStore';
 import RecruiterLayout from '../components/layout/RecruiterLayout';
 import api from '../services/api';
+import { startProCheckout } from '../utils/startProCheckout';
 
 /* ============================== utilities ============================== */
 
@@ -408,10 +409,18 @@ function KpiCard({ icon: Icon, label, value, hint, accent = 'primary' }) {
   );
 }
 
-/* ============================== upgrade gate ============================== */
-
 function UpgradeGate({ onUpgrade }) {
   const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const handleUpgrade = async () => {
+    setBusy(true);
+    setErr('');
+    const ok = await onUpgrade({ onError: (m) => setErr(m) });
+    if (!ok) setBusy(false);
+  };
+
   return (
     <div className="bg-gradient-to-br from-primary-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white text-center shadow-xl">
       <Lock className="w-10 h-10 mx-auto mb-3" />
@@ -420,12 +429,18 @@ function UpgradeGate({ onUpgrade }) {
         {t('recruiter.analytics.proDesc')}
       </p>
       <button
-        onClick={onUpgrade}
-        className="inline-flex items-center gap-2 bg-white text-primary-700 font-semibold rounded-full px-5 py-2.5 hover:scale-[1.02] transition-transform"
+        onClick={handleUpgrade}
+        disabled={busy}
+        className="inline-flex items-center gap-2 bg-white text-primary-700 font-semibold rounded-full px-5 py-2.5 hover:scale-[1.02] transition-transform disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        <Sparkles className="w-4 h-4" />
-        {t('recruiter.analytics.upgradeToPro')}
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+        {busy ? t('recruiter.analytics.upgradeRedirecting') : t('recruiter.analytics.upgradeToPro')}
       </button>
+      {err && (
+        <p className="mt-4 text-sm bg-red-500/20 border border-red-300/40 rounded-lg px-3 py-2 max-w-md mx-auto">
+          {err}
+        </p>
+      )}
     </div>
   );
 }
@@ -484,7 +499,7 @@ export default function RecruiterAnalyticsPage() {
   if (locked) {
     return (
       <RecruiterLayout user={effectiveUser}>
-        <UpgradeGate onUpgrade={() => (window.location.href = '/recruiter/dashboard')} />
+        <UpgradeGate onUpgrade={startProCheckout} />
       </RecruiterLayout>
     );
   }

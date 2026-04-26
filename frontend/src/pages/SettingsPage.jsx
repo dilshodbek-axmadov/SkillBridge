@@ -118,6 +118,9 @@ function ProfileTab({ user, profile, onUserUpdate }) {
   const [expLevel, setExpLevel] = useState(profile?.experience_level || 'beginner');
   const [desiredRole, setDesiredRole] = useState(profile?.desired_role || '');
   const [employed, setEmployed] = useState(!!profile?.current_job_position);
+  const [openToRecruiters, setOpenToRecruiters] = useState(
+    profile?.open_to_recruiters !== undefined ? !!profile.open_to_recruiters : true
+  );
   const [saving1, setSaving1] = useState(false);
   const [saved1, setSaved1] = useState(false);
   const [saving2, setSaving2] = useState(false);
@@ -144,6 +147,7 @@ function ProfileTab({ user, profile, onUserUpdate }) {
         current_job_position: jobPosition,
         experience_level: expLevel,
         desired_role: desiredRole,
+        open_to_recruiters: openToRecruiters,
       });
       onUserUpdate();
       setSaved2(true);
@@ -211,14 +215,13 @@ function ProfileTab({ user, profile, onUserUpdate }) {
             <textarea
               id="bio"
               value={bio}
-              onChange={(e) => setBio(e.target.value.slice(0, 200))}
-              maxLength={200}
-              rows={3}
+              onChange={(e) => setBio(e.target.value)}
+              rows={5}
               placeholder={t('settings.profile.bioPlaceholder')}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none resize-none
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 outline-none resize-y
                 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
-            <p className="text-xs text-gray-400 text-right mt-1">{bio.length}/200</p>
+            <p className="text-xs text-gray-400 text-right mt-1">{bio.length} {t('settings.profile.charsLabel', 'characters')}</p>
           </div>
         </div>
         <SaveBtn onClick={savePersonal} saving={saving1} saved={saved1} />
@@ -257,6 +260,19 @@ function ProfileTab({ user, profile, onUserUpdate }) {
             </div>
             <div>
               <Toggle checked={employed} onChange={setEmployed} label={t('settings.profile.employed')} />
+            </div>
+            <div className="md:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-3 mt-1">
+              <Toggle
+                checked={openToRecruiters}
+                onChange={setOpenToRecruiters}
+                label={t('settings.profile.openToRecruiters', 'Open to recruiters (visible in recruiter search)')}
+              />
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {t(
+                  'settings.profile.openToRecruitersHint',
+                  'When off, your profile will not appear to recruiters searching for candidates.'
+                )}
+              </p>
             </div>
           </div>
           <SaveBtn onClick={saveCareer} saving={saving2} saved={saved2} />
