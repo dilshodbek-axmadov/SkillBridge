@@ -298,10 +298,18 @@ FRONTEND_URL = config('FRONTEND_URL')
 BACKEND_URL = config('BACKEND_URL')
 
 # Google OAuth (Sign in with Google)
-# Used only by the frontend via VITE_GOOGLE_CLIENT_ID; kept here for reference
-# and in case we later switch to a server-side ID-token verification flow.
 GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')
 
 # HH OAuth2 (client credentials)
 HH_CLIENT_ID = config('HH_CLIENT_ID')
 HH_CLIENT_SECRET = config('HH_CLIENT_SECRET')
+
+
+# Replaces local Ollama. 
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
+# Heavy / accurate work: CV parsing, roadmap generation, gap analysis
+GROQ_LARGE_MODEL = config('GROQ_LARGE_MODEL', default='llama-3.1-70b-versatile')
+# Lightweight / fast work: chatbot replies, short helpers
+GROQ_FAST_MODEL = config('GROQ_FAST_MODEL', default='llama-3.1-8b-instant')
+# Per-request timeout (seconds)
+GROQ_TIMEOUT = config('GROQ_TIMEOUT', default=60, cast=int)

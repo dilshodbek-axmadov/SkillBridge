@@ -302,40 +302,29 @@ Be encouraging and specific.
 Response:"""
         
         try:
-            import requests
-            
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "qwen2.5:7b",
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "num_predict": 150
-                    }
-                },
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                reasoning = result.get('response', '').strip()
-                
-                # Clean up
-                reasoning = reasoning.replace('\n\n', ' ').replace('\n', ' ')
-                
-                # Limit length
-                if len(reasoning) > 300:
-                    reasoning = reasoning[:297] + "..."
-                
-                return reasoning if reasoning else self._generate_template_reasoning(role, user_scores, match_score)
-        
+            from core.ai.groq_client import GroqClient
+
+            client = GroqClient()  # uses GROQ_LARGE_MODEL by default
+            reasoning = client.generate(
+                prompt=prompt,
+                temperature=0.7,
+                max_tokens=150,
+            ).strip()
+
+            # Clean up
+            reasoning = reasoning.replace('\n\n', ' ').replace('\n', ' ')
+
+            # Limit length
+            if len(reasoning) > 300:
+                reasoning = reasoning[:297] + "..."
+
+            return reasoning if reasoning else self._generate_template_reasoning(role, user_scores, match_score)
+
         except Exception as e:
             logger.error(f"AI API call failed: {e}")
-        
+
         return self._generate_template_reasoning(role, user_scores, match_score)
-    
+
     def _add_template_reasoning(self, matches: List[Dict]):
         """Add template-based reasoning (fallback)."""
         for match in matches:
@@ -344,7 +333,7 @@ Response:"""
                 match['user_scores'],
                 match['match_score']
             )
-    
+
     def _generate_template_reasoning(
         self,
         role: 'ITRole',

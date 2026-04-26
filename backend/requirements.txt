@@ -50,3 +50,6 @@ django-celery-results==2.5.1
 # Vector Search / RAG
 pgvector==0.3.6
 sentence-transformers==3.0.1
+
+# LLM (Groq cloud API — replaces local Ollama)
+groq==0.11.0

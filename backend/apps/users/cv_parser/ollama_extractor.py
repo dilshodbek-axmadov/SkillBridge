@@ -21,8 +21,9 @@ SETUP:
 
 import json
 import logging
-import requests
 from typing import Dict, List
+
+from core.ai.groq_client import GroqClient
 
 logger = logging.getLogger(__name__)
 
@@ -37,23 +38,24 @@ class OllamaExtractor:
     def __init__(
         self,
         model_name: str = "qwen2.5:7b",
-        ollama_url: str = "http://localhost:11434"
+        ollama_url: str = "http://localhost:11434",
     ):
         """
-        Initialize Ollama extractor.
-        
-        Args:
-            model_name: Ollama model (default: qwen2.5:7b)
-            ollama_url: Ollama API URL
+        Initialize the CV extractor.
+
+        ``model_name`` and ``ollama_url`` are kept for backward
+        compatibility with callers; the underlying transport is now Groq.
+        Legacy Ollama model names are auto-mapped to a Groq model.
         """
         self.model_name = model_name
-        self.ollama_url = ollama_url
+        self.ollama_url = ollama_url  # unused, retained for API compatibility
+        self.client = GroqClient(model=model_name)
         self.available = self._check_available()
-        
+
         if self.available:
-            logger.info(f"✅ Ollama ready: {model_name}")
+            logger.info(f"✅ LLM ready (Groq, mapped from '{model_name}' -> {self.client.model})")
         else:
-            logger.warning(f"⚠️ Ollama not available")
+            logger.warning("⚠️ Groq LLM not available (check GROQ_API_KEY)")
     
     def extract_all(self, cv_text: str) -> Dict:
         """
@@ -62,7 +64,7 @@ class OllamaExtractor:
         Returns standard extraction format.
         """
         if not self.available:
-            logger.error("Ollama not available")
+            logger.error("Groq LLM not available")
             return self._empty_result()
         
         if not cv_text or len(cv_text.strip()) < 50:
@@ -204,7 +206,7 @@ Return ONLY this JSON (no extra text):
 }}"""
 
         response = self._call_llm(prompt, max_tokens=200)
-
+        
         try:
             json_start = response.find('{')
             json_end = response.rfind('}') + 1
@@ -331,59 +333,28 @@ Return ONLY the JSON array, no extra text."""
             return 'lead'
     
     def _call_llm(self, prompt: str, max_tokens: int = 1000) -> str:
-        """Call Ollama API."""
+        """Send a prompt to the LLM and return the raw text response.
+
+        Signature kept identical to the original (Ollama) implementation
+        so callers (notably ``HybridOllamaExtractor``) keep working.
+        """
         try:
-            response = requests.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model_name,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0,  # Deterministic
-                        "num_predict": max_tokens
-                    }
-                },
-                timeout=60
-            )
-            
-            response.raise_for_status()
-            result = response.json()
-            
-            return result.get('response', '').strip()
-        
+            return self.client.generate(
+                prompt=prompt,
+                temperature=0,  # deterministic
+                max_tokens=max_tokens,
+            ).strip()
         except Exception as e:
-            logger.error(f"Ollama API error: {e}")
+            logger.error(f"Groq API error: {e}")
             raise
-    
+
     def _check_available(self) -> bool:
-        """Check if Ollama is running and model exists."""
+        """Return True iff the Groq LLM is reachable and an API key is set."""
         try:
-            response = requests.get(
-                f"{self.ollama_url}/api/tags",
-                timeout=3
-            )
-            
-            if response.status_code == 200:
-                models = response.json().get('models', [])
-                model_names = [m.get('name', '') for m in models]
-                
-                # Check if our model exists
-                base_model = self.model_name.split(':')[0]
-                available = any(
-                    self.model_name in name or base_model in name
-                    for name in model_names
-                )
-                
-                if not available:
-                    logger.warning(f"Model not found. Run: ollama pull {self.model_name}")
-                
-                return available
-        
+            return self.client.is_available()
         except Exception as e:
-            logger.debug(f"Ollama check failed: {e}")
-        
-        return False
+            logger.debug(f"Groq availability check failed: {e}")
+            return False
     
     def _empty_result(self) -> Dict:
         """Return empty result."""
