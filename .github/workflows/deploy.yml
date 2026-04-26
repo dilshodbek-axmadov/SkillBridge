@@ -1,0 +1,53 @@
+# Build the SkillBridge backend Docker image, push to Azure Container Registry,
+# and deploy it to Azure App Service for Containers.
+
+name: Build and Deploy to Azure
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: backend
+  WEBAPP_NAME: skillbridge-api
+  # Dockerfile and source live under backend/ (repo is a monorepo: backend/ + frontend/)
+  BUILD_CONTEXT: ./backend
+
+jobs:
+  build-and-deploy:
+    name: Build, push & deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.BUILD_CONTEXT }}
+          file: ${{ env.BUILD_CONTEXT }}/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+            ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
