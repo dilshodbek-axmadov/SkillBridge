@@ -42,11 +42,6 @@ jobs:
           tags: |
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          # Use GitHub Actions cache (works with the default buildx driver
-          # on GitHub-hosted runners; avoids the "Cache export is not
-          # supported for the docker driver" error from registry caching).
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
