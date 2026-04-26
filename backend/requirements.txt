@@ -2,6 +2,7 @@
 Django
 djangorestframework
 djangorestframework-simplejwt
+drf_spectacular
 
 # Database
 psycopg2-binary
