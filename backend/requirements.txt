@@ -1,55 +1,55 @@
 # Django & DRF
-Django==4.2
-djangorestframework==3.14
-djangorestframework-simplejwt==5.3.0
+Django
+djangorestframework
+djangorestframework-simplejwt
 
 # Database
-psycopg2-binary==2.9
+psycopg2-binary
 
 # CORS
-django-cors-headers==4.3.1
+django-cors-headers
 
 # File handling
-Pillow==10.1.0
+Pillow
 
 # Utilities
-requests==2.31
-python-decouple==3.8
+requests
+python-decouple
 
 # PDF & DOCX Parsing
-PyPDF2==3.0.1                    
-python-docx==1.1.0               
-pdfplumber==0.10.3              
+PyPDF2                   
+python-docx             
+pdfplumber            
 
 # NLP & Text Processing
-spacy==3.7.2                     
+spacy                    
 
 # Alternative/Additional NLP tools
-transformers==4.36.0
-nltk==3.8.1
+transformers
+nltk
 
 # Pattern Matching
-regex==2023.12.25               
-fuzzywuzzy==0.18.0
-python-Levenshtein==0.21.1
+regex              
+fuzzywuzzy
+python-Levenshtein
 
 # Date Parsing
-python-dateutil==2.8.2
-dateparser==1.2.0
+python-dateutil
+dateparser
 
 # File Validation
-python-magic==0.4.27
-Pillow==10.1.0
+python-magic
+Pillow
 
 # Task Queue
-celery==5.4.0
-redis==5.0.1
-django-celery-beat==2.6.0
-django-celery-results==2.5.1
+celery
+redis
+django-celery-beat
+django-celery-results
 
 # Vector Search / RAG
-pgvector==0.3.6
-sentence-transformers==3.0.1
+pgvector
+sentence-transformers
 
 # LLM (Groq cloud API — replaces local Ollama)
-groq==0.11.0
+groq
