@@ -1,9 +1,15 @@
+import os
 from pathlib import Path
-from decouple import config
 from datetime import timedelta
 from celery.schedules import crontab
-import os 
-from pathlib import Path
+
+
+def _env_bool(key: str, default: bool = False) -> bool:
+    """Parse an env var as a boolean (True/False/1/0/yes/no, case-insensitive)."""
+    raw = os.environ.get(key)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ('1', 'true', 't', 'yes', 'y', 'on')
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -14,12 +20,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG')
+# NOTE: os.environ.get('DEBUG') returns the string 'False', which is TRUTHY.
+# Use _env_bool to parse it correctly.
+DEBUG = _env_bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+# Comma-separated list, e.g. "skillbridge-api.azurewebsites.net,api.skillbridge.com"
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '*').split(',') if h.strip()]
 
 
 # Application definition
@@ -152,9 +161,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME'),
-        'USER':os.environ.get('DB_USER'),
-        'PASSWORD':os.environ.get('DB_PASSWORD'),
-        'HOST':os.environ.get('DB_HOST'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
         'PORT': int(os.environ.get('DB_PORT', 5432)),
     }
 }
@@ -224,12 +233,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = "users.User"
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('SMTP_HOST', default='sandbox.smtp.mailtrap.io')
-EMAIL_PORT = os.environ.get('SMTP_PORT', default=587, cast=int)
-EMAIL_HOST_USER = os.environ.get('SMTP_USER', default='')
-EMAIL_HOST_PASSWORD = os.environ.get('SMTP_PASS', default='')
-EMAIL_USE_TLS = os.environ.get('SMTP_USE_TLS', default=True, cast=bool)
-DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', default='SkillBridge <noreply@skillbridge.com>')
+EMAIL_HOST = os.environ.get('SMTP_HOST', 'sandbox.smtp.mailtrap.io')
+EMAIL_PORT = int(os.environ.get('SMTP_PORT', 587))
+EMAIL_HOST_USER = os.environ.get('SMTP_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('SMTP_PASS', '')
+EMAIL_USE_TLS = _env_bool('SMTP_USE_TLS', default=True)
+DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', 'SkillBridge <noreply@skillbridge.com>')
 
 
 # Maximum file upload size (5MB)
@@ -272,7 +281,7 @@ SPECTACULAR_SETTINGS = {
 
 
 # Celery Configuration
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', default='redis://127.0.0.1:6379/0')
+CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_ACCEPT_CONTENT = ['json']
@@ -296,22 +305,22 @@ STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 STRIPE_CV_DOWNLOAD_PRICE_ID = os.environ.get('STRIPE_CV_DOWNLOAD_PRICE_ID')
 STRIPE_PRO_SUBSCRIPTION_PRICE_ID = os.environ.get('STRIPE_PRO_SUBSCRIPTION_PRICE_ID')
-FRONTEND_URL = os.environ.get('FRONTEND_URL')
-BACKEND_URL = os.environ.get('BACKEND_URL')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8000')
 
 # Google OAuth (Sign in with Google)
-GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', default='')
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
 
 # HH OAuth2 (client credentials)
 HH_CLIENT_ID = os.environ.get('HH_CLIENT_ID')
 HH_CLIENT_SECRET = os.environ.get('HH_CLIENT_SECRET')
 
 
-# Replaces local Ollama. 
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', default='')
+# Replaces local Ollama.
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 # Heavy / accurate work: CV parsing, roadmap generation, gap analysis
-GROQ_LARGE_MODEL = os.environ.get('GROQ_LARGE_MODEL', default='llama-3.1-70b-versatile')
+GROQ_LARGE_MODEL = os.environ.get('GROQ_LARGE_MODEL', 'llama-3.1-70b-versatile')
 # Lightweight / fast work: chatbot replies, short helpers
-GROQ_FAST_MODEL = os.environ.get('GROQ_FAST_MODEL', default='llama-3.1-8b-instant')
+GROQ_FAST_MODEL = os.environ.get('GROQ_FAST_MODEL', 'llama-3.1-8b-instant')
 # Per-request timeout (seconds)
-GROQ_TIMEOUT = os.environ.get('GROQ_TIMEOUT', default=60, cast=int)
+GROQ_TIMEOUT = int(os.environ.get('GROQ_TIMEOUT', 60))

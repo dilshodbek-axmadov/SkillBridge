@@ -7,7 +7,10 @@
 set -e
 
 echo "[entrypoint] Running database migrations..."
-python manage.py migrate --noinput
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+    python manage.py migrate
+fi
+exec "$@"
 
 # (Optional) collectstatic — uncomment if/when STATIC_ROOT is configured:
 # python manage.py collectstatic --noinput
