@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def _env_bool(key: str, default: bool = False) -> bool:
@@ -301,7 +304,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = env('CELERY_BROKER_URL')
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
