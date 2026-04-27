@@ -113,8 +113,9 @@ RUN chmod +x /app/docker-entrypoint.sh
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["gunicorn", "skillbridge.wsgi:application", \
      "--bind", "0.0.0.0:8000", \
-     "--workers", "3", \
+     "--workers", "2", \
      "--threads", "2", \
-     "--timeout", "120", \
+     "--timeout", "60", \
+     "--graceful-timeout", "30", \
      "--access-logfile", "-", \
      "--error-logfile", "-"]
