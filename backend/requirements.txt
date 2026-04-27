@@ -54,3 +54,9 @@ sentence-transformers
 
 # LLM (Groq cloud API — replaces local Ollama)
 groq
+
+# Payments
+stripe
+
+# PDF generation (CV export)
+reportlab

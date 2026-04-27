@@ -1,17 +1,16 @@
-# Build the SkillBridge backend Docker image, push to Azure Container Registry,
-# and deploy it to Azure App Service for Containers.
-
 name: Build and Deploy to Azure
 
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 env:
   IMAGE_NAME: backend
   WEBAPP_NAME: skillbridge-api
-  # Dockerfile and source live under backend/ (repo is a monorepo: backend/ + frontend/)
   BUILD_CONTEXT: ./backend
 
 jobs:
@@ -42,6 +41,9 @@ jobs:
           tags: |
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          # 🚀 KEY OPTIMIZATION: Registry cache
+          cache-from: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
