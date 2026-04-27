@@ -60,3 +60,6 @@ stripe
 
 # PDF generation (CV export)
 reportlab
+
+# for staticfiles
+whitenoise
