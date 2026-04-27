@@ -2,9 +2,6 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 def _env_bool(key: str, default: bool = False) -> bool:
