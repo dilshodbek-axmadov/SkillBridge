@@ -88,9 +88,6 @@ RUN python -m nltk.downloader -d /usr/share/nltk_data punkt stopwords || true
 # Copy application source
 COPY . .
 
-# Collect static files at BUILD time (not runtime)
-RUN python manage.py collectstatic --noinput
-
 # Writable dirs for media uploads, static files, and HF / sentence-transformers cache
 RUN mkdir -p /app/media /app/staticfiles /app/.cache \
     && chown -R app:app /app
