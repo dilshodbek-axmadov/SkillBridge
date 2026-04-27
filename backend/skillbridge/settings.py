@@ -3,10 +3,6 @@ from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
 
-from dotenv import load_dotenv
-load_dotenv()
-
-
 
 def _env_bool(key: str, default: bool = False) -> bool:
     """Parse an env var as a boolean (True/False/1/0/yes/no, case-insensitive)."""
@@ -321,7 +317,7 @@ CELERY_WORKER_POOL = 'solo'  # Windows does not support prefork
 CELERY_BEAT_SCHEDULE = {
     'daily-job-extraction': {
         'task': 'apps.jobs.tasks.run_daily_extraction',
-        'schedule': crontab(hour=9, minute=0),
+        'schedule': crontab(hour=8, minute=0),
     },
 }
 
