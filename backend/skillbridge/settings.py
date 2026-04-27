@@ -3,6 +3,9 @@ from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 
 def _env_bool(key: str, default: bool = False) -> bool:
@@ -128,7 +131,7 @@ if extra_cors:
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = [
+CSRF_TRUSTED_ORIGINS = [ 
     x.strip()
     for x in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
     if x.strip()
@@ -301,12 +304,13 @@ SPECTACULAR_SETTINGS = {
     ],
 }
 
-
 # Celery Configuration
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
+CELERY_BROKER_URL = env('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = 'django-db'
-CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Tashkent'
