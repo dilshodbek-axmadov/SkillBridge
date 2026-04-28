@@ -2,6 +2,7 @@
 set -e
 
 echo "[entrypoint] Starting SSH..."
+ssh-keygen -A
 /usr/sbin/sshd
 
 echo "[entrypoint] Collecting static files..."
