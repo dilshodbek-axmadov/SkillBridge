@@ -1,10 +1,6 @@
 #!/bin/sh
 set -e
 
-echo "[entrypoint] Starting SSH..."
-ssh-keygen -A
-/usr/sbin/sshd
-
 echo "[entrypoint] Collecting static files..."
 python manage.py collectstatic --noinput
 
@@ -25,6 +21,9 @@ python manage.py migrate --noinput
 
 echo "[entrypoint] Ensuring superuser exists..."
 python manage.py ensure_superuser
+
+echo "[entrypoint] Initializing system data (if needed)..."
+python manage.py initialize_system
 
 echo "[entrypoint] Starting: $*"
 exec "$@"

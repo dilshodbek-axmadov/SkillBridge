@@ -98,15 +98,6 @@ ENV HF_HOME=/app/.cache/huggingface \
     TRANSFORMERS_CACHE=/app/.cache/huggingface \
     SENTENCE_TRANSFORMERS_HOME=/app/.cache/sentence-transformers
 
-
-# SSH for Azure App Service
-USER root
-RUN apt-get update && apt-get install -y openssh-server \
-    && echo "root:Docker!" | chpasswd \
-    && mkdir -p /run/sshd
-
-COPY sshd_config /etc/ssh/sshd_config
-
 USER app
 
 EXPOSE 8000

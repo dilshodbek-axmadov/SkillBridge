@@ -16,6 +16,7 @@ from apps.cv.views import (
     ExportCVView,
     TemplateListView,
     CVPayView,
+    CVPaymentVerifyView,
     CVAccessStatusView,
 )
 
@@ -45,6 +46,7 @@ urlpatterns = [
 
     # CV payments (download)
     path('<int:cv_id>/pay/', CVPayView.as_view(), name='cv-pay'),
+    path('<int:cv_id>/pay/verify/', CVPaymentVerifyView.as_view(), name='cv-pay-verify'),
     path('<int:cv_id>/access-status/', CVAccessStatusView.as_view(), name='cv-access-status'),
 
     # CV detail (keep generic route last)

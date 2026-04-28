@@ -26,7 +26,11 @@ from apps.cv.serializers import (
 )
 from apps.payments.access import can_download_cv, has_paid_for_cv
 from apps.payments.models import Payment
-from apps.payments.services import create_payment_intent, create_cv_checkout_session
+from apps.payments.services import (
+    create_payment_intent,
+    create_cv_checkout_session,
+    verify_and_record_cv_payment,
+)
 
 
 def _build_export_response(cv, export_format):
@@ -337,7 +341,14 @@ class CVPayView(APIView):
         # Preferred: Stripe Checkout redirect flow.
         try:
             frontend = getattr(settings, "FRONTEND_URL", "").rstrip("/")
-            success_url = f"{frontend}/payment/cv/success?cv_id={cv_id}"
+            # Stripe replaces {CHECKOUT_SESSION_ID} with the real session id
+            # at redirect time. The frontend success page passes this id back
+            # to /verify/ so the Payment row is recorded even when the webhook
+            # never reaches us (local dev, transient outages, etc.).
+            success_url = (
+                f"{frontend}/payment/cv/success?cv_id={cv_id}"
+                f"&session_id={{CHECKOUT_SESSION_ID}}"
+            )
             cancel_url = f"{frontend}/payment/cv/failure?cv_id={cv_id}"
             checkout_url = create_cv_checkout_session(
                 user=request.user,
@@ -420,6 +431,64 @@ class CVAccessStatusView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+class CVPaymentVerifyView(APIView):
+    """
+    POST /api/v1/cv/{cv_id}/pay/verify/
+
+    Called by the frontend success page (`/payment/cv/success?...&session_id=cs_...`)
+    after Stripe redirects the user back. We retrieve the Checkout Session
+    from Stripe directly, validate that it belongs to this user and was paid,
+    then upsert a Payment row server-side.
+
+    This is the webhook-independent path — it ensures the Payment is recorded
+    immediately, even when Stripe webhooks aren't reachable (local dev,
+    transient outages, retry windows).
+
+    Body: { "session_id": "cs_test_xxx" }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cv_id):
+        try:
+            CV.objects.only('cv_id').get(cv_id=cv_id)
+        except CV.DoesNotExist:
+            return Response({'error': 'CV not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        session_id = (
+            request.data.get('session_id')
+            or request.query_params.get('session_id')
+        )
+        if not session_id:
+            return Response(
+                {'error': 'session_id is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        result = verify_and_record_cv_payment(
+            user=request.user,
+            session_id=session_id,
+            cv_id=cv_id,
+        )
+
+        if not result.get('ok'):
+            return Response(
+                {
+                    'paid': False,
+                    'reason': result.get('reason'),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                'paid': True,
+                'payment_id': result.get('payment_id'),
+                'can_download': can_download_cv(request.user, cv_id=cv_id),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class TemplateListView(APIView):

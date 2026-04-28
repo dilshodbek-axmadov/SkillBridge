@@ -1,10 +1,20 @@
 import traceback
+from decimal import Decimal, ROUND_HALF_UP
 
 import stripe
 from django.conf import settings
 from django.utils import timezone
 
 from .models import Customer, Subscription, Payment
+
+
+def _cents_to_decimal(cents):
+    """Convert Stripe's integer cent amount to a 2-decimal Decimal."""
+    try:
+        n = int(cents or 0)
+    except Exception:
+        n = 0
+    return (Decimal(n) / Decimal(100)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -184,6 +194,103 @@ def create_cv_checkout_session(user, cv_id, success_url, cancel_url):
     print(f"[CHECKOUT SESSION CREATED] id={session.id} metadata={cv_payment_metadata}")
 
     return session.url
+
+
+def verify_and_record_cv_payment(*, user, session_id, cv_id=None):
+    """
+    Server-side verification path used by the /payment/cv/success page.
+
+    Mirrors `verify_and_sync_pro_subscription` but for one-time CV download
+    payments. Retrieves the Stripe Checkout Session directly, validates that
+    the session belongs to this user and was actually paid, then upserts a
+    Payment row.
+
+    This is required because Stripe webhooks are not always reachable in
+    local dev (and may fail/retry in prod), yet the user has already paid
+    by the time they land on the success page. Without this verify call,
+    `has_paid_for_cv()` keeps returning False and the user is asked to pay
+    again.
+
+    Returns: {"ok": bool, "paid": bool, "reason": str | None, "payment_id": int | None}
+    """
+    if not session_id:
+        return {"ok": False, "paid": False, "reason": "missing session_id", "payment_id": None}
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as e:
+        print(f"[VERIFY CV] retrieve session failed: {e}")
+        return {"ok": False, "paid": False, "reason": f"stripe error: {e}", "payment_id": None}
+
+    session_dict = session.to_dict() if hasattr(session, "to_dict") else dict(session)
+    mode = session_dict.get("mode")
+    payment_status = session_dict.get("payment_status")
+    metadata = dict(session_dict.get("metadata") or {})
+    payment_intent_field = session_dict.get("payment_intent")
+    if isinstance(payment_intent_field, dict):
+        payment_intent_id = payment_intent_field.get("id")
+    else:
+        payment_intent_id = payment_intent_field
+    amount_total = session_dict.get("amount_total") or 0
+    currency = session_dict.get("currency") or "usd"
+
+    print(
+        f"[VERIFY CV] user={user.id} session={session_id} mode={mode} "
+        f"payment_status={payment_status} pi={payment_intent_id} metadata={metadata}"
+    )
+
+    if mode != "payment":
+        return {"ok": False, "paid": False, "reason": "session is not a one-time payment", "payment_id": None}
+
+    # Defence in depth: prevent one user from "claiming" another user's session.
+    meta_user_id = str(metadata.get("user_id") or "")
+    if meta_user_id and meta_user_id != str(user.id):
+        return {"ok": False, "paid": False, "reason": "session does not belong to this user", "payment_id": None}
+
+    # If a cv_id was provided, make sure it matches what was paid for.
+    if cv_id is not None:
+        meta_cv_id = str(metadata.get("cv_id") or "")
+        if meta_cv_id and meta_cv_id != str(cv_id):
+            return {"ok": False, "paid": False, "reason": "session was for a different CV", "payment_id": None}
+
+    if payment_status not in ("paid", "no_payment_required"):
+        return {"ok": False, "paid": False, "reason": f"payment_status={payment_status}", "payment_id": None}
+
+    if not payment_intent_id:
+        return {"ok": False, "paid": False, "reason": "no payment_intent on session", "payment_id": None}
+
+    # Tag the metadata with the checkout session id so we can audit later.
+    metadata["checkout_session_id"] = session_id
+
+    payment_type = metadata.get("payment_type") or Payment.PaymentType.CV_DOWNLOAD.value
+
+    payment, created = Payment.objects.get_or_create(
+        stripe_payment_intent_id=payment_intent_id,
+        defaults={
+            "user_id": user.id,
+            "amount": _cents_to_decimal(amount_total),
+            "currency": currency,
+            "payment_type": payment_type,
+            "status": Payment.Status.SUCCEEDED,
+            "metadata": metadata,
+        },
+    )
+
+    if not created:
+        # Webhook may have created a PENDING row first; flip to SUCCEEDED and
+        # merge metadata.
+        payment.status = Payment.Status.SUCCEEDED
+        merged = dict(payment.metadata or {})
+        merged.update(metadata)
+        payment.metadata = merged
+        payment.save(update_fields=["status", "metadata", "updated_at"])
+
+    print(
+        f"[VERIFY CV] Payment {'created' if created else 'updated'}: "
+        f"id={payment.id} user_id={user.id} intent={payment_intent_id}"
+    )
+
+    return {"ok": True, "paid": True, "reason": None, "payment_id": payment.id}
 
 
 # Webhook handlers

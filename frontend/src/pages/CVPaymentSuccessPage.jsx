@@ -7,6 +7,7 @@ export default function CVPaymentSuccessPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const cvId = params.get('cv_id');
+  const sessionId = params.get('session_id');
 
   const backTo = useMemo(() => {
     if (!cvId) return '/cv-builder';
@@ -21,6 +22,25 @@ export default function CVPaymentSuccessPage() {
     let pollTimer = null;
     let countdownTimer = null;
 
+    const verify = async () => {
+      // Webhook-independent path: ask the backend to retrieve the Stripe
+      // session, validate it, and persist the Payment row.
+      if (!cvId || !sessionId) return false;
+      try {
+        const { data } = await api.post(
+          `/cv/${cvId}/pay/verify/`,
+          { session_id: sessionId }
+        );
+        if (mounted && data?.paid) {
+          setReady(true);
+          return true;
+        }
+      } catch {
+        // fall through to polling — webhook may still come through
+      }
+      return false;
+    };
+
     const poll = async () => {
       if (!cvId) return;
       try {
@@ -34,9 +54,13 @@ export default function CVPaymentSuccessPage() {
       }
     };
 
-    // Poll access status quickly while we show the message.
-    poll();
-    pollTimer = setInterval(poll, 1000);
+    // 1) Verify the session server-side (fast path, works without webhook).
+    // 2) Fall back to polling access-status as a safety net.
+    verify().then((ok) => {
+      if (!mounted || ok) return;
+      poll();
+      pollTimer = setInterval(poll, 1000);
+    });
 
     countdownTimer = setInterval(() => {
       setSeconds((s) => Math.max(0, s - 1));
@@ -47,7 +71,7 @@ export default function CVPaymentSuccessPage() {
       if (pollTimer) clearInterval(pollTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [cvId]);
+  }, [cvId, sessionId]);
 
   useEffect(() => {
     if (seconds <= 0) {
